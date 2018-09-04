@@ -1,0 +1,26 @@
+install.packages("installr")
+library(installr)
+updateR()
+
+install.packages('extrafont')
+library(extrafont)
+font_import()
+loadfonts()
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("SNPRelate")
+biocLite("ConsensusClusterPlus")
+
+install.packages("plyr")
+install.packages("ape")
+install.packages("circlize")
+install.packages("dendextend")
+install.packages("stringi")
+install.packages("adegenet")
+install.packages("poppr")
+install.packages("pegas")
+install.packages("scrime")
+# install.packages("roxygen2")
+# library("roxygen2")
+
+# install.packages("randomForest")
