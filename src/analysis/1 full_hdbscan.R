@@ -1,14 +1,11 @@
 library(SNPRelate)
 library(plyr)
-# install.packages("dbscan")
 library(dbscan)
 library(scrime)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-
 ## loading the gds of the data and pullling some attributes out
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 genotypes <- replace(genotypes, genotypes == 0, 1)
 genotypes <- replace(genotypes, genotypes == 3, NA)

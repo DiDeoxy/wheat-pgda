@@ -1,12 +1,10 @@
 library(SNPRelate)
 library(extrafont)
-if (!require("RColorBrewer")) { install.packages("RColorBrewer", dependencies = TRUE) }
-library(RColorBrewer)
 
 setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
 
 gdsSubset <- paste0("Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds")
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 snp.pos <- snp.pos/1000000
 
 # making list of ld heatmaps

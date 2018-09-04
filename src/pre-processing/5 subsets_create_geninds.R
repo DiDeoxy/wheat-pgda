@@ -3,11 +3,9 @@ library(plyr)
 library(adegenet)
 # library(dbscan)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA")
-
 ## loading the gds of the data and pullling some attributes out
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 # making the data palatable by genind
 genotypes <- replace(genotypes, genotypes == 0, "0")
@@ -85,7 +83,7 @@ save(genind, file = paste0("Data\\Intermediate\\Adegenet\\genind_wheat.RData"))
 
 # ## loading the gds of the data and pullling some attributes out
 # gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds"
-# source("Analysis\\R\\functions\\data_loading.R")
+# source("src\\functions\\data_loading.R")
 # 
 # ## for the major three groups
 # indexNotCanadian <- c(which(dbscan6 != 1))

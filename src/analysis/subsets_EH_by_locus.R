@@ -2,7 +2,7 @@ library(SNPRelate)
 library(extrafont)
 
 setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-source("Analysis\\R\\functions\\funcs_draw_loci.R")
+source("src\\analysis\\R\\functions\\funcs_draw_loci.R")
 
 ## genes split up by contig
 mainGenes <- get(load("Data\\Intermediate\\Aligned_genes\\top_main_genes_contigs.RData"))
@@ -13,10 +13,10 @@ resiGenes$Pos <- resiGenes$Pos/1000000
 # prints out the eh values of the extreme phi markers of each group in the compariosn on the smae graph with the second group as negative values
 for (subset in list(c("HRS", "SWS", "HRS_SWS"), c("HRS", "HRW", "HRS_HRW"), c("HRW", "SWS", "HRW_SWS"))) {
   gdsSubset <- paste0("Data\\Intermediate\\GDS\\", subset[1], "_phys_subset_sample.gds")
-  source("Analysis\\R\\functions\\data_loading.R")
+  source("src\\functions\\data_loading.R")
   group1EH <- EH(genotypes)
   gdsSubset <- paste0("Data\\Intermediate\\GDS\\", subset[2], "_phys_subset_sample.gds")
-  source("Analysis\\R\\functions\\data_loading.R")
+  source("src\\functions\\data_loading.R")
   group2EH <- -EH(genotypes)
   snp.pos <- snp.pos/1000000
   
@@ -82,7 +82,7 @@ for (subset in list(c("HRS", "SWS", "HRS_SWS"), c("HRS", "HRW", "HRS_HRW"), c("H
 # }
 
 gdsSubset <- paste0("Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds")
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\analysis\\R\\functions\\data_loading.R")
 snp.pos <- snp.pos/1000000
 
 haplotypes <- as.list(rep(NA, 21))
@@ -120,7 +120,7 @@ haplotypes[[19]] <- haplotypes[[19]][!is.na(haplotypes[[19]])]
 ## plots the eh values for all markers
 for (subset in c("wheat", "HRS", "HRW", "SWS")[1]) {
   gdsSubset <- paste0("Data\\Intermediate\\GDS\\", subset, "_phys_subset_sample.gds")
-  source("Analysis\\R\\functions\\data_loading.R")
+  source("src\\functions\\data_loading.R")
   snp.pos <- snp.pos/1000000
   print(subset)
   
@@ -151,7 +151,7 @@ for (subset in c("wheat", "HRS", "HRW", "SWS")[1]) {
 ## plots the eh values for all markers
 for (subset in c("wheat", "HRS", "HRW", "SWS")[1]) {
   gdsSubset <- paste0("Data\\Intermediate\\GDS\\", subset, "_gen_subset_sample.gds")
-  source("Analysis\\R\\functions\\data_loading.R")
+  source("src\\functions\\data_loading.R")
   snp.pos <- snp.pos/1000000
   print(subset)
   

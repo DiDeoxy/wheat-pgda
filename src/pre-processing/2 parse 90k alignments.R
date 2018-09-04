@@ -1,8 +1,6 @@
 library(ape)
 library(plyr)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-
 chrs <- paste0("chr", as.vector(t(outer(as.character(1:7), c("A", "B", "D"), paste, sep=""))))
 
 alignments <- data.frame()

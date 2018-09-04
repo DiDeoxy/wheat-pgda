@@ -1,13 +1,10 @@
 library(SNPRelate)
 library(extrafont)
-# install.packages("GeneticSubsetter")
-# library(GeneticSubsetter)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-source("Analysis\\R\\functions\\funcs_calc_stats.R")
+source("src\\analysis\\R\\functions\\funcs_calc_stats.R")
 
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 # load("Data\\Intermediate\\Aligned_genes\\top_main_genes_contigs.RData")
 dim(genotypes)

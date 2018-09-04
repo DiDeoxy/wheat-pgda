@@ -3,16 +3,13 @@ library(circlize)
 library(dendextend)
 library(extrafont)
 library(ape)
-# library(tidyverse)
-# library(ggtree)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-source("Analysis\\R\\functions\\funcs_draw_dend.R")
-source("Analysis\\R\\functions\\colour_sets.R")
+source("src\\functions\\funcs_draw_dend.R")
+source("src\\functions\\colour_sets.R")
 
 ## setting up the data
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 load("Data\\Intermediate\\dbscan\\wheatHdbscan.RData")
 # wheatHdbscan$cluster[which(wheatHdbscan$cluster == 0)] <- wheatHdbscan$cluster[which(wheatHdbscan$cluster == 0)] + 5

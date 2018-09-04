@@ -2,9 +2,6 @@ library(SNPRelate)
 library(plyr)
 library(dplyr)
 
-## set wd directory so that short file paths can be used
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-
 ## importing the snp-chip genotype calls from a CSV file
 data <- read.csv("Data\\Raw\\Genotypes\\Jan_6_wheat_genotypes_curtis.csv",
                  header = T, comment.char = "", quote="", stringsAsFactors = F, row.names = 2)

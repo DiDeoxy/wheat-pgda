@@ -1,11 +1,9 @@
 library(SNPRelate)
 library(plyr)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-
 ## load data into R object from the GDS object using the script at the source location
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 ## open the GDS object again and select SNPs with a missing data rate below 0.1
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\wheat_phys.gds")
@@ -25,7 +23,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_phys_snpgdsSelectSNP.gds",
 
 ## same aas above but for gen map gds
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_gen.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_gen_snpgdsSelectSNP.gds",
                  genmat = genotypes[snp.indices,],
                  sample.id = sample.id, 
@@ -37,7 +35,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_gen_snpgdsSelectSNP.gds",
 
 ## eliminate those individuals that show identity by state (IBS, fractional identity) greater than 0.99
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_snpgdsSelectSNP.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\wheat_phys_snpgdsSelectSNP.gds")
 IBS <- snpgdsIBS(wheat, autosome.only = F)
@@ -84,7 +82,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds",
 
 ## gen map
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_gen_snpgdsSelectSNP.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_gen_subset_sample.gds",
                  genmat = genotypes[,-sample.indices],
                  sample.id = sample.id[-sample.indices], 
@@ -96,7 +94,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_gen_subset_sample.gds",
 
 ## identify and remove from the overall dataset LD pruned markers
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 ## performs LD pruning to produce a set of SNPs that maximally represent the diversity
 ## of the genome with as little redundant info as possible used for estimation of relationships

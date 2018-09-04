@@ -1,10 +1,8 @@
 library(SNPRelate)
 library(plyr)
 
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA")
-
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds"
-source("Analysis\\R\\functions\\data_loading.R")
+source("src\\functions\\data_loading.R")
 
 makeGenesContigsDataframe <- function (fileIn, fileOut) {
   genes <- read.csv(fileIn, header = F, stringsAsFactors = F, col.names = c("Name", "ID", "Contig", "Pos", "sleng", "aleng", "%id"))[,c(3,4,1)]

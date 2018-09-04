@@ -1,5 +1,3 @@
-setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
-
 ## loading and ordering the SNP data genetic map
 pozniak_gen_map <- read.csv("Data\\Raw\\Maps\\pozniak_gen_map.csv",
                         header = F, col.names = c("Name", "Contig", "Position"), row.names = 1, stringsAsFactors = F)
