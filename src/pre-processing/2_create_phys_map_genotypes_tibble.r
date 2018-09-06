@@ -1,9 +1,9 @@
 library(ape)
 library(tidyverse)
+library(magrittr)
 
 # load the filtered gen map
-poz_filtered <- read_rds(
-    "Data\\Intermediate\\Maps\\pozniak_filtered_map.rds")
+poz_filtered <- read_rds("Data\\Intermediate\\Maps\\pozniak_filtered_map.rds")
 
 # create a vector of the chromosomes
 chrs <- paste0("chr", as.vector(t(outer(as.character(1:7), c("A", "B", "D"),
@@ -24,8 +24,7 @@ for (chr in chrs) {
     per_id <- strsplit(attributes[3], split = "=")[[1]][2]
     chrom <- substr(feat[1], 4, nchar(feat[1]))
     pos <- floor( (as.integer(feat[4]) + as.integer(feat[5]) ) / 2)
-    return(c(name, ID, chrom, pos, coverage, per_id,
-    use.names = F))
+    return(c(name, ID, chrom, pos, coverage, per_id, use.names = F))
   }))
   alignments <- rbind(alignments, parsed_pos, stringsAsFactors = F)
 }
@@ -36,7 +35,7 @@ alignments <- alignments %>%
     type_convert(col_type = list(col_character(), col_character(),
     col_character(), col_integer(), col_double(), col_double())) %>%
     rename(marker = V1, ID = V2, chrom = V3, pos = V4, coverage = V5,
-    per_id = V6)
+    per_id = V6) 
 
 # a function for returning the best alignment on the correct chromosome
 best_alignment <- function(aligns, poz_filtered) {
@@ -56,30 +55,38 @@ best_alignment <- function(aligns, poz_filtered) {
     }
 }
 
-# create the physical map by filtering and using the best_alignment function
+# create the physical map by filtering based on qulaity and using the
+# best_alignment function
 phys_map <- alignments %>%
     filter(coverage >= 90, per_id >= 98) %>%
     group_by(marker) %>%
     do(best_alignment(., poz_filtered)) %>%
     select(marker, chrom, pos) %>%
-    arrange(chrom, pos)
+    arrange(chrom, pos) %<>%
+    mutate(pos = pos/1000000)
+maps <- phys_map %>%
+        left_join(poz_filtered, by = "marker") %>%
+        rename(phys_pos = pos.x, gen_pos = pos.y) %>%
+        select(marker, chrom, phys_pos, gen_pos)
 
+# format the genotype data into the proper format for snpgds format
 genotypes <- read_csv(
                 "Data\\Raw\\Genotypes\\Jan_6_wheat_genotypes_curtis.csv") %>%
-            select(-X1, -X3, -X4, -X5, -Name) %>%
-            .[-1:-2,] %>%
-            rename(marker = X2) %>%
-            replace(. == "C1", 0) %>%
-            replace(. == "c1", 0) %>%
-            replace(. == "C2", 2) %>%
-            replace(. == "NC", NA)
+             select(-X1, -X3, -X4, -X5, -Name) %>%
+             .[-1:-2, ] %>%
+             dplyr::rename(marker = X2) %>%
+             replace(. == "C1", 0) %>%
+             replace(. == "c1", 0) %>%
+             replace(. == "C2", 2) %>%
+             replace(. == "NC", NA)
 
+# remove at least one marker mapping to the same position in phys map
 unique_marker <- function(markers) {
     if (nrow(markers) == 1) {
         return(markers[1, ])
     } else if (nrow(markers) == 2) {
-        marker1 <- markers[1, 4:ncol(markers)]
-        marker2 <- markers[2, 4:ncol(markers)]
+        marker1 <- markers[1, 5:ncol(markers)]
+        marker2 <- markers[2, 5:ncol(markers)]
         per_diff <- (sum(abs(marker1 - marker2), na.rm = TRUE) / 2) / 100
         if (per_diff > 0.01) {
             return(tibble())
@@ -91,11 +98,15 @@ unique_marker <- function(markers) {
     }
 }
 
-phys_map_genotypes <- phys_map %>%
-                      left_join(genotypes) %>%
-                      type_convert() %>%
-                      group_by(chrom, pos) %>%
-                      do(unique_marker(.))
+# combine the phys map with the genotypes and prune positons with multpile
+# markers
+maps_genotypes <- maps %>%
+                  left_join(genotypes) %>%
+                  type_convert() %>%
+                  group_by(chrom, phys_pos) %>%
+                  do(unique_marker(.)) %>%
+                  ungroup()
+maps_genotypes
 
-write_rds(phys_map_genotypes,
-    path = "Data\\Intermediate\\Maps\\phys_map_genotypes.rds")
+write_rds(maps_genotypes,
+    path = "Data\\Intermediate\\Maps\\maps_genotypes.rds")

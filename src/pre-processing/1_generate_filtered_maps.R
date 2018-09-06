@@ -23,7 +23,12 @@ wang_gen_map <- read_csv("Data\\Raw\\Maps\\wang_gen_map.csv",
 
 # filter the genetic maps so only markers present in the poz gen map are kept
 # with those having a different position in the wang genetic map removed
-poz_filtered <- semi_join(poz_gen_map, wang_gen_map, by = c("marker", "group"))
+poz_semi <- semi_join(poz_gen_map, wang_gen_map, by = c("marker", "group"))
+poz_anti <- anti_join(poz_gen_map, wang_gen_map, by = c("marker", "group")) %>%
+    anti_join(wang_gen_map, by = "marker")
+poz_filtered <- poz_semi %>%
+    bind_rows(poz_anti) %>%
+    arrange(marker, group, pos)
 
 # write the filtered genetic map out
 write_rds(

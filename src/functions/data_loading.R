@@ -1,15 +1,15 @@
-wheat <- snpgdsOpen(gdsSubset)
-sample.id <- as.character(read.gdsn(index.gdsn(wheat, "sample.id")))
-snp.id <- as.character(read.gdsn(index.gdsn(wheat, "snp.id")))
-snp.pos <- as.integer(read.gdsn(index.gdsn(wheat, "snp.position")))
-snp.chrom <- as.integer(read.gdsn(index.gdsn(wheat, "snp.chromosome")))
+wheat <- snpgdsOpen(gds)
+sample_id <- as.character(read.gdsn(index.gdsn(wheat, "sample.id")))
+snp_id <- as.character(read.gdsn(index.gdsn(wheat, "snp.id")))
+snp_pos <- as.integer(read.gdsn(index.gdsn(wheat, "snp.position")))
+snp_chrom <- as.integer(read.gdsn(index.gdsn(wheat, "snp.chromosome")))
 genotypes <- read.gdsn(index.gdsn(wheat, "genotype"))
 
-samp.annot <- read.gdsn(index.gdsn(wheat, "samp.annot"))
-bp <- read.gdsn(index.gdsn(wheat, "samp.annot/BP"))
-year <- read.gdsn(index.gdsn(wheat, "samp.annot/Year"))
-desig <- read.gdsn(index.gdsn(wheat, "samp.annot/designation"))
-mc <- read.gdsn(index.gdsn(wheat, "samp.annot/MC"))
+samp_annot <- read.gdsn(index.gdsn(wheat, "samp_annot"))
+bp <- read.gdsn(index.gdsn(wheat, "samp_annot/BP"))
+year <- read.gdsn(index.gdsn(wheat, "samp_annot/Year"))
+desig <- read.gdsn(index.gdsn(wheat, "samp_annot/designation"))
+mc <- read.gdsn(index.gdsn(wheat, "samp_annot/MC"))
 
 era <- cut(as.numeric(as.character(year)),
            breaks = c(1800, 1920, 1940, 1960, 1980, 2000, 2020),

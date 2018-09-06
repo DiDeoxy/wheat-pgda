@@ -1,101 +1,35 @@
-library(ape)
 library(tidyverse)
+library(SNPRelate)
 
-# load the filtered gen map
-poz_filtered <- read_rds(
-    "Data\\Intermediate\\Maps\\pozniak_filtered_map.rds")
+# load the phys map with the genotypes
+phys_map_genotypes <- read_rds(
+    "Data\\Intermediate\\Maps\\phys_map_genotypes.rds")
 
-# create a vector of the chromosomes
-chrs <- paste0("chr", as.vector(t(outer(as.character(1:7), c("A", "B", "D"),
-               paste, sep = ""))))
+## import categorical information on wheat varieites (market class, breeding program, year of release, phenotype, etc.)
+metadata <- read_csv("Data\\Raw\\Parsed\\metadata_final.csv")
 
-# parse the GFF3 format file of the wheat 90K snp chip physical map positions
-alignments <- data.frame()
-for (chr in chrs) {
-  chr_feats <- read.gff(
-      paste0(
-          "Data\\Raw\\Maps\\90K_RefSeqv1_physical_maps\\Infinium90K-",
-          chr, ".gff3"))
-  parsed_pos <- t(apply(chr_feats, 1, function (feat) {
-    attributes <- strsplit(feat[9], split = ";")[[1]]
-    name <- strsplit(attributes[2], split = "=")[[1]][2]
-    ID <- strsplit(attributes[4], split = "=")[[1]][2]
-    coverage <- strsplit(attributes[1], split = "=")[[1]][2]
-    per_id <- strsplit(attributes[3], split = "=")[[1]][2]
-    chrom <- substr(feat[1], 4, nchar(feat[1]))
-    pos <- floor( (as.integer(feat[4]) + as.integer(feat[5]) ) / 2)
-    return(c(name, ID, chrom, pos, coverage, per_id,
-    use.names = F))
-  }))
-  alignments <- rbind(alignments, parsed_pos, stringsAsFactors = F)
-}
+## construct the sample annotation information from the metadata
+samp.annot <- list(BP = metadata$`Breeding Program`, Year = metadata$Date, 
+                   origin = metadata$Origin, texture = metadata$Strength, 
+                   colour = metadata$Colour, habit = metadata$Season, 
+                   designation = metadata$Designation, MC = metadata$Consensus)
 
-## format the alignemts into a tibble with named columns
-alignments <- alignments %>%
-    as_tibble %>%
-    type_convert(col_type = list(col_character(), col_character(),
-    col_character(), col_integer(), col_double(), col_double())) %>%
-    rename(marker = V1, ID = V2, chrom = V3, pos = V4, coverage = V5,
-    per_id = V6)
+## construct the SNPRelate GDS object fromt the input data with physical map
+snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_phys.gds",
+                 genmat = data.matrix(genotypes),
+                 sample.id = metadata$Real.Name, 
+                 snp.id = row.names(physMap),
+                 snp.chromosome = as.integer(as.factor(physMap$Contig)),
+                 snp.position = physMap$Position,
+                 other.vars = list(samp.annot = samp.annot),
+                 snpfirstdim = T)
 
-# a function for returning the best alignment on the correct chromosome
-best_alignment <- function(aligns, poz_filtered) {
-    # finds if the same marker is on the filtered gen map
-    poz_marker <- filter(poz_filtered, marker == aligns$marker[1])
-    if (nrow(poz_marker)) {
-        # finds if the marker has a single phys alignment on a chromosome 
-        # equivalent to the gen map linkage group
-        aligns_chrom <- filter(aligns, chrom == poz_marker$group)
-        if (nrow(aligns_chrom) == 1) {
-            return(aligns_chrom)
-        } else {
-            return(tibble())
-        }
-    } else {
-        return(tibble())
-    }
-}
-
-# create the physical map by filtering and using the best_alignment function
-phys_map <- alignments %>%
-    filter(coverage >= 90, per_id >= 98) %>%
-    group_by(marker) %>%
-    do(best_alignment(., poz_filtered)) %>%
-    select(marker, chrom, pos) %>%
-    arrange(chrom, pos)
-
-genotypes <- read_csv(
-                "Data\\Raw\\Genotypes\\Jan_6_wheat_genotypes_curtis.csv") %>%
-            select(-X1, -X3, -X4, -X5, -Name) %>%
-            .[-1:-2,] %>%
-            rename(marker = X2) %>%
-            replace(. == "C1", 0) %>%
-            replace(. == "c1", 0) %>%
-            replace(. == "C2", 2) %>%
-            replace(. == "NC", NA)
-
-unique_marker <- function(markers) {
-    if (nrow(markers) == 1) {
-        return(markers[1, ])
-    } else if (nrow(markers) == 2) {
-        marker1 <- markers[1, 4:ncol(markers)]
-        marker2 <- markers[2, 4:ncol(markers)]
-        per_diff <- (sum(abs(marker1 - marker2), na.rm = TRUE) / 2) / 100
-        if (per_diff > 0.01) {
-            return(tibble())
-        } else {
-            return(markers[1, ])
-        }
-    } else {
-        return(tibble())
-    }
-}
-
-phys_map_genotypes <- phys_map %>%
-                      left_join(genotypes) %>%
-                      type_convert() %>%
-                      group_by(chrom, pos) %>%
-                      do(unique_marker(.))
-
-write_rds(phys_map_genotypes,
-    path = "Data\\Intermediate\\Maps\\phys_map_genotypes.rds")
+## construct the SNPRelate GDS object form the input data with genetic map
+snpgdsCreateGeno("Data\\Intermediate\\GDS\\wheat_gen.gds",
+                 genmat = data.matrix(genotypes),
+                 sample.id = metadata$Real.Name, 
+                 snp.id = row.names(physMap),
+                 snp.chromosome = as.integer(as.factor(physMap$Contig)),
+                 snp.position = data$Position,
+                 other.vars = list(samp.annot = samp.annot),
+                 snpfirstdim = T)
