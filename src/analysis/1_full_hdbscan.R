@@ -1,5 +1,5 @@
+library(tidyverse)
 library(SNPRelate)
-library(plyr)
 library(dbscan)
 library(scrime)
 
@@ -7,8 +7,9 @@ library(scrime)
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
 source("src\\functions\\data_loading.R")
 
-genotypes <- replace(genotypes, genotypes == 0, 1)
-genotypes <- replace(genotypes, genotypes == 3, NA)
+genotypes <- genotypes %>%
+             replace(. == 0, 1) %>%
+             genotypes(. == 3, NA)
 
 genotypesImputed <- knncatimpute(t(genotypes))
 
