@@ -6,11 +6,14 @@ snp_chrom <- as.integer(read.gdsn(index.gdsn(wheat, "snp.chromosome")))
 genotypes <- read.gdsn(index.gdsn(wheat, "genotype"))
 
 samp_annot <- read.gdsn(index.gdsn(wheat, "samp_annot"))
-bp <- read.gdsn(index.gdsn(wheat, "samp_annot/BP"))
-year <- read.gdsn(index.gdsn(wheat, "samp_annot/Year"))
-desig <- read.gdsn(index.gdsn(wheat, "samp_annot/designation"))
-mc <- read.gdsn(index.gdsn(wheat, "samp_annot/MC"))
+bp <- samp_annot$BP
+mc <- samp_annot$MC
+desig <- samp_annot$designation
+texture <- samp_annot$texture
+colour <- samp_annot$colour
+habit <- samp_annot$habit
 
+year <- samp_annot$Year
 era <- cut(as.numeric(as.character(year)),
            breaks = c(1800, 1920, 1940, 1960, 1980, 2000, 2020),
            labels = c("Pre-1920", "1921-1940", "1941-1960", "1961-1980", "1981-2000", "2001-2016")

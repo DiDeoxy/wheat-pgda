@@ -106,12 +106,12 @@ wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds")
 set.seed(1000)
 snpset_ids_list <- snpgdsLDpruning(
     wheat, autosome.only = F, missing.rate = 0.1, maf = 0.05,
-    ld.threshold = 0.6, slide.max.bp = 10)
+    ld.threshold = 0.6, slide.max.bp = 1e7)
 snpgdsClose(wheat)
 snp_indices <- match(unlist(snpset_ids_list), snp_id)
 
 # create a subset gds object containg only the SNPs remaing after ld pruning
-snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_both.gds",
+snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds",
                  genmat = genotypes[snp_indices,],
                  sample.id = sample_id, 
                  snp.id = snp_id[snp_indices],

@@ -21,8 +21,8 @@ write(metadata$`Real Name`, file = "Data\\Intermediate\\ordered_names.txt",
 
 ## construct the sample annotation information from the metadata
 samp_annot <- list(BP = metadata$`Breeding Program`, Year = metadata$Date, 
-                   origin = metadata$Origin, texture = metadata$Strength, 
-                   colour = metadata$Colour, habit = metadata$Season, 
+                   origin = metadata$Origin, texture = metadata$Texture, 
+                   colour = metadata$Colour, habit = metadata$Habit, 
                    designation = metadata$Designation, MC = metadata$Consensus)
 
 ## construct the SNPRelate GDS object fromt the input data with physical map

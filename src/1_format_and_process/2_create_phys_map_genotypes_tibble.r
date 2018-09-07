@@ -1,6 +1,5 @@
 library(ape)
 library(tidyverse)
-library(magrittr)
 
 # load the filtered gen map
 poz_filtered <- read_rds("Data\\Intermediate\\Maps\\pozniak_filtered_map.rds")
@@ -62,8 +61,7 @@ phys_map <- alignments %>%
     group_by(marker) %>%
     do(best_alignment(., poz_filtered)) %>%
     select(marker, chrom, pos) %>%
-    arrange(chrom, pos) %<>%
-    mutate(pos = pos/1000000)
+    arrange(chrom, pos)
 maps <- phys_map %>%
         left_join(poz_filtered, by = "marker") %>%
         rename(phys_pos = pos.x, gen_pos = pos.y) %>%
@@ -78,7 +76,7 @@ genotypes <- read_csv(
              replace(. == "C1", 0) %>%
              replace(. == "c1", 0) %>%
              replace(. == "C2", 2) %>%
-             replace(. == "NC", NA)
+             replace(. == "NC", 3)
 
 # remove at least one marker mapping to the same position in phys map
 unique_marker <- function(markers) {
