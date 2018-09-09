@@ -3,10 +3,10 @@ library(extrafont)
 # library(rgl)
 # install.packages("rgl")
 
-source("src\\functions\\colour_sets.R")
+source("src\\R_functions\\colour_sets.R")
 
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 ## PCA
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds")

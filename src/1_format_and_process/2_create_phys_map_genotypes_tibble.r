@@ -54,7 +54,7 @@ best_alignment <- function(aligns, poz_filtered) {
     }
 }
 
-# create the physical map by filtering based on qulaity and using the
+# create the physical map by filtering based on quality and using the
 # best_alignment function
 phys_map <- alignments %>%
     filter(coverage >= 90, per_id >= 98) %>%

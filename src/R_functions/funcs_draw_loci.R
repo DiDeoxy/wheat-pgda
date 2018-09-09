@@ -1,6 +1,6 @@
 ## add in xaxt for last three graphs
-source("Analysis\\R\\functions\\funcs_calc_stats.R")
-source("Analysis\\R\\functions\\colour_sets.R")
+source("Analysis\\R\\R_functions\\funcs_calc_stats.R")
+source("Analysis\\R\\R_functions\\colour_sets.R")
 
 plots <- function (positions, values, mainGenes, resiGenes, segments, ylim = c(0, 1),
                    oma = c(4,1,3,3), plotGenes = TRUE, colour = FALSE, ab = FALSE) {

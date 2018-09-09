@@ -5,7 +5,7 @@ library(scrime)
 
 ## loading the gds of the data and pullling some attributes out
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_both.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 genotypes <- genotypes %>%
              replace(. == 0, 1) %>%

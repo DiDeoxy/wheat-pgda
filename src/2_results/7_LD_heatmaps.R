@@ -4,7 +4,7 @@ library(extrafont)
 setwd("C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\PGDA\\")
 
 gdsSubset <- paste0("Data\\Intermediate\\GDS\\wheat_phys_subset_sample.gds")
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 snp.pos <- snp.pos/1000000
 
 # making list of ld heatmaps

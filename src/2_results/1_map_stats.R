@@ -1,161 +1,125 @@
+library(tidyverse)
 library(SNPRelate)
 library(extrafont)
 
-source("src\\analysis\\R\\functions\\funcs_calc_stats.R")
+source("src\\R_functions\\funcs_calc_stats.R")
 
-gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("src\\functions\\data_loading.R")
+gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
+source("src\\R_functions\\data_loading.R")
 
-# load("Data\\Intermediate\\Aligned_genes\\top_main_genes_contigs.RData")
-dim(genotypes)
-##
-# genotypes <- replace(genotypes, genotypes == 0, -1)
-# genotypes <- replace(genotypes, genotypes == 2, 1)
-# genotypes <- replace(genotypes, genotypes == 3, 0)
+mb <- 1000000
 
-# PICs <- vector()
-# for (i in 1:dim(genotypes)[1]) {
-#   PICs <- c(PICs, PicCalc(t(genotypes[i,])))
-# }
-# signif <- quantile(PICs, prob = 0.95, na.rm = T)
-# signif2 <- quantile(PICs, prob = 0.99, na.rm = T)
-# mean(PICs)
-
-# png("Analysis\\Figures\\loci\\pic_hrs.png", 
-#     family="Calibri", width = 6, height = 6, pointsize = 10, units = "in", res = 300)
-# plots2(snp.pos, PICs, genes_contigs, snp.chrom)
-# dev.off()
-
-counts <- apply(genotypes, 1, function (x) {
-  count <- as.data.frame(table(x))
-  if (dim(count)[1] == 3) {
-    return(count[,2])
+# count how often for each marker the different homozygotes and missing data
+# occurs
+counts <- apply(genotypes, 1, function (marker) {
+  count <- as.data.frame(table(marker))
+  if (nrow(count) == 3) {
+    return(count[, 2])
   } else {
-    return(c(count[,2], 0))
+    return(c(count[, 2], 0))
   }
 })
-stats <- apply(counts, 2, function (x) {
-  maf <- min(x[1:2])/365
-  mr <- x[3]/365
-  return(c(maf = maf, mr = mr))
-})
-## MAF and MR
-mean(stats[1,])
-mean(stats[2,])
+## find the minor allel frequency and missing rate of each marker
+stats <- as.data.frame(t(apply(counts, 2, function (marker) {
+                            maf <- min(marker[1:2])/sum(marker[1:2])
+                            mr <- marker[3]/sum(marker)
+                            return(c(maf = maf, mr = mr))
+                         })))
+## mean maf and mr
+mean(stats$maf)
+mean(stats$mr)
 
-## numbers and mean distances
+## number of markers and mean distances between the genome
 num <- data.frame(A = 0, B = 0, D = 0)
 diff <- list(A = list(), B = list(), D = list())
 count <- 1
-i <- 1
-num_by_segment <- by(snp.pos, snp.chrom, function (x) {
+num_by_segment <- by(snp_pos, snp_chrom, function (pos) {
   if (count %in% seq(1, 19, 3)) {
-    num$A <<- sum(num$A, length(x))
+    num$A <<- sum(num$A, length(pos)) # number of markers on group
     if (count == 1) {
-      diff$A[[1]] <<- diff(x)
+      diff$A[[1]] <<- diff(pos) # distances between markers
     } else {
-      diff$A[[(count %/% 3) + 1]] <<- diff(x)
+      diff$A[[(count %/% 3) + 1]] <<- diff(pos) # for each chromosome by genome
     }
-    
   } else if (count %in% seq(2, 20, 3)) { 
-    num$B <<- sum(num$B, length(x))
+    num$B <<- sum(num$B, length(pos))
     if (count == 1) {
-      diff$B[[1]] <<- diff(x)
+      diff$B[[1]] <<- diff(pos)
     } else {
-      diff$B[[(count %/% 3) + 1]] <<- diff(x)
+      diff$B[[(count %/% 3) + 1]] <<- diff(pos)
     }
   } else {
-    num$D <<- sum(num$D, length(x))
-    diff$D[[count / 3]] <<- diff(x)
+    num$D <<- sum(num$D, length(pos))
+    diff$D[[count / 3]] <<- diff(pos)
   }
   count <<- count + 1
 })
-## num SNPs
+# num SNPs by genome
 num
+## average distance between markers overall and by genome
+mean(unlist(diff))/mb
+mean(unlist(diff$A))/mb
+mean(unlist(diff$B))/mb
+mean(unlist(diff$D))/mb
 
-## average dist
-mean(unlist(diff))
-mean(unlist(diff$A))
-mean(unlist(diff$B))
-mean(unlist(diff$D))
-
-png("Results\\gaps_dist_ldpruned.png", family="Times New Roman", width = 12, height = 6, pointsize = 20, units = "in", res = 500)
+# histograms and boxplots depicting the distribution of gaps on each genome
+png("Results\\gaps\\gaps_dist.png", family="Times New Roman",
+    width = 12, height = 6, pointsize = 20, units = "in", res = 500)
 par(mar=c(0, 1, 1, 1), oma = c(4, 3, 3, 0))
-nf <- layout(mat = matrix(c(1,3,5,7,2,4,6,8), 2, 4, byrow=TRUE), height = c(4,1))
+nf <- layout(mat = matrix(c(1,3,5,7,2,4,6,8), 2, 4, byrow=TRUE), 
+             height = c(4,1))
 layout.show(nf)
 for (chrom in names(diff)) {
-  hist(log10(unlist(diff[[chrom]])), col = "pink", main = chrom, xlab = "", ylab = "", xaxt = "n")
-  boxplot(log10(unlist(diff[[chrom]])), horizontal=TRUE, outline=TRUE,
-          frame=F, col = "green1", width = 10)
+  hist(log10(unlist(diff[[chrom]])), col = "pink", main = chrom, xlab = "",
+       ylab = "", xaxt = "n")
+  boxplot(log10(unlist(diff[[chrom]])), horizontal=TRUE, outline=TRUE, frame=F,
+          col = "green1", width = 10)
 }
-hist(log10(unlist(diff)), col = "pink", main = "All", xlab = "", ylab = "", xaxt = "n")
+hist(log10(unlist(diff)), col = "pink", main = "All", xlab = "", ylab = "",
+     xaxt = "n")
 boxplot(log10(unlist(diff)), horizontal=TRUE, outline=TRUE,
         frame=F, col = "green1", width = 10)
 title(xlab = "Log 10 Power", outer = T, cex.lab = 1.5, line = 2.5)
 title(ylab = "Count", outer = T, cex.lab = 1.5, line = 1.5)
-title(paste("Distributions of Distances Between Markers by Genome"), outer = T, cex.main = 1.5, line = 1)
+title(paste("Distributions of Distances Between Markers by Genome"), outer = T,
+      cex.main = 1.5, line = 1)
 dev.off()
 
-## Gaps
+# find the min length of the top percentile of gaps
+top_percentile <- quantile(unlist(diff), prob = 0.99, na.rm = T)
+top_percentile
 
-longest <- quantile(unlist(diff), prob = 0.99, na.rm = T)
-longest
-length(which(unlist(diff$A) >= longest))
-length(which(unlist(diff$B) >= longest))
-length(which(unlist(diff$D) >= longest))
-order(unlist(diff$A), decreasing = T)
-unlist(diff$A)[2199]
-max(unlist(diff$B))
-max(unlist(diff$D))
+# the number of top percentile gaps on each genome
+length(which(unlist(diff$A) >= top_percentile))
+length(which(unlist(diff$B) >= top_percentile))
+length(which(unlist(diff$D) >= top_percentile))
+# the longest gap on each genome
+max(unlist(diff$A))/mb
+max(unlist(diff$B))/mb
+max(unlist(diff$D))/mb
 
-## LD
-labels <- as.vector(t(outer(as.character(1:7), c("A", "B", "D"), paste, sep="")))
-# labels <- as.vector(t(outer(chromes, c("part1", "part2"), paste, sep="_")))
-
-wheat <- snpgdsOpen("Data\\intermediate\\GDS\\wheat_phys_subset_both.gds")
+# Calcualte ld between all markers on each chromosome
+wheat <- snpgdsOpen(
+    "Data\\intermediate\\GDS\\full_phys_subset_sample.gds")
+chroms <- as.vector(t(outer(as.character(1:7), c("A", "B", "D"), paste, 
+                            sep="")))
 ld_mat <- list()
-for(i in levels(as.factor(snp.chrom))) {
-  ld_mat[[labels[as.numeric(i)]]] <- c(snpgdsLDMat(wheat, method = "composite", 
-                                                   snp.id = snp.id[which(snp.chrom == i)], 
-                                                   slide = -1),
-                                       list(pos = snp.pos[which(snp.chrom == i)]))
+for (i in unique(snp_chrom)) {
+    ld_mat[[chroms[i]]] <- c(snpgdsLDMat(wheat, method = "composite", 
+                                snp.id = snp_id[which(snp_chrom == i)], 
+                                slide = -1),
+                             list(pos = snp_pos[which(snp_chrom == i)]))
 }
 snpgdsClose(wheat)
 
-
-pairwise_ld <- lapply(ld_mat, function (data) {
-  ld <- vector()
-  # ld <- c(ld, mean(abs(as.dist(data$LD)), na.rm = T))
-  ld <- c(ld, mean(as.dist(data$LD^2), na.rm = T))
-  return(ld)
+# calculate the average pairwise ld by chromosome
+pairwise_ld_by_chrom <- lapply(ld_mat, function (chrom) {
+    # return(mean(abs(as.dist(data$LD)), na.rm = T))
+    return(as.vector(as.dist(chrom$LD^2)))
 })
 
-genome_ld <- list(A = list(), B = list(), D = list())
-count <- 1
-blah <- lapply(pairwise_ld, function (pairs) {
-  if (count %in% seq(1, 19, 3)) {
-    if (count == 1) {
-      genome_ld$A[[1]] <<- pairs
-    } else {
-      genome_ld$A[[(count %/% 3) + 1]] <<- pairs
-    }
-  } else if (count %in% seq(2, 20, 3)) { 
-    if (count == 1) {
-      genome_ld$B[[1]] <<- pairs
-    } else {
-      genome_ld$B[[(count %/% 3) + 1]] <<- pairs
-    }
-  } else {
-    genome_ld$D[[count / 3]] <<- pairs
-  }
-  count <<- count + 1
-})
-mean(unlist(genome_ld))
-
-lapply(genome_ld, function (x) {
-  mean(unlist(x))
-})
-
-
-mean(unlist(pairwise_ld), na.rm = T)
-
+# overall avvera pairwise ld, and by genome
+mean(unlist(pairwise_ld_by_chrom), na.rm = TRUE)
+mean(unlist(pairwise_ld_by_chrom[seq(1, 19, 3)]), na.rm = TRUE)
+mean(unlist(pairwise_ld_by_chrom[seq(2, 20, 3)]), na.rm = TRUE)
+mean(unlist(pairwise_ld_by_chrom[seq(3, 21, 3)]), na.rm = TRUE)

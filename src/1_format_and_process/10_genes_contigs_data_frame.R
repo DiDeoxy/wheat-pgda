@@ -4,7 +4,7 @@ library(SNPRelate)
 library(plyr)
 
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 makeGenesContigsDataframe <- function (file_in, file_out) {
     genes <- read_csv(file_in, 

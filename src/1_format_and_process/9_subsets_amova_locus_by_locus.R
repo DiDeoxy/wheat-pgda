@@ -5,7 +5,7 @@ library(ape)
 
 ## loading the gds of the data and pullling some attributes out
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_both.gds")
 distances <- 1 - snpgdsIBS(wheat, autosome.only = F)$ibs

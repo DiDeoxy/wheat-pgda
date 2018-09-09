@@ -5,7 +5,7 @@ library(plyr)
 
 ## loading the gds of the data and pullling some attributes out
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 cluster <- read_rds("Data\\Intermediate\\dbscan\\full_hdbscan.rds")$cluster
 
 # making the data palatable by genind

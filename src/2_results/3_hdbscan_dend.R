@@ -4,12 +4,12 @@ library(dendextend)
 library(extrafont)
 library(ape)
 
-source("src\\functions\\funcs_draw_dend.R")
-source("src\\functions\\colour_sets.R")
+source("src\\R_functions\\funcs_draw_dend.R")
+source("src\\R_functions\\colour_sets.R")
 
 ## setting up the data
 gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 load("Data\\Intermediate\\dbscan\\wheatHdbscan.RData")
 # wheatHdbscan$cluster[which(wheatHdbscan$cluster == 0)] <- wheatHdbscan$cluster[which(wheatHdbscan$cluster == 0)] + 5

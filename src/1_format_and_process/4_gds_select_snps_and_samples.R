@@ -4,7 +4,7 @@ library(SNPRelate)
 # load data into R object from the GDS object using the script at the source
 # location
 gds <- "Data\\Intermediate\\GDS\\full_phys.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 # open the GDS object again and select SNPs with a missing data rate below 0.1
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")
@@ -25,7 +25,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds",
 
 # same aas above but for gen map gds
 gds <- "Data\\Intermediate\\GDS\\full_gen.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_snpgdsSelectSNP.gds",
                  genmat = genotypes[snp_indices,],
                  sample.id = sample_id, 
@@ -38,7 +38,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_snpgdsSelectSNP.gds",
 # eliminate those individuals that show identity by state 
 # (IBS, fractional identity) greater than 0.99
 gds <- "Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds")
 IBS <- snpgdsIBS(wheat, autosome.only = F)
@@ -85,7 +85,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds",
 
 # gen map
 gds <- "Data\\Intermediate\\GDS\\full_gen_snpgdsSelectSNP.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_subset_sample.gds",
                  genmat = genotypes[,-sample_indices],
                  sample.id = sample_id[-sample_indices], 
@@ -97,7 +97,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_subset_sample.gds",
 
 # identify and remove from the overall dataset LD pruned markers
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\functions\\data_loading.R")
+source("src\\R_functions\\data_loading.R")
 
 # performs LD pruning to produce a set of SNPs that maximally represent the diversity
 # of the genome with as little redundant info as possible used for estimation of relationships
