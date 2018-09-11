@@ -1,47 +1,52 @@
+library(tidyverse)
+library(magrittr)
+library(GGally)
 library(SNPRelate)
 library(extrafont)
-# library(rgl)
 # install.packages("rgl")
+# library(rgl)
 
 source("src\\R_functions\\colour_sets.R")
 
-gdsSubset <- "Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds"
+gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds"
 source("src\\R_functions\\data_loading.R")
 
 ## PCA
-wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\wheat_phys_subset_both.gds")
+wheat <- snpgdsOpen(
+            "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds")
 pca <- snpgdsPCA(wheat, num.thread = 4, autosome.only = F)
 snpgdsClose(wheat)
 
 pc.percent <- pca$varprop*100
 
-load("Data\\Intermediate\\dbscan\\wheatHdbscan.RData")
-bests <- factor(wheatHdbscan$cluster + 1)
+full_hdbscan <- read_rds("Data\\Intermediate\\dbscan\\full_hdbscan.rds")
 
-## Plotting the first four dimenions against each other
-panelfun <- function(x, y, cluster = bests, prob = wheatHdbscan$membership_prob, ...) {
-  points(x, y,
-         col = coloursDBSCAN[cluster],
-         pch = ifelse(cluster == 1, 4, 1), # Mark noise as star
-         cex = ifelse(cluster == 1, 0.5, 0.75))
-  colours <- sapply(1:length(cluster), 
-                   function(i) { adjustcolor(coloursDBSCAN[(cluster)[i]], alpha.f = prob[i]) })
-  points(x, y, col=colours, pch=20)
+# png("Results\\pca\\full_pca_dbscan.png", family = "Times New Roman",
+#     width = 6, height = 6, pointsize = 10, units = "in", res = 300)
+ggpairs_pca <- pca$eigenvect[,1:3] %>%
+               cbind(Cluster = cluster, .) %>%
+               as.tibble() %>%
+               rename(PC1 = V1, PC2 = V2, PC3 = V3) %<>%
+               mutate(Cluster = factor(cluster)) %>%
+               ggpairs(
+                 mapping = aes(colour = Cluster),
+                 title = paste("First Three PCs With Varieties Coloured by",
+                              "HDBSCAN Clusters"),
+                      )
+for(i in 1:ggpairs_pca$nrow) {
+  for(j in 1:ggpairs_pca$ncol){
+    ggpairs_pca[i, j] <- ggpairs_pca[i, j] + 
+      scale_fill_manual(values=colours_dbscan) +
+      scale_color_manual(values=colours_dbscan)
+  }
 }
-png("Results\\pca\\full_pca_dbscan.png", family = "Times New Roman",
-    width = 6, height = 7, pointsize = 10, units = "in", res = 300)
-lbls <- paste("PC", 1:4, "\n", format(pc.percent[1:4], digits = 2), "%", sep="")
-pairs(pca$eigenvect[,1:3], 
-      panel = panelfun,
-      labels = lbls,
-      main = "First Three PCs Plotted Against Each Other\nWith Varieties Coloured by HDBSCAN Clustering",
-      oma = c(6,2,8,2)
-)
-par(xpd = T)
-legend("bottom", legend = c("Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"),
-       pch = 19, col = coloursDBSCAN, cex = 0.6, horiz = T)
-dev.off()
+ggpairs_pca[4, 1] <- ggpairs_pca[4, 1] +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_y_continuous(breaks = c(0, 45))
+ggpairs_pca
+# dev.off()
 
 # # 3D plot
-# plot3d(pca$eigenvect[,1:3], col = coloursDBSCAN[wheatHdbscan$cluster + 1], type = "s", size = 1, xlab = "Eigenvector 1",
-#        ylab = "Eigenvector 2", zlab = "Eigenvector 3")
+# plot3d(pca$eigenvect[,1:3], col = colours_dbscan[wheatHdbscan$cluster + 1],
+#        type = "s", size = 1, xlab = "Eigenvector 1", ylab = "Eigenvector 2",
+#        zlab = "Eigenvector 3")

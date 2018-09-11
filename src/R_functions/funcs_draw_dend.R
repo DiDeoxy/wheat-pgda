@@ -1,22 +1,24 @@
-legends <- function (region, pop.code, colours, title, cex = 0.45, ncol = 1, bg = "white", horiz = F) {
-  legend(region, legend = levels(pop.code), pch = 19, col = colours, cex = cex, bg = bg, title = title, ncol = ncol, horiz = horiz)
-}
-
-drawRects <- function (pop.code, colourSubset, labelOrder, border) {
+draw_rects <- function(pop_code, colour_subset, label_order, border) {
+  leng <- length(label_order)
   rects <- function(x, y) {
-    circos.rect(0.05:(length(labelOrder)-0.95), 
-                rep(0,length(labelOrder)), 
-                0.95:(length(labelOrder)-0.05), 
-                rep(1,length(labelOrder)), 
-                border = border, 
-                lwd = 0.8,
-                col = sapply(as.numeric(pop.code)[labelOrder], function(x) { return(colourSubset[x]) } ))
+    circos.rect(
+      0.05:(leng - 0.95), rep(0, leng),
+      0.95:(leng - 0.05), rep(1, leng),
+      border = border,
+      lwd = 0.8,
+      col = sapply(
+        as.numeric(pop_code)[label_order],
+        function(x) {
+          return(colour_subset[x])
+        }
+      )
+    )
   }
-  
-  circos.track(ylim = c(0, 1), 
-               panel.fun = rects(x, y), 
-               track.height = 0.04, 
-               bg.border = NA)
+
+  circos.track(
+    ylim = c(0, 1),
+    panel.fun = rects(x, y),
+    track.height = 0.04,
+    bg.border = NA
+  )
 }
-
-

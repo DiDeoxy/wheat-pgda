@@ -4,12 +4,12 @@ library(dbscan)
 library(scrime)
 
 ## loading the gds of the data and pullling some attributes out
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_both.gds"
+gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds"
 source("src\\R_functions\\data_loading.R")
 
 genotypes <- genotypes %>%
-             replace(. == 0, 1) %>%
-             replace(. == 3, NA)
+    replace(. == 0, 1) %>%
+    replace(. == 3, NA)
 
 genotypes_imputed <- knncatimpute(t(genotypes))
 
@@ -20,4 +20,5 @@ table(full_hdbscan$cluster)
 # table(desig)
 
 write_rds(full_hdbscan,
-          path = "Data\\Intermediate\\dbscan\\full_hdbscan.rds")
+    path = "Data\\Intermediate\\dbscan\\full_hdbscan.rds"
+)
