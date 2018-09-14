@@ -15,4 +15,6 @@ colours_desig <- colour_set[c(1, 6, 4, 16, 12, 7, 9, 22)]
 colours_dend <- colour_set[c(5, 7, 6, 1, 15)]
 colours_dbscan <- colour_set[c(22, 6, 5, 7, 15, 1)]
 colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
-# pie(rep(1, 5), col = colours_dend)
+colours_comparisons_genes <- colour_set[c(1, 2, 4, 15, 19)]
+points <- c(15, 16, 18, 17, 8)
+# pie(rep(1, 5), col = colours_comparisons_genes)

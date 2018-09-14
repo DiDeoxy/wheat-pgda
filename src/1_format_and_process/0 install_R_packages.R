@@ -13,6 +13,7 @@ biocLite("ConsensusClusterPlus")
 
 install.packages("tidyverse")
 install.packages("GGally")
+install.packages("ggrepel")
 install.packages("ape")
 install.packages("plyr")
 install.packages("adegenet")

@@ -19,14 +19,14 @@ bp <- revalue(bp, replace = (c("FOREIGN" = "N/A", "USA" = "N/A")))
 
 # create a hrs vs all other group
 hrs_other <- as.character(desig)
-hrs_other[which(desig_hrs_other != "HRS")] <- "Other"
+hrs_other[which(hrs_other != "HRS")] <- "Other"
 hrs_other <- as.factor(hrs_other)
 
 # create chrs vs all others
 chrs_other <- cluster
 chrs_other[which(chrs_other != 5)] <- "Other"
 chrs_other[which(chrs_other == 5)] <- "CHRS"
-chrs_other <- as.facor(chrs_other)
+chrs_other <- as.factor(chrs_other)
 
 # create a data frame of the different strata
 strata <- data.frame(desig = desig, era = era, bp = bp,

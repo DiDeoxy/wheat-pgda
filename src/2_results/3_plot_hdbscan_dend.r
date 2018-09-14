@@ -20,7 +20,7 @@ levels(clusters) <- c("Noise", "Cluster 1", "Cluster 2", "Cluster 3",
 full <- snpgdsOpen(
   "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds")
 ## making the distance object
-full_dist <- as.dist(1-snpgdsIBS(full, autosome.only = F)$ibs)
+full_dist <- as.dist(1 - snpgdsIBS(full, autosome.only = F)$ibs)
 snpgdsClose(full)
 
 upgma_dend <- as.dendrogram(hclust(full_dist), method = "average")
