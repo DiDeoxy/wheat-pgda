@@ -18,3 +18,7 @@ colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
 colours_comparisons_genes <- colour_set[c(1, 2, 4, 15, 19)]
 points <- c(15, 16, 18, 17, 8)
 # pie(rep(1, 5), col = colours_comparisons_genes)
+
+# a colour blind pallette
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442",
+               "#0072B2", "#D55E00", "#CC79A7")

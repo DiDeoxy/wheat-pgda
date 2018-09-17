@@ -48,8 +48,7 @@ draw_rects(clusters, colours_dbscan, label_order, colors()[109])
 max_height <- max(attr(upgma_dend, "height"))
 circos.track(ylim = c(0, max_height), panel.fun = function(x, y) {
   circos.dendrogram(upgma_dend, max_height = max_height)
-}
-, track.height = 0.3, bg.border = NA)
+}, track.height = 0.3, bg.border = NA)
 
 circos.clear()
 
@@ -70,17 +69,4 @@ legend("center", legend = levels(clusters), title = "HDBSCAN Clusters",
 title(main = paste("UPGMA Dendrogram of full Samples\nwith",
                    "HDBSCAN Clusters and Variety Data In Surrounding Rows"),
                    cex.main = 0.6)
-
 dev.off()
-
-## testing out ggtree
-# neighbour <- nj(dist)
-# neighbour$tip.label <- sample.id
-# neighbour <- groupOTU(neighbour, split(sample.id, clusters))
-# 
-# tree <- ggtree(neighbour, aes(color = group)) + geom_tiplab2(align = TRUE, linesize = 0.5, cex = 1.5) +
-#   scale_colour_manual(values = coloursDBSCAN2)
-
-# png("Results\\dend\\full_dbscan_clusters_nj.png", width = 11, height = 11, pointsize = 20, units = "in", res = 500)
-#   gheatmap(tree, data.frame(era), offset = 2, width = 0.5) # doesnt work mysteriously
-# dev.off()

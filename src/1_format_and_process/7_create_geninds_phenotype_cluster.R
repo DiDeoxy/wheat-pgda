@@ -44,4 +44,4 @@ full_genind <- df2genind(t(data.frame(genotypes)),
                          ncode = 1, strata = strata)
 
 write_rds(full_genind,
-         path = paste0("Data\\Intermediate\\Adegenet\\full_genind.rds"))
+          path = paste0("Data\\Intermediate\\Adegenet\\full_genind.rds"))

@@ -9,16 +9,9 @@ library(SNPRelate)
 source("src\\R_functions\\funcs_calc_stats.R")
 source("src\\R_functions\\colour_sets.R")
 
-# size of a megabase, used to divide the bp positions
-mb <- 1000000
-
 # load the data from the gds object
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
 source("src\\R_functions\\data_loading.R")
-snp_pos <- snp_pos / mb
-
-# create a data frame of all the 
-data <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos)
 
 # find the max position of any marker on each genome for xlims
 chrom_lengths <- by(data$pos, data$chrom, max)

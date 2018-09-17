@@ -8,22 +8,15 @@ library(extrafont)
 source("src\\R_functions\\funcs_calc_stats.R")
 source("src\\R_functions\\colour_sets.R")
 
-# size of a megabase, used to divide the bp positions
-mb <- 1000000
-
 # load the data from the gds object
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
 source("src\\R_functions\\data_loading.R")
-snp_pos <- snp_pos / mb
-
-# create a data frame of all the 
-data <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos)
 
 # find the max position of any marker on each genome for xlims
 chrom_lengths <- by(data$pos, data$chrom, max)
-max_genome_lengths <- data.frame(A = max(chrom_lengths[seq(1, 19, 3)]),
-                                 B = max(chrom_lengths[seq(2, 20, 3)]),
-                                 D = max(chrom_lengths[seq(3, 21, 3)]))
+max_genome_lengths <- c(max(chrom_lengths[seq(1, 19, 3)]), # A genome
+                        max(chrom_lengths[seq(2, 20, 3)]), # B genome
+                        max(chrom_lengths[seq(3, 21, 3)])) # D genome
 
 # find the phi values of all markers in each of the three amova comparisons and
 # add them to the data table
@@ -94,9 +87,7 @@ plots <- by(data_long, data_long$chrom, function (data_chrom) {
   data_chrom %>%
     ggplot() +
       ylim(-0.5, 0.5) +
-      xlim(0, ifelse(chrom_num %in% seq(1, 19, 3), max_genome_lengths$A,
-                      ifelse(chrom_num %in% seq(2, 30, 3),
-                             max_genome_lengths$B, max_genome_lengths$D))) +
+      xlim(0, max_genome_lengths[ifelse(chrom_num %% 3, chrom_num %% 3, 3)]) +
       geom_point(aes(pos, eh, colour = comparison, shape = comparison)) +
       geom_hline(yintercept = 0) +
       scale_colour_manual(legend_title,

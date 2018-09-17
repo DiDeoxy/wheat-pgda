@@ -8,23 +8,18 @@ library(extrafont)
 source("src\\R_functions\\funcs_calc_stats.R")
 source("src\\R_functions\\colour_sets.R")
 
-# size of a megabase, used to divide the bp positions
-mb <- 1000000
-
 # load the data from the gds object
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
 source("src\\R_functions\\data_loading.R")
-snp_pos <- snp_pos / mb
 
 # create a data frame of all the 
-data_eh <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos) %>%
-           add_column(eh = eh(genotypes))
+data_eh <- data %>% add_column(eh = eh(genotypes))
 
 # find the max position of any marker on each genome for xlims
-chrom_lengths <- by(data_eh$pos, data_eh$chrom, max)
-max_genome_lengths <- data.frame(A = max(chrom_lengths[seq(1, 19, 3)]),
-                                 B = max(chrom_lengths[seq(2, 20, 3)]),
-                                 D = max(chrom_lengths[seq(3, 21, 3)]))
+chrom_lengths <- by(data$pos, data$chrom, max)
+max_genome_lengths <- c(max(chrom_lengths[seq(1, 19, 3)]), # A genome
+                        max(chrom_lengths[seq(2, 20, 3)]), # B genome
+                        max(chrom_lengths[seq(3, 21, 3)])) # D genome
 
 # allows application of same colour to each set of chromosomes
 colour_order <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3), rep(6,3),
@@ -66,9 +61,7 @@ plots <- by(data_eh_haplo, data_eh_haplo$chrom, function (data_chrom) {
   chrom_num <- data_chrom$chrom[1]
   data_chrom %>%
     ggplot() +
-      xlim(0, ifelse(chrom_num %in% seq(1, 19, 3), max_genome_lengths$A,
-                      ifelse(chrom_num %in% seq(2, 30, 3),
-                             max_genome_lengths$B, max_genome_lengths$D))) +
+      xlim(0, max_genome_lengths[ifelse(chrom_num %% 3, chrom_num %% 3, 3)]) +
       geom_point(aes(pos, eh),
                  colour = colours_chroms[colour_order[chrom_num]],
                  size = 0.5) +

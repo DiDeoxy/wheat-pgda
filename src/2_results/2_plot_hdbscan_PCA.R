@@ -22,10 +22,6 @@ pc.percent <- pca$varprop * 100
 
 full_hdbscan <- read_rds("Data\\Intermediate\\dbscan\\full_hdbscan.rds")
 
-png("Results\\pca\\full_pca_dbscan.png",
-  family = "Times New Roman",
-  width = 6, height = 6, pointsize = 10, units = "in", res = 300
-)
 ggpairs_pca <- pca$eigenvect[, 1:3] %>%
   cbind(Cluster = cluster, .) %>%
   as.tibble() %>%
@@ -48,6 +44,10 @@ for (i in 1:ggpairs_pca$nrow) {
 ggpairs_pca[4, 1] <- ggpairs_pca[4, 1] +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   scale_y_continuous(breaks = c(0, 45))
+
+png("Results\\pca\\full_pca_dbscan.png",
+  family = "Times New Roman",
+  width = 200, height = 200, pointsize = 5, units = "mm", res = 300)
 ggpairs_pca
 dev.off()
 

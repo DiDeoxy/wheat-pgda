@@ -7,7 +7,8 @@ source("src\\R_functions\\funcs_calc_stats.R")
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
 source("src\\R_functions\\data_loading.R")
 
-mb <- 1000000
+# how many snps?
+length(snp_id)
 
 # count how often for each marker the different homozygotes and missing data
 # occurs
@@ -30,44 +31,60 @@ mean(stats$maf)
 mean(stats$mr)
 
 ## number of markers and mean distances between the genome
-num <- data.frame(A = 0, B = 0, D = 0)
-diff <- list(A = list(), B = list(), D = list())
-count <- 1
-num_by_segment <- by(snp_pos, snp_chrom, function (pos) {
-  if (count %in% seq(1, 19, 3)) {
-    num$A <<- sum(num$A, length(pos)) # number of markers on group
-    if (count == 1) {
-      diff$A[[1]] <<- diff(pos) # distances between markers
-    } else {
-      diff$A[[(count %/% 3) + 1]] <<- diff(pos) # for each chromosome by genome
-    }
-  } else if (count %in% seq(2, 20, 3)) {
-    num$B <<- sum(num$B, length(pos))
-    if (count == 1) {
-      diff$B[[1]] <<- diff(pos)
-    } else {
-      diff$B[[(count %/% 3) + 1]] <<- diff(pos)
-    }
+leng <- list(A = vector(), B = vector(), D = vector())
+num <- list(A = vector(), B = vector(), D = vector())
+diff <- list(A = vector(), B = vector(), D = vector())
+num_by_segment <- by(data, snp_chrom, function (chrom_pos) {
+  if (chrom_pos$chrom[1] %in% seq(1, 19, 3)) {
+    leng$A <<- c(leng$A, max(chrom_pos$pos))
+    num$A <<- c(num$A, length(chrom_pos$pos)) # number of markers on group
+    diff$A <<- c(diff$A, diff(chrom_pos$pos))
+  } else if (chrom_pos$chrom[1] %in% seq(2, 20, 3)) {
+    leng$B <<- c(leng$B, max(chrom_pos$pos))
+    num$B <<- c(num$B, length(chrom_pos$pos))
+    diff$B <<- c(diff$B, diff(chrom_pos$pos))
   } else {
-    num$D <<- sum(num$D, length(pos))
-    diff$D[[count / 3]] <<- diff(pos)
+    leng$D <<- c(leng$D, max(chrom_pos$pos))
+    num$D <<- c(num$D, length(chrom_pos$pos))
+    diff$D <<- c(diff$D, diff(chrom_pos$pos))
   }
   count <<- count + 1
 })
-# num SNPs by genome
+# mac position on each chromosome and genome
+leng
+sum(leng$A)
+sum(leng$B)
+sum(leng$D)
+# num SNPs by chromosome and genopme
 num
+sum(num$A)
+sum(num$B)
+sum(num$D)
 ## average distance between markers overall and by genome
-mean(unlist(diff)) / mb
-mean(unlist(diff$A)) / mb
-mean(unlist(diff$B)) / mb
-mean(unlist(diff$D)) / mb
+mean(unlist(diff))
+mean(diff$A)
+mean(diff$B)
+mean(diff$D)
+
+# find the min length of the top percentile of gaps
+top_percentile <- quantile(unlist(diff), prob = 0.99, na.rm = T)
+top_percentile
+
+# the number of top percentile gaps on each genome
+length(which(unlist(diff$A) >= top_percentile))
+length(which(unlist(diff$B) >= top_percentile))
+length(which(unlist(diff$D) >= top_percentile))
+# the longest gap on each genome
+max(unlist(diff$A))
+max(unlist(diff$B))
+max(unlist(diff$D))
 
 # histograms and boxplots depicting the distribution of gaps on each genome
 png("Results\\gaps\\gaps_dist.png", family="Times New Roman",
     width = 12, height = 6, pointsize = 20, units = "in", res = 500)
 par(mar = c(0, 1, 1, 1), oma = c(4, 3, 3, 0))
 nf <- layout(mat = matrix(c(1, 3, 5, 7, 2, 4, 6, 8), 2, 4, byrow = TRUE), 
-             height = c(4,1))
+             height = c(4, 1))
 layout.show(nf)
 for (chrom in names(diff)) {
   hist(log10(unlist(diff[[chrom]])), col = "pink", main = chrom, xlab = "",
@@ -85,37 +102,18 @@ title(paste("Distributions of Distances Between Markers by Genome"), outer = T,
       cex.main = 1.5, line = 1)
 dev.off()
 
-# find the min length of the top percentile of gaps
-top_percentile <- quantile(unlist(diff), prob = 0.99, na.rm = T)
-top_percentile
-
-# the number of top percentile gaps on each genome
-length(which(unlist(diff$A) >= top_percentile))
-length(which(unlist(diff$B) >= top_percentile))
-length(which(unlist(diff$D) >= top_percentile))
-# the longest gap on each genome
-max(unlist(diff$A)) / mb
-max(unlist(diff$B)) / mb
-max(unlist(diff$D)) / mb
-
 # Calcualte ld between all markers on each chromosome
-wheat <- snpgdsOpen(
-    "Data\\intermediate\\GDS\\full_phys_subset_sample.gds")
-chroms <- as.vector(t(outer(as.character(1:7), c("A", "B", "D"), paste,
-                            sep = "")))
-ld_mat <- list()
-for (i in unique(snp_chrom)) {
-    ld_mat[[chroms[i]]] <- c(snpgdsLDMat(wheat, method = "composite",
-                                snp.id = snp_id[which(snp_chrom == i)],
-                                slide = -1),
-                             list(pos = snp_pos[which(snp_chrom == i)]))
-}
-snpgdsClose(wheat)
+full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds")
+ld_mats <- by(data, snp_chrom, function (chrom) {
+  abs(snpgdsLDMat(full, method = "composite", snp.id = chrom$id,
+                  slide = -1)$LD) 
+})
+snpgdsClose(full)
 
 # calculate the average pairwise ld by chromosome
-pairwise_ld_by_chrom <- lapply(ld_mat, function (chrom) {
-    # return(mean(abs(as.dist(data$LD)), na.rm = T))
-    return(as.vector(as.dist(chrom$LD^2)))
+pairwise_ld_by_chrom <- lapply(ld_mats, function (chrom) {
+    return(mean(as.dist(data$LD), na.rm = T))
+    # return(as.vector(as.dist(chrom$LD^2)))
 })
 
 # overall avvera pairwise ld, and by genome

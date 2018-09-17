@@ -18,15 +18,10 @@ full_genind <- read_rds("Data\\Intermediate\\Adegenet\\full_genind.rds")
 
 listing <- function (reps, grouping, amova_result, amova_randtest) {
   results[[grouping]][[1]] <- cbind(amova_result$componentsofcovariance,
-                                    "direction" = rev(
-                                                    c(rep("NA", reps),
-                                                      amova_randtest$alter)
-                                                      ),
-                                    "p-value" = rev(
-                                                  c(rep("NA", reps), 
-                                                    amova_randtest$pvalue)
-                                                    )
-                                    )
+                                    "direction" = rev(c(rep("NA", reps),
+                                                      amova_randtest$alter)),
+                                    "p-value" = rev(c(rep("NA", reps), 
+                                                    amova_randtest$pvalue)))
   return (results)
 }
 
