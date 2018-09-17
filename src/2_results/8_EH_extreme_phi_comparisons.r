@@ -62,38 +62,38 @@ index_hrw <- which(desig == "HRW")
 # find the expected heterozygosity of each marker in each group and add to data
 # we need one of each group in each of the comparisons, one is negated for 
 # plotting below zero, like a mirror
-data_eh <- data %>%
-             add_column(eh_chrs_csws = eh(genotypes[, index_chrs])) %>%
-             add_column(eh_csws_chrs = -eh(genotypes[, index_csws])) %>%
-             add_column(eh_chrs_hrw = eh(genotypes[, index_chrs])) %>%
-             add_column(eh_hrw_chrs = -eh(genotypes[, index_hrw])) %>%
-             add_column(eh_csws_hrw = eh(genotypes[, index_csws])) %>%
-             add_column(eh_hrw_csws = -eh(genotypes[, index_hrw]))
+data_eh <- data %>% 
+             rbind(data) %>%
+             add_column(eh_chrs_csws = c(eh(genotypes[, index_chrs]),
+                                         -eh(genotypes[, index_csws]))) %>%
+             add_column(eh_chrs_hrw = c(eh(genotypes[, index_chrs]),
+                                        -eh(genotypes[, index_hrw]))) %>%
+             add_column(eh_csws_hrw = c(eh(genotypes[, index_csws]), 
+                                        -eh(genotypes[, index_hrw])))
 
 # make all eh values not extreme in each comparison NA
-data_eh$eh_chrs_csws[-chrs_csws_markers] <- NA
-data_eh$eh_csws_chrs[-chrs_csws_markers] <- NA
-data_eh$eh_chrs_hrw[-chrs_hrw_markers] <- NA
-data_eh$eh_hrw_chrs[-chrs_hrw_markers] <- NA
-data_eh$eh_csws_hrw[-csws_hrw_markers] <- NA
-data_eh$eh_hrw_csws[-csws_hrw_markers] <- NA
+data_eh$eh_chrs_csws[-c(chrs_csws_markers,
+                        chrs_csws_markers + nrow(data))] <- NA
+data_eh$eh_chrs_hrw[-c(chrs_hrw_markers,
+                       chrs_hrw_markers + nrow(data))] <- NA
+data_eh$eh_csws_hrw[-c(csws_hrw_markers,
+                       csws_hrw_markers + nrow(data))] <- NA
 
 # make the data long for easier plotting
 data_long <- data_eh %>%
-               gather(comparison, eh, c(eh_chrs_csws, eh_csws_chrs,
-                                        eh_chrs_hrw, eh_hrw_chrs, 
-                                        eh_csws_hrw, eh_hrw_csws))
+               gather(comparison, eh, c(eh_chrs_csws, eh_chrs_hrw, 
+                                        eh_csws_hrw)) %>%
+               arrange(chrom, pos)
 
 # plot the EH values for each group in each comparison on each chromosome
-lables <- c("CHRS vs CSWS", "CHRS vs CSWS", "CHRS vs HRW", "CHRS vs HRW",
-            "CSWS vs HRW", "CSWS vs HRW")
+lables <- c("CHRS vs CSWS", "CHRS vs HRW", "CSWS vs HRW")
 legend_title <- "Comparisons"
 plots <- by(data_long, data_long$chrom, function (data_chrom) {
   unique(data_chrom$comparison)
   chrom_num <- data_chrom$chrom[1]
   data_chrom %>%
     ggplot() +
-      ylim(-0.5, 0.5) + 
+      ylim(-0.5, 0.5) +
       xlim(0, ifelse(chrom_num %in% seq(1, 19, 3), max_genome_lengths$A,
                       ifelse(chrom_num %in% seq(2, 30, 3),
                              max_genome_lengths$B, max_genome_lengths$D))) +
@@ -101,11 +101,10 @@ plots <- by(data_long, data_long$chrom, function (data_chrom) {
       geom_hline(yintercept = 0) +
       scale_colour_manual(legend_title,
                           labels = lables,
-                          values = c(rbind(colours_comparisons_genes[1:3],
-                                           colours_comparisons_genes[1:3]))) +
+                          values = colours_comparisons_genes[1:3]) +
       scale_shape_manual(legend_title,
                          labels = lables,
-                         values = c(rbind(points[1:3], points[1:3])))
+                         values = points[1:3])
 })
 
 # turn plot list into ggmatrix

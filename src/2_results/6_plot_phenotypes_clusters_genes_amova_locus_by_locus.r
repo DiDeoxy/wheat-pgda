@@ -1,6 +1,5 @@
-library(tidyverse)
-library(magrittr)
 library(plyr)
+library(tidyverse)
 library(GGally)
 library(ggrepel)
 library(extrafont)
@@ -61,7 +60,7 @@ resi_genes <- cbind(resi_genes, resi_genes = min(signifs))
 
 # make the data set long for easier plotting
 data_long <- data %>%
-             gather(comparison, phi, c(chrs_csws, chrs_hrw, csws_hrw)) 
+             gather(comparison, phi, c(chrs_csws, chrs_hrw, csws_hrw))
 
 # add the genes in and make longer
 data_long_genes <- data_long %>%
@@ -82,9 +81,7 @@ plots <- by(data_long_genes, data_long_genes$chrom, function (data_chrom) {
   data_chrom %>%
     ggplot() +
       ylim(min(signifs), 1) +
-      xlim(0, ifelse(chrom_num %in% seq(1, 19, 3), max_genome_lengths$A,
-                      ifelse(chrom_num %in% seq(2, 30, 3),
-                             max_genome_lengths$B, max_genome_lengths$D))) +
+      xlim(0, max_genome_lengths[ifelse(chrom_num %% 3, chrom_num %% 3, 3)]) +
       geom_point(aes(pos, phi, colour = comparison, shape = comparison),
                  size = 0.5) +
       geom_point(aes(pos, phi2, colour = gene_type, shape = gene_type)) +
