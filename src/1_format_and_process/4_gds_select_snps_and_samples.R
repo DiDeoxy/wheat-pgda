@@ -7,10 +7,10 @@ gds <- "Data\\Intermediate\\GDS\\full_phys.gds"
 source("src\\R_functions\\data_loading.R")
 
 # open the GDS object again and select SNPs with a missing data rate below 0.1
-wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")
+full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")
 snpset_ids_list <- snpgdsSelectSNP(
-    wheat, autosome.only = F, missing.rate = 0.1)
-snpgdsClose(wheat)
+    full, autosome.only = F, missing.rate = 0.1)
+snpgdsClose(full)
 snp_indices <- match(unlist(snpset_ids_list), snp_id)
 
 # create a new gds object with only the snps with less than 10% missing data
@@ -40,9 +40,9 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_snpgdsSelectSNP.gds",
 gds <- "Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds"
 source("src\\R_functions\\data_loading.R")
 
-wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds")
-IBS <- snpgdsIBS(wheat, autosome.only = F)
-snpgdsClose(wheat)
+full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_snpgdsSelectSNP.gds")
+IBS <- snpgdsIBS(full, autosome.only = F)
+snpgdsClose(full)
 
 pairs <- which(IBS$ibs >= 0.99, arr.ind = T)
 
@@ -75,8 +75,8 @@ for(name in names(samp_annot)) {
 }
 #create gds ubjects without the NILs, physical map
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds",
-                 genmat = genotypes[,-sample_indices],
-                 sample.id = sample_id[-sample_indices], 
+                 genmat = genotypes[, -sample_indices],
+                 sample.id = sample_id[-sample_indices],
                  snp.id = snp_id,
                  snp.chromosome = snp_chrom,
                  snp.position = snp_pos,
@@ -87,35 +87,10 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds",
 gds <- "Data\\Intermediate\\GDS\\full_gen_snpgdsSelectSNP.gds"
 source("src\\R_functions\\data_loading.R")
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen_subset_sample.gds",
-                 genmat = genotypes[,-sample_indices],
-                 sample.id = sample_id[-sample_indices], 
+                 genmat = genotypes[, -sample_indices],
+                 sample.id = sample_id[-sample_indices],
                  snp.id = snp_id,
                  snp.chromosome = snp_chrom,
                  snp.position = snp_pos,
                  other.vars = list(samp_annot = retained_samp_annot),
-                 snpfirstdim = T)
-
-# identify and remove from the overall dataset LD pruned markers
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\R_functions\\data_loading.R")
-
-# performs LD pruning to produce a set of SNPs that maximally represent the diversity
-# of the genome with as little redundant info as possible used for estimation of relationships
-# genome wide (i.e. clustering)
-wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds")
-set.seed(1000)
-snpset_ids_list <- snpgdsLDpruning(
-    wheat, autosome.only = F, missing.rate = 0.1, maf = 0.05,
-    ld.threshold = 0.6, slide.max.bp = 1e7)
-snpgdsClose(wheat)
-snp_indices <- match(unlist(snpset_ids_list), snp_id)
-
-# create a subset gds object containg only the SNPs remaing after ld pruning
-snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds",
-                 genmat = genotypes[snp_indices,],
-                 sample.id = sample_id, 
-                 snp.id = snp_id[snp_indices],
-                 snp.chromosome = snp_chrom[snp_indices],
-                 snp.position = snp_pos[snp_indices],
-                 other.vars = list(samp_annot = samp_annot),
                  snpfirstdim = T)

@@ -20,22 +20,43 @@ bp <- revalue(bp, replace = (c("FOREIGN" = "N/A", "USA" = "N/A")))
 # create a hrs vs all other group
 hrs_other <- as.character(desig)
 hrs_other[which(hrs_other != "HRS")] <- "Other"
-hrs_other <- as.factor(hrs_other)
 
-# create chrs vs all others
-chrs_other <- cluster
-chrs_other[which(chrs_other != 5)] <- "Other"
-chrs_other[which(chrs_other == 5)] <- "CHRS"
-chrs_other <- as.factor(chrs_other)
+# # create chrs vs all others
+# chrs_other <- cluster
+# chrs_other[which(chrs_other != 5)] <- "Other"
+# chrs_other[which(chrs_other == 5)] <- "CHRS"
+# chrs_other <- as.factor(chrs_other)
+
+# create each cluster vs all other
+cluster1 <- cluster
+cluster1[which(cluster1 != 1)] <- 0
+
+cluster2 <- cluster
+cluster2[which(cluster2 != 2)] <- 0
+cluster2[which(cluster2 != "cluster2")] <- "other"
+
+cluster3 <- cluster
+cluster3[which(cluster3 != 3)] <- 0
+
+cluster4 <- cluster
+cluster4[which(cluster4 != 4)] <- 0
+
+cluster5 <- cluster
+cluster5[which(cluster5 != 5)] <- 0
+
+# create CSWS
 
 # create a data frame of the different strata
 strata <- data.frame(desig = desig, era = era, bp = bp,
                      texture = texture, colour = colour, habit = habit,
-                     texture_colour = paste(texture, colour),
-                     texture_habit = paste(texture, habit),
-                     colour_habit = paste(colour, habit),
-                     hrs_other = hrs_other, cluster = as.factor(cluster),
-                     chrs_other = chrs_other)
+                     hrs_other = as.factor(hrs_other),
+                     phenotype = desig,
+                     clusters = as.factor(cluster),
+                     cluster1 = as.factor(cluster1),
+                     cluster2 = as.factor(cluster2),
+                     cluster3 = as.factor(cluster3),
+                     cluster4 = as.factor(cluster4),
+                     cluster5 = as.factor(cluster5))
 
 # turn the genotype data and strate into a genind
 full_genind <- df2genind(t(data.frame(genotypes)),

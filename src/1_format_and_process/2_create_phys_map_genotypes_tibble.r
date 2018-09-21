@@ -96,15 +96,27 @@ unique_marker <- function(markers) {
     }
 }
 
-# combine the phys map with the genotypes and prune positons with multpile
-# markers
+# combine the phys map with the genotypes 
 maps_genotypes <- maps %>%
                   left_join(genotypes) %>%
                   type_convert() %>%
-                  group_by(chrom, phys_pos) %>%
-                  do(unique_marker(.)) %>%
-                  ungroup()
-maps_genotypes
+                  group_by(chrom, phys_pos)
+nrow(maps_genotypes)
+# find the groups of chrom and phys_pos of size 2 or greater
+# turns out there are none greater than 2 though
+duplicates <- maps_genotypes %>%
+                group_by(chrom, phys_pos) %>%
+                filter(n() >= 2)
+nrow(duplicates)
+# filter the duplicates to identify the number retained
+duplicates_filtered <- duplicates %>%
+                        do(unique_marker(.))
+nrow(duplicates_filtered)
+# de-duplicate the full data set
+maps_genotypes_deduplicated <- maps_genotypes %>%
+                                do(unique_marker(.)) %>%
+                                ungroup()
+nrow(maps_genotypes_deduplicated)
 
-write_rds(maps_genotypes,
+write_rds(maps_genotypes_deduplicated,
     path = "Data\\Intermediate\\Maps\\maps_genotypes.rds")

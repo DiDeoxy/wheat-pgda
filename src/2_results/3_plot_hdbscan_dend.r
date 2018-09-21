@@ -28,8 +28,10 @@ upgma_dend <- color_branches(upgma_dend, k = 5, col = colours_dend)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
-png("Results\\dend\\full_dbscan_clusters.png", width = 11, height = 11,
-    pointsize = 20, units = "in", res = 500)
+png("Results\\dend\\full_dbscan_clusters.png",
+    family = "Times New Roman", width = 200, height = 200, pointsize = 15,
+    units = "mm", res = 500
+    )
 circos.par(cell.padding = c(0, 0, 0, 0), gap.degree = 0.5, 
            track.margin = c(0.005, 0.005))
 circos.initialize("foo", xlim = c(0, length(label_order)), sector.width = 1)
@@ -64,9 +66,13 @@ legend("bottomleft", legend = levels(mc), title = "Market Class", pch = pch,
 legend("topleft", legend = levels(desig), title = "Phenotype", pch = pch,
        col = colours_desig, cex = cex, bg = colors()[525])
 legend("center", legend = levels(clusters), title = "HDBSCAN Clusters",
-       pch = pch, col = colours_dbscan, cex = cex, bg = colors()[109])
+       pch = pch, col = colours_dbscan_legend, cex = cex, bg = colors()[109])
 
-title(main = paste("UPGMA Dendrogram of full Samples\nwith",
-                   "HDBSCAN Clusters and Variety Data In Surrounding Rows"),
-                   cex.main = 0.6)
+title(main = paste("Figure 4: UPGMA Dendrogram of 364 Varieties\nwith HDBSCAN ",
+                   "Clusters and Categorical Data In Surrounding Rows"),
+                   cex.main = 0.7)
 dev.off()
+
+# Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.25/bin/gswin64c.exe")
+# embed_fonts("Results\\dend\\full_dbscan_clusters.pdf", 
+#             outfile="Results\\dend\\full_dbscan_clusters.pdf")

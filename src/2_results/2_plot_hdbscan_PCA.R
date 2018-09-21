@@ -20,7 +20,7 @@ snpgdsClose(full)
 
 pc.percent <- pca$varprop * 100
 
-full_hdbscan <- read_rds("Data\\Intermediate\\dbscan\\full_hdbscan.rds")
+cluster <- read_rds("Data\\Intermediate\\dbscan\\full_hdbscan.rds")$cluster
 
 ggpairs_pca <- pca$eigenvect[, 1:3] %>%
   cbind(Cluster = cluster, .) %>%
@@ -32,7 +32,7 @@ ggpairs_pca <- pca$eigenvect[, 1:3] %>%
     title = paste(
       "First Three PCs With Varieties Coloured by",
       "HDBSCAN Clusters"
-    ),
+    )
   )
 for (i in 1:ggpairs_pca$nrow) {
   for (j in 1:ggpairs_pca$ncol) {
@@ -47,7 +47,8 @@ ggpairs_pca[4, 1] <- ggpairs_pca[4, 1] +
 
 png("Results\\pca\\full_pca_dbscan.png",
   family = "Times New Roman",
-  width = 200, height = 200, pointsize = 5, units = "mm", res = 300)
+  width = 200, height = 200, pointsize = 5, units = "mm", res = 300
+)
 ggpairs_pca
 dev.off()
 

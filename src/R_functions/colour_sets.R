@@ -12,13 +12,10 @@ colours_era <- colour_set[c(1, 5, 3, 2, 4, 6, 22)]
 colours_bp <- colour_set[c(3, 1, 5, 7, 12, 2, 20, 22, 6, 4, 8, 9, 13)]
 colours_mc <- colour_set[c(5, 4, 11, 13, 2, 6, 15, 8, 9, 10, 1, 12, 22)]
 colours_desig <- colour_set[c(1, 6, 4, 16, 12, 7, 9, 22)]
-colours_dend <- colour_set[c(5, 7, 6, 1, 15)]
+colours_dend <- colour_set[c(15, 7, 6, 1, 5)]
 colours_dbscan <- colour_set[c(22, 6, 5, 7, 15, 1)]
+colours_dbscan_legend <- colour_set[c(22, 6, 7, 5, 15, 1)]
 colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
 colours_comparisons_genes <- colour_set[c(1, 2, 4, 15, 19)]
 points <- c(15, 16, 18, 17, 8)
-# pie(rep(1, 5), col = colours_comparisons_genes)
-
-# a colour blind pallette
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442",
-               "#0072B2", "#D55E00", "#CC79A7")
+pie(rep(1, 6), col = colours_dbscan_legend)

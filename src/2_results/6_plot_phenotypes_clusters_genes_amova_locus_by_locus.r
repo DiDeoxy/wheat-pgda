@@ -21,7 +21,7 @@ max_genome_lengths <- data.frame(A = max(chrom_lengths[seq(1, 19, 3)]),
 
 # find the phi values of all markers in each of the three amova comparisons and
 # add them to the data table
-for (group in c("chrs_csws", "chrs_hrw", "csws_hrw")) {
+for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {
   amova <- read_rds(str_c("Data\\Intermediate\\Adegenet\\", group,
                           "_amova.rds"))
   data <- data %>% add_column(!!(group) := phi_markers(amova))
@@ -31,13 +31,13 @@ for (group in c("chrs_csws", "chrs_hrw", "csws_hrw")) {
 signifs <- data %>%
              summarise(chrs_csws = quantile(chrs_csws, prob = 0.975,
                                             na.rm = T),
-                       chrs_hrw = quantile(chrs_hrw, prob = 0.975, na.rm = T),
-                       csws_hrw = quantile(csws_hrw, prob = 0.975, na.rm = T))
+                       chrs_chrw = quantile(chrs_chrw, prob = 0.975, na.rm = T),
+                       csws_chrw = quantile(csws_chrw, prob = 0.975, na.rm = T))
 
 # turn each value less than the top 2.5% quantile for the comparison to NA
 data$chrs_csws[which(data$chrs_csws < signifs$chrs_csws)] <- NA
-data$chrs_hrw[which(data$chrs_hrw < signifs$chrs_hrw)] <- NA
-data$csws_hrw[which(data$csws_hrw < signifs$csws_hrw)] <- NA
+data$chrs_chrw[which(data$chrs_chrw < signifs$chrs_chrw)] <- NA
+data$csws_chrw[which(data$csws_chrw < signifs$csws_chrw)] <- NA
 
 # load gene data
 main_genes <- read_rds(
@@ -53,7 +53,7 @@ resi_genes <- cbind(resi_genes, resi_genes = min(signifs))
 
 # make the data set long for easier plotting
 data_long <- data %>%
-             gather(comparison, phi, c(chrs_csws, chrs_hrw, csws_hrw))
+             gather(comparison, phi, c(chrs_csws, chrs_chrw, csws_chrw))
 
 # add the genes in and make longer
 data_long_genes <- data_long %>%
