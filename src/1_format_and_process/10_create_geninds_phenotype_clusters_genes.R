@@ -16,7 +16,7 @@ index_chrs <- hrs[which(hrs %in% which(cluster == 5))]
 sws <- which(desig == "SWS")
 index_csws <- sws[which(sws %in% which(cluster == 3))]
 hrw <- which(desig == "HRW")
-index_chrw <- sws[which(hrw %in% which(cluster == 2))]
+index_chrw <- hrw[which(hrw %in% which(cluster == 1))]
 
 index_chrs_csws <- c(index_chrs, index_csws)
 index_chrs_chrw <- c(index_chrs, index_chrw)

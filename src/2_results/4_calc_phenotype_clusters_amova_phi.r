@@ -33,15 +33,13 @@ listing <- function(reps, grouping, amova_result, amova_randtest) {
 
 results <- list()
 for (grouping in c(
-  "desig", "era", "bp", "texture", "colour", "habit", "phenotype", "hrs_other",
-  "phenotype", "clusters", "cluster1", "cluster2", "cluster3", "cluster4",
-  "cluster5"
+  "era", "bp", "texture", "colour", "habit", "phenotype", "hrs", "sws", "hrw",
+  "clusters", "cluster1", "cluster2", "cluster3", "cluster4", "cluster5"
 )) {
   print(grouping)
   amova_result <- poppr.amova(full_genind,
     hier = as.formula(paste0(
-      "~",
-      grouping
+      "~", grouping
     )),
     cutoff = 0.1, missing = "genotype", within = F,
     clonecorrect = F, dist = as.dist(full_dist),
@@ -69,8 +67,6 @@ results
 
 for (name in names(results)) {
   write_csv(data.frame(results[name]),
-    "Data//Intermediate//amova_results.csv",
-    append = TRUE,
-    col_names = T
+    "Results//amova_results.csv", append = TRUE, col_names = T
   )
 }

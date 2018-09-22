@@ -4,7 +4,7 @@ library(SNPRelate)
 # load data into R object from the GDS object using the script at the source
 # location
 gds <- "Data\\Intermediate\\GDS\\full_phys.gds"
-source("src\\R_functions\\data_loading.R")
+source("src\\R_functions\\data_loading_no_mb.R")
 
 # open the GDS object again and select SNPs with a missing data rate below 0.1
 full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")

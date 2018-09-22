@@ -68,8 +68,9 @@ legend("topleft", legend = levels(desig), title = "Phenotype", pch = pch,
 legend("center", legend = levels(clusters), title = "HDBSCAN Clusters",
        pch = pch, col = colours_dbscan_legend, cex = cex, bg = colors()[109])
 
-title(main = paste("Figure 4: UPGMA Dendrogram of 364 Varieties\nwith HDBSCAN ",
-                   "Clusters and Categorical Data In Surrounding Rows"),
+title(main = str_c("Figure 4: UPGMA Dendrogram of 364 Varieties\nwith ",
+                   "HDBSCAN Clusters and Categorical Data In Surrounding ",
+                   "Rows"),
                    cex.main = 0.7)
 dev.off()
 

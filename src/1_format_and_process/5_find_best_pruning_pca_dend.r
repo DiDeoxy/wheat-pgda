@@ -1,11 +1,16 @@
 library(SNPRelate)
 library(tidyverse)
+library(circlize)
+library(dendextend)
 library(magrittr)
 library(GGally)
 
 # identify and remove from the overall dataset LD pruned markers
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\R_functions\\data_loading.R")
+source("src\\R_functions\\data_loading_no_mb.R")
+
+source("src\\R_functions\\funcs_draw_dend.R")
+source("src\\R_functions\\colour_sets.R")
 
 # performs LD pruning to produce a set of SNPs that maximally represent the
 # diversity of the genome with as little redundant info as possible used for

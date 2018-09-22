@@ -23,7 +23,7 @@ write_rds(full_hdbscan,
 # table(full_hdbscan$cluster)
 # table(full_hdbscan$cluster[which(habit == "Winter")])
 # table(desig[which(habit == "Winter")])
-# table(full_hdbscan$cluster[which(desig == "HRS")])
+# table(full_hdbscan$cluster[which(desig == "HRW")])
 # table(full_hdbscan$cluster[which(mc == "CWES")])
 # table(desig[which(full_hdbscan$cluster == 0)])
 # table(mc[which(full_hdbscan$cluster == 0)])

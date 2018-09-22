@@ -3,28 +3,32 @@
 mb <- 1000000
 
 # open the gds object specified in the scrips
-wheat <- snpgdsOpen(gds)
+full <- snpgdsOpen(gds)
 
 # extract the marker metadata
-snp_id <- as.character(read.gdsn(index.gdsn(wheat, "snp.id")))
-snp_chrom <- as.integer(read.gdsn(index.gdsn(wheat, "snp.chromosome")))
+snp_id <- as.character(read.gdsn(index.gdsn(full, "snp.id")))
+snp_chrom <- as.integer(read.gdsn(index.gdsn(full, "snp.chromosome")))
 # turn snp base positons into Mb positons
-snp_pos <- as.integer(read.gdsn(index.gdsn(wheat, "snp.position"))) / mb
+snp_pos <- as.integer(read.gdsn(index.gdsn(full, "snp.position"))) / mb
 # create a data frame of the marker metadata
 data <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos)
 
+library(tidyverse)
+
 ## find the max position of any marker on each genome for xlims
 chrom_lengths <- by(snp_pos, snp_chrom, max)
-max_genome_lengths <- c(max(chrom_lengths[seq(1, 19, 3)]), # A genome
-                        max(chrom_lengths[seq(2, 20, 3)]), # B genome
-                        max(chrom_lengths[seq(3, 21, 3)])) # D genome
+max_genome_lengths <- c(
+    max(chrom_lengths[seq(1, 19, 3)]), # A genome
+    max(chrom_lengths[seq(2, 20, 3)]), # B genome
+    max(chrom_lengths[seq(3, 21, 3)])
+) # D genome
 
 # extract the genotypes and the samples
-genotypes <- read.gdsn(index.gdsn(wheat, "genotype"))
-sample_id <- as.character(read.gdsn(index.gdsn(wheat, "sample.id")))
+genotypes <- read.gdsn(index.gdsn(full, "genotype"))
+sample_id <- as.character(read.gdsn(index.gdsn(full, "sample.id")))
 
 # extract the categorical information
-samp_annot <- read.gdsn(index.gdsn(wheat, "samp_annot"))
+samp_annot <- read.gdsn(index.gdsn(full, "samp_annot"))
 bp <- samp_annot$BP
 mc <- samp_annot$MC
 desig <- samp_annot$designation
@@ -44,4 +48,4 @@ era <- cut(as.numeric(as.character(year)),
 era <- addNA(era)
 levels(era)[7] <- "UNKNOWN"
 
-snpgdsClose(wheat)
+snpgdsClose(full)

@@ -12,12 +12,10 @@ distances <- 1 - snpgdsIBS(wheat, autosome.only = F)$ibs
 snpgdsClose(wheat)
 
 for (group in c(
-  "chrs_csws", "chrs_chrw", "csws_chrw", "Lr1", "Lr10", "Lr21",
-  "Lr22a", "Lr34"
-)[5:8]) {
+  "chrs_csws", "chrs_chrw", "csws_chrw", "Lr1", "Lr10", "Lr21", "Lr22a", "Lr34"
+)[1:3]) {
   genind <- read_rds(str_c(
-    "Data\\Intermediate\\Adegenet\\", group,
-    "_genind.rds"
+    "Data\\Intermediate\\Adegenet\\", group, "_genind.rds"
   ))
 
   genind_seploc <- seploc(genind)

@@ -2,7 +2,7 @@ library(SNPRelate)
 
 # apply the best LD pruning to the dataset
 gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\R_functions\\data_loading.R")
+source("src\\R_functions\\data_loading_no_mb.R")
 
 # performs LD pruning to produce a set of SNPs that maximally represent the
 # diversity of the genome with as little redundant info as possible used for

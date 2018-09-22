@@ -5,7 +5,7 @@ library(extrafont)
 
 source("src\\R_functions\\funcs_calc_stats.R")
 
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
+gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds"
 source("src\\R_functions\\data_loading.R")
 
 # how many snps?
@@ -60,11 +60,12 @@ sum(leng$D)
 # Kength of genome covered by markers
 sum(unlist(leng))
 ## average distance between markers overall and by genome
+length(which(unlist(diff) < 0.5))
 mean(unlist(diff))
 mean(unlist(diff$A))
 mean(unlist(diff$B))
 mean(unlist(diff$D))
-
+log10(unlist(diff))
 # find the min length of the top percentile of gaps
 top_percentile <- quantile(unlist(diff), prob = 0.99, na.rm = T)
 top_percentile
@@ -80,14 +81,21 @@ max(unlist(diff$D))
 lapply(diff$B, max)
 
 # histograms and boxplots depicting the distribution of gaps on each genome
-diff_log10 <- tibble(Genome = factor(
-  c(rep("A", length(unlist(diff$A))),
-    rep("B", length(unlist(diff$B))),
-    rep("D", length(unlist(diff$D))),
-    rep("All", length(unlist(diff)))),
-  levels = c("A", "B", "D", "All")),
-                     diffs = log10(
-  c(unlist(diff$A), unlist(diff$B), unlist(diff$D), unlist(diff))))
+diff_log10 <- tibble(
+  Genome = factor(
+    c(rep("A", length(unlist(diff$A))),
+      rep("B", length(unlist(diff$B))),
+      rep("D", length(unlist(diff$D))),
+      rep("All", length(unlist(diff)))
+    ),
+    levels = c("A", "B", "D", "All")
+  ),
+  diffs = log10(
+    c(unlist(diff$A), unlist(diff$B), unlist(diff$D), unlist(diff))
+  )
+)
+head(diff$A[[1]][2])
+mean(diff_log10$diffs, na.rm = TRUE)
 plots <- list()
 plots[[2]] <- ggplot(diff_log10, aes(diffs, colour = Genome)) +
   geom_freqpoly() +
@@ -104,7 +112,7 @@ plots[[1]] <- ggplot(diff_log10, aes(Genome, diffs, colour = Genome)) +
 plots_matrix <- ggmatrix(
   plots, nrow = 2, ncol = 1, xlab = "Log10 Transformed Gap Distance",
   yAxisLabels = c("a) Boxplots", "b) Frequency Plots"),
-  title = "Figure 2: Log 10 Gap Distances Full Map",
+  title = "Figure 3: Log 10 Gap Distances Pruned Map",
   legend = c(2, 1)
 )
 
