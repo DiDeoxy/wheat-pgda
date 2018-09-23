@@ -1,3 +1,4 @@
+library(tidyverse)
 
 # set the size of a mega base
 mb <- 1000000
@@ -10,8 +11,8 @@ snp_id <- as.character(read.gdsn(index.gdsn(full, "snp.id")))
 snp_chrom <- as.integer(read.gdsn(index.gdsn(full, "snp.chromosome")))
 # turn snp base positons into Mb positons
 snp_pos <- as.integer(read.gdsn(index.gdsn(full, "snp.position"))) / mb
-# create a data frame of the marker metadata
-data <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos)
+# create a tiblle of the marker metadata
+marker_data <- tibble(id = snp_id, chrom = snp_chrom, pos = snp_pos)
 
 library(tidyverse)
 

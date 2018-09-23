@@ -1,98 +1,112 @@
 ld_floor_prune <- function(chrom, ld_mat, ld_floor, max_window) {
+  # make sure ld_mat has only distances from zero in it
+  ld_mat <- abs(ld_mat)
   # pick a random starting point on each chromosome
   start <- sample(1:nrow(chrom), 1)
-  # start the sliding window at this point
+  # initialize the kept list of markers with NA, to be removed later
+  kept <- NA
+  # window heading upstream
   in_window <- start
-  kept <- vector()
-  for (i in (start + 1):nrow(chrom)) {
+  for (i in ((start + 1):nrow(chrom))) {
     temp <- slide_window(
-      chrom, kept, in_window, i, max_window, ld_mat, ld_floor
+      1, chrom, kept, in_window, i, max_window, ld_mat, ld_floor
     )
-    if (length(temp) == 1 && ! temp) {
-      next
-    } else if (length(temp == 1)) {
-      in_window <- temp[[1]]
-    } else {
-      kept <- temp[1]
-      in_window <- temp[2]
-    }
+    kept <- temp[[1]]
+    in_window <- temp[[2]]
   }
+  # window heading downstream
   in_window <- start
   for (i in (start - 1):1) {
     temp <- slide_window(
-      chrom, kept, in_window, i, max_window, ld_mat, ld_floor
+      -1, chrom, kept, in_window, i, max_window, ld_mat, ld_floor
     )
-    if (length(temp) == 1 && ! temp) {
-      next
-    } else if (length(temp == 1)) {
-      in_window <- temp[[1]]
-    } else {
-      kept <- temp[1]
-      in_window <- temp[2]
-    }
+    kept <- temp[[1]]
+    in_window <- temp[[2]]
   }
-  return (kept)
+  return (na.omit(kept))
 }
 
-slide_window <- function (chrom, kept, in_window, i, max_window, ld_mat,
+slide_window <- function (dir, chrom, kept, in_window, i, max_window, ld_mat,
   ld_floor) {
+    # we potentially have markers in the window greater than i due to a
+    # proceeding step. we therefor check if the ith marker is before the the
+    # last marker in the window, if it is we return the kept and in_window 
+    # vectors as is
+    if (dir > 0 && i < in_window[length(in_window)]) {
+      # print("1a")
+      return(list(kept, in_window))
+    } else if (dir < 0 && i > in_window[length(in_window)]) {
+      # print("1b")
+      return(list(kept, in_window))
+    }
     # prune the window so that only markers less than max_window distant from
     # the ith marker or only one marker remains in the window, pruned markers
     # are added to the kept list
     temp <- prune_window(chrom, kept, in_window, i, max_window)
-    if (length(temp) == 1) {
-      in_window <- temp
-    } else {
-      kept <- temp[1]
-      in_window <- temp[2]
-    }
-    # if window has only one marker in it and the position of the next marker
-    # is further away than the max_window add the current marker to the kept
-    # list and make the next marker the only marker in the window, skip to the
-    # next iteration of the loop
-    if (length(in_window) == 1)
+    kept <- temp[[1]]
+    in_window <- temp[[2]]
+    # if window has only one marker in it and the position of the ith marker
+    # is further away than max_window retunr the concatenation of the kept
+    # and in_window list as the new kept list and i as the start of the window
+    if (length(in_window) == 1) {
+      # if (abs(chrom$pos[i] - chrom$pos[in_window]) < max_window) {
+      #   print(ld_mat[in_window, i])
+      # }
       if (abs(chrom$pos[i] - chrom$pos[in_window]) > max_window) {
-        kept <- in_window
-        in_window <- i
-        return(c(kept, in_window))
+        # print(2)
+        return(list(c(kept, in_window), i))
       # there is a possibility if we have only one marker in the window and the
-      # next marker is within max_window that the marker in the window is not
+      # ith marker is within max_window that the marker in the window is not
       # from that locus. To overcome this we test all combinations of markers
-      # within max_window until we find a pair in ld above ld_floor and make
-      # these the markers in the sliding window dropping the one that was
-      # already there and moving onto the next iteration of the loop
-      } else if (ld_mat[in_window, i] < ld_floor) {
+      # within max_window until we find the earliest pair in ld above ld_floor
+      # we then return the kep list as is an make the sliding window the 
+      # markers in ld  floor
+      } else if (is.nan(ld_mat[in_window, i]) ||
+        ld_mat[in_window, i] < ld_floor) {
         j <- 1
-        while (abs(chrom$pos[i + j] - chrom$pos[in_window]) < max_window) {
-          j <- j + 1
+        while ((i + j) < nrow(chrom) && 
+          abs(chrom$pos[i + j] - chrom$pos[in_window]) < max_window) {
+            j <- j + 1
         }
-        combos <- combn(in_window:(i + j))
-        for (k in ncol(combos)) {
-          if (ld_mat[combos[1, k], combo[2, k]] > ld_floor) {
-            return(list(combos[, k]))
+        combos <- combn(in_window:(i + j), 2)
+        for (k in 1:ncol(combos)) {
+          if (! is.nan(ld_mat[combos[1, k], combos[2, k]]) && 
+            ld_mat[combos[1, k], combos[2, k]] > ld_floor) {
+            # print(3)
+            return(list(kept, combos[, k]))
           }
         }
         # if none of the combos above found markers in ld above the floor we
-        # drop all markers from the locus and jump ahead to the (i + j)th
-        # marker
-        if (length(in_window) == 1) {
-          in_window <- i + j
-          return(0)
+        # return the kept list as is and make the (i + j)th  marker the start 
+        # of the window
+        # print(4)
+        return(list(kept, i + j))
+        # i think this would be worse:
+        # set.seed(1000)
+        # return(c(c(kept, sample(i:j, 1)), i + j)) 
+      # since the distance to ith marker from the marker in the window is less 
+      # than max_window and the ld between the two markers is above ld_floor
+      # return the kept list as is and add the ith marker to the window
+      } else {
+        # print(5)
+        return(list(kept, c(in_window, i)))
+      }
+    # if length(in_window) > 1, the ith marker will always be less than 
+    # max_window distant because of the pruning step, thus we test every marker
+    # j in the window against the ith marker, if any have ld above ld_floor
+    # the ith marker is added to the window
+    } else {
+      for (j in in_window) {
+        if (! is.nan(ld_mat[j, i]) && ld_mat[j, i] > ld_floor) {
+          # print(6)
+          return(list(kept, c(in_window, i)))
         }
       }
-    # since we potentially have marerks in the window greater than i due to
-    # above step we check the last marker in the window and skip ahead until
-    # the ith marker is greater
-    if (in_window[length(in_window)] >= i) {
-      return(0)
+      # if the ith marker is below ld_floor to all markers in the window return
+      # kept and in_window as is
+      return(list(kept, in_window))
     }
-    # the ith marker is guranteed to be within max_window to the first marker
-    # in the window, if it is above the ld_floor to any marker in the window
-    # add it to the window
-    in_window <- c(in_window,
-      check_floor(in_window, i, ld_mat, ld_floor)
-    )
-    return(c(kept, in_window))
+    # print("no")
   }
 
 prune_window <- function (chrom, kept, in_window, i, max_window) {
@@ -101,7 +115,7 @@ prune_window <- function (chrom, kept, in_window, i, max_window) {
   # ith marker is less than max_window distant from the first marker in the
   # window
   if (length(in_window) > 1 &&
-    abs(chrom$pos[i] - chrom$pos[in_window[1]] > max_window)) {
+    abs(chrom$pos[i] - chrom$pos[in_window[1]]) > max_window) {
       return(
         prune_window(
           chrom, c(kept, in_window[1]), in_window[2:length(in_window)], i,
@@ -109,17 +123,7 @@ prune_window <- function (chrom, kept, in_window, i, max_window) {
         )
       )
   } else {
-    return(c(kept, in_window))
+    # print("yes")
+    return(list(kept, in_window))
   }
-}
-
-check_floor <- function(in_window, i, ld_mat, ld_floor) {
-  # if the ith marker has greater ld than ld_floor to the jth marker in the
-  # sliding window add the ith marker to the sliding window
-  for (j in in_window) {
-    if (ld_mat[j, i] > ld_floor) {
-        return (i)
-    }
-  }
-  return (NULL)
 }
