@@ -1,29 +1,19 @@
 library(SNPRelate)
 
-# apply the best LD pruning to the dataset
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
-source("src\\R_functions\\data_loading_no_mb.R")
+source("src\\R_functions\\funcs_gds_parse_create.R")
 
-# performs LD pruning to produce a set of SNPs that maximally represent the
-# diversity of the genome with as little redundant info as possible used for
-# estimation of relationships genome wide (i.e. clustering)
-full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_sample.gds")
+wheat_data <- parse_gds("phys_subset_sample")
+
+wheat_gds <- snpgdsOpen("Data\\Intermediate\\GDS\\phys_subset_sample.gds")
+
+# ld pruned set of markes
 set.seed(1000)
-snpset_ids_list <- snpgdsLDpruning(
-    full,
-    autosome.only = F, missing.rate = 0.1, maf = 0.05,
-    ld.threshold = 0.6, slide.max.bp = 1e7
-)
-snpgdsClose(full)
-snp_indices <- match(unlist(snpset_ids_list), snp_id)
+kept_id <- unlist(snpgdsLDpruning(wheat_gds,
+  autosome.only = FALSE,
+  maf = 0.05, slide.max.bp = 1e7, ld.threshold = 0.7
+))
+kept_index <- match(kept_id, wheat_data$snp$id)
 
-# create a subset gds object containg only the SNPs remaing after ld pruning
-snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds",
-    genmat = genotypes[snp_indices, ],
-    sample.id = sample_id,
-    snp.id = snp_id[snp_indices],
-    snp.chromosome = snp_chrom[snp_indices],
-    snp.position = snp_pos[snp_indices],
-    other.vars = list(samp_annot = samp_annot),
-    snpfirstdim = T
+snpgds_create_snp_subset(
+  wheat_data, "phys_subset_sample_ld_pruned", kept_index
 )

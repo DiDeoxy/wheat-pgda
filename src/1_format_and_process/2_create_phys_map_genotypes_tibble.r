@@ -102,8 +102,7 @@ maps_genotypes <- maps %>%
                   type_convert() %>%
                   group_by(chrom, phys_pos)
 nrow(maps_genotypes)
-# find the groups of chrom and phys_pos of size 2 or greater
-# turns out there are none greater than 2 though
+# find the groups of markers which have the same position in a chromosome
 duplicates <- maps_genotypes %>%
                 group_by(chrom, phys_pos) %>%
                 filter(n() >= 2)

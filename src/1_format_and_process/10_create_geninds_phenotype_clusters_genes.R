@@ -45,31 +45,31 @@ for (i in 1:length(grouping[[1]])) {
   )
 }
 
-# # making subsetted geninds of groups containing and not containing alleles of
-# # certain lR genes
-# gene_pres <- read_csv(
-#     "Data\\Intermediate\\Aligned_genes\\gene_presence_randhawa.csv",
-#     col_names = c("sample", "gene_A", "gene_B", "gene_C"))
-# for (gene in c("Lr34", "Lr22a", "Lr21", "Lr10", "Lr1")) {
-#   indivs <- c(which(gene_pres$gene_A == gene), which(gene_pres$gene_B == gene),
-#               which(gene_pres$gene_C == gene))
-#   index_indivs <- match(gene_pres$sample[indivs], sample_id)
-#   index_indivs <- index_indivs[!is.na(index_indivs)]
-#   index_not_indivs <- match(gene_pres$sample[-indivs], sample_id)
-#   index_not_indivs <- index_not_indivs[!is.na(index_not_indivs)]
+# making subsetted geninds of groups containing and not containing alleles of
+# certain lR genes
+gene_pres <- read_csv(
+    "Data\\Intermediate\\Aligned_genes\\gene_presence_randhawa.csv",
+    col_names = c("sample", "gene_A", "gene_B", "gene_C"))
+for (gene in c("Lr34", "Lr22a", "Lr21", "Lr10", "Lr1")) {
+  indivs <- c(which(gene_pres$gene_A == gene), which(gene_pres$gene_B == gene),
+              which(gene_pres$gene_C == gene))
+  index_indivs <- match(gene_pres$sample[indivs], sample_id)
+  index_indivs <- index_indivs[!is.na(index_indivs)]
+  index_not_indivs <- match(gene_pres$sample[-indivs], sample_id)
+  index_not_indivs <- index_not_indivs[!is.na(index_not_indivs)]
 
-#   strata <- data.frame(c(rep(gene, length(index_indivs)),
-#                          rep(str_c("not_", gene), length(index_not_indivs))))
-#   colnames(strata) <- gene
+  strata <- data.frame(c(rep(gene, length(index_indivs)),
+                         rep(str_c("not_", gene), length(index_not_indivs))))
+  colnames(strata) <- gene
 
-#   genind <- df2genind(t(data.frame(
-#                         genotypes[,c(index_indivs, index_not_indivs)])),
-#                       ind.names = as.character(
-#                                     sample_id)[c(index_indivs,
-#                                                index_not_indivs)],
-#                       loc.names = snp_id, NA.char = "N", ploidy = 1,
-#                       type = "codom", ncode = 1, strata = strata)
+  genind <- df2genind(t(data.frame(
+                        genotypes[,c(index_indivs, index_not_indivs)])),
+                      ind.names = as.character(
+                                    sample_id)[c(index_indivs,
+                                               index_not_indivs)],
+                      loc.names = snp_id, NA.char = "N", ploidy = 1,
+                      type = "codom", ncode = 1, strata = strata)
 
-#   write_rds(genind,
-#     path = paste0("Data\\Intermediate\\Adegenet\\", gene, "_genind.rds"))
-# }
+  write_rds(genind,
+    path = paste0("Data\\Intermediate\\Adegenet\\", gene, "_genind.rds"))
+}

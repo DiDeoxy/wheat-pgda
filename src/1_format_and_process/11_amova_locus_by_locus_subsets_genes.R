@@ -4,10 +4,12 @@ library(SNPRelate)
 library(ape)
 
 ## loading the gds of the data and pullling some attributes out
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample.gds"
+gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned_floor.gds"
 source("src\\R_functions\\data_loading.R")
 
-wheat <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys_subset_both.gds")
+wheat <- snpgdsOpen(
+  "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned_both.gds"
+)
 distances <- 1 - snpgdsIBS(wheat, autosome.only = F)$ibs
 snpgdsClose(wheat)
 

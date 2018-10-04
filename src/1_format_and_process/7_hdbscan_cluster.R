@@ -3,31 +3,55 @@ library(SNPRelate)
 library(dbscan)
 library(scrime)
 
-## loading the gds of the data and pullling some attributes out
-gds <- "Data\\Intermediate\\GDS\\full_phys_subset_sample_pruned.gds"
-source("src\\R_functions\\data_loading.R")
+source("src\\R_functions\\funcs_gds_parse_create.R")
 
-genotypes <- genotypes %>%
+wheat_data <- parse_gds("phys_subset_sample")
+
+wheat_imputed <- wheat_data$genotypes %>%
     replace(. == 0, 1) %>%
-    replace(. == 3, NA)
+    replace(. == 3, NA) %>%
+    t() %>%
+    knncatimpute()
 
-genotypes_imputed <- knncatimpute(t(genotypes))
+wheat_hdbscan <- wheat_imputed %>% hdbscan(minPts = 8)
 
-full_hdbscan <- hdbscan(genotypes_imputed, minPts = 9)
-
-write_rds(full_hdbscan,
-    path = "Data\\Intermediate\\dbscan\\full_hdbscan.rds"
+write_rds(wheat_hdbscan,
+    path = "Data\\Intermediate\\hdbscan\\wheat_hdbscan.rds"
 )
 
 # examine group composition
-# table(full_hdbscan$cluster)
-# table(full_hdbscan$cluster[which(habit == "Winter")])
-# table(desig[which(habit == "Winter")])
-# table(full_hdbscan$cluster[which(desig == "HRW")])
-# table(full_hdbscan$cluster[which(mc == "CWES")])
-# table(desig[which(full_hdbscan$cluster == 0)])
-# table(mc[which(full_hdbscan$cluster == 0)])
-# table(bp[which(full_hdbscan$cluster == 0)])
-# table(full_hdbscan$cluster[which(bp == "FOREIGN")])
-# cbind(sample_id, as.character(desig), as.character(mc))[which(full_hdbscan$cluster == 0),]
-# length(which(desig == "SWS"))
+table(wheat_hdbscan$cluster)
+
+# cluster 1
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 1])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HRW"])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HWW"])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SRW"])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SWW"])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$habit == "Winter"])
+
+# cluster 2
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 2])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SWS"])
+
+# cluster 3
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 3])
+table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 3])
+table(wheat_data$sample$annot$mc[wheat_data$sample$annot$pheno == "HWS" &
+  wheat_hdbscan$cluster == 3])
+
+# cluster 4
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 4])
+table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 4])
+table(wheat_data$sample$annot$pheno[wheat_data$sample$annot$mc == "CWGP" &
+  wheat_hdbscan$cluster == 4])
+table(wheat_data$sample$annot$pheno[wheat_data$sample$annot$mc == "N/A" &
+  wheat_hdbscan$cluster == 4])
+
+# cluster 5
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 5])
+
+# Noise
+table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 0])
+table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 0])
+table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HRS"])

@@ -24,12 +24,24 @@ write(metadata$`Real Name`,
   sep = "\n"
 )
 
+# transform year into binned eras
+era <- as.numeric(as.character(metadata$Date))
+era <- cut(era,
+  breaks = c(1800, 1920, 1940, 1960, 1980, 2000, 2020),
+  labels = c(
+    "Pre-1920", "1921-1940", "1941-1960", "1961-1980", "1981-2000",
+    "2001-2016"
+  )
+)
+era <- addNA(era)
+levels(era)[7] <- "UNKNOWN"
+
 ## construct the sample annotation information from the metadata
 samp_annot <- list(
-  BP = metadata$`Breeding Program`, Year = metadata$Date,
+  bp = metadata$`Breeding Program`, era = era,
   origin = metadata$Origin, texture = metadata$Texture,
   colour = metadata$Colour, habit = metadata$Habit,
-  designation = metadata$Designation, MC = metadata$Consensus
+  pheno = metadata$Designation, mc = metadata$Consensus
 )
 
 ## construct the SNPRelate GDS object fromt the input data with physical map

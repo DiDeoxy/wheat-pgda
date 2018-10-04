@@ -21,3 +21,4 @@ kept_ids <- by(marker_data, marker_data$chrom, function (chrom) {
 snpgdsClose(full)
 head(kept_ids[[1]])
 length(unlist(kept_ids))
+length(snp_id)
