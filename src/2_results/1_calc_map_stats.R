@@ -1,4 +1,4 @@
-source("src\\R_functions\\funcs_calc_stats.R")
+source("src\\R_functions\\funcs_calc_map_stats.R")
 
 # all markers
 calc_map_stats_plot(

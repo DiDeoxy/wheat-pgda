@@ -18,6 +18,28 @@ retrieve_phi <- function(amova) {
   return(phis)
 }
 
+closest_markers <- function(wheat_data, known_genes, gene, dist) {
+  amova <- read_rds(
+    str_c("Data\\Intermediate\\Adegenet\\", gene, "_amova.rds")
+  )
+  wheat_data$snp <- wheat_data$snp %>% add_column(phi = retrieve_phi(amova))
+
+  gene_row <- which(known_genes$id == gene)
+  gene_chrom <- known_genes$chrom[gene_row]
+  gene_pos <- known_genes$pos[gene_row]
+
+  snp_subset <- wheat_data$snp %>%
+    filter(chrom == gene_chrom & abs(pos_mb - gene_pos) < dist) %>%
+    transmute(id, chrom, diff = pos_mb - gene_pos, phi)
+  signif <- quantile(wheat_data$snp$phi, prob = 0.975, na.rm = T)
+  snp_subset_signif <- snp_subset %>%
+    filter(phi > signif)
+  write_csv(snp_subset, str_c("Results\\closest_markers\\", gene, "_full.csv"))
+  write_csv(
+    snp_subset_signif, str_c("Results\\closest_markers\\", gene, "_signif.csv")
+  )
+}
+
 calc_eh <- function (genotypes) {
   apply(genotypes, 1, function (snp) {
     2 * ((sum(snp == 0) / sum(snp == 0 | 2)) *

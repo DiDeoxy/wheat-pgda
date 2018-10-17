@@ -5,10 +5,10 @@ library(SNPRelate)
 library(extrafont)
 
 # load custom functions
-source("src\\R_functions\\funcs_calc_stats.R")
+source("src\\R_functions\\funcs_calc_map_stats.R")
 source("src\\R_functions\\colour_sets.R")
 
-plot_eh <- function (wheat, subset) {
+plots_eh <- function (wheat, subset) {
 
   # create a snp_data frame of all the
   wheat$snp_data <- wheat$snp_data %>%
@@ -26,26 +26,33 @@ plot_eh <- function (wheat, subset) {
 
   # identify those snps within the extended haplotypes
   index_A1 <- which(wheat$snp_data$chrom == 1)
-  snps_A1 <- wheat$snp_data$id[index_A1][which(wheat$snp_data$pos[index_A1] > 70 &
-                                    wheat$snp_data$pos[index_A1] < 300)]
+  snps_A1 <-
+    wheat$snp_data$id[index_A1][which(wheat$snp_data$pos[index_A1] > 70 &
+      wheat$snp_data$pos[index_A1] < 300)]
   index_A2 <- which(wheat$snp_data$chrom == 4)
-  snps_A2 <- wheat$snp_data$id[index_A2][which(wheat$snp_data$pos[index_A2] > 210 &
-                                    wheat$snp_data$pos[index_A2] < 470)]
+  snps_A2 <-
+    wheat$snp_data$id[index_A2][which(wheat$snp_data$pos[index_A2] > 210 &
+      wheat$snp_data$pos[index_A2] < 470)]
   index_A4 <- which(wheat$snp_data$chrom == 10)
-  snps_A4 <- wheat$snp_data$id[index_A4][which(wheat$snp_data$pos[index_A4] > 230 &
-                                    wheat$snp_data$pos[index_A4] < 460)]
+  snps_A4 <-
+    wheat$snp_data$id[index_A4][which(wheat$snp_data$pos[index_A4] > 230 &
+      wheat$snp_data$pos[index_A4] < 460)]
   index_B5 <- which(wheat$snp_data$chrom == 14)
-  snps_B5 <- wheat$snp_data$id[index_B5][which(wheat$snp_data$pos[index_B5] > 110 &
-                                    wheat$snp_data$pos[index_B5] < 210)]
+  snps_B5 <-
+    wheat$snp_data$id[index_B5][which(wheat$snp_data$pos[index_B5] > 110 &
+      wheat$snp_data$pos[index_B5] < 210)]
   index_A6 <- which(wheat$snp_data$chrom == 16)
-  snps_A6 <- wheat$snp_data$id[index_A6][which(wheat$snp_data$pos[index_A6] > 170 &
-                                    wheat$snp_data$pos[index_A6] < 445)]
+  snps_A6 <-
+    wheat$snp_data$id[index_A6][which(wheat$snp_data$pos[index_A6] > 170 &
+      wheat$snp_data$pos[index_A6] < 445)]
   index_B6 <- which(wheat$snp_data$chrom == 17)
-  snps_B6 <- wheat$snp_data$id[index_B6][which(wheat$snp_data$pos[index_B6] > 250 &
-                                    wheat$snp_data$pos[index_B6] < 380)]
+  snps_B6 <-
+    wheat$snp_data$id[index_B6][which(wheat$snp_data$pos[index_B6] > 250 &
+      wheat$snp_data$pos[index_B6] < 380)]
   index_A7 <- which(wheat$snp_data$chrom == 19)
-  snps_A7 <- wheat$snp_data$id[index_A7][which(wheat$snp_data$pos[index_A7] > 310 &
-                                    wheat$snp_data$pos[index_A7] < 445)]
+  snps_A7 <-
+    wheat$snp_data$id[index_A7][which(wheat$snp_data$pos[index_A7] > 310 &
+      wheat$snp_data$pos[index_A7] < 445)]
   haplo_snps <- match(c(snps_A1, snps_A2, snps_A4, snps_B5, snps_A6, snps_B6,
                         snps_A7),
                       wheat$snp_data$id)
@@ -80,6 +87,59 @@ plot_eh <- function (wheat, subset) {
   png(str_c("Results\\loci\\EH\\", subset, "_EH.png"),
       family = "Times New Roman", width = 200, height = 287, pointsize = 5,
       units = "mm", res = 300)
+  print(plots_matrix)
+  dev.off()
+}
+
+# function to create a plot for the chromosome of each gene
+gene_plots <- function(gene) {
+  known_genes <- read_rds(
+    "Data\\Intermediate\\Aligned_genes\\known_genes_groups_corrected.rds"
+  )
+
+  amova <- read_rds(str_c(
+    "Data\\Intermediate\\Adegenet\\", gene,
+    "_amova.rds"
+  ))
+  wheat_data$snp <- wheat_data$snp %>% add_column(phi = retrieve_phi(amova))
+
+  gene_row <- which(known_genes$id == gene)
+  gene_chrom <- known_genes$chrom[gene_row]
+
+  signif <- quantile(wheat_data$snp$phi, prob = 0.975, na.rm = T)
+  snp_subset <- wheat_data$snp %>%
+    filter(chrom == gene_chrom & phi > signif)
+  ggplot() +
+    geom_point(aes(snp_subset$pos_mb, snp_subset$phi),
+      colour = colour_set[19], size = 0.5
+    ) +
+    geom_point(aes(known_genes$pos[gene_row], 0.2),
+      shape = 17, colour = colour_set[15]
+    ) +
+    ylim(0.2, 1) +
+    xlim(0, 650)
+}
+
+plot_genes <- function (genes) {
+  # making the plots for each gene
+  plots <- lapply(genes, gene_plots)
+
+  # creating a ggmatrix of the plots
+  plots_matrix <- ggmatrix(
+    plots,
+    nrow = 3, ncol = 5, xlab = "Position in Mb", ylab = "Phi Value",
+    xAxisLabels = c(
+      "Chr 1A: Lr10", "Chr 1D: Lr21", "Chr 2D: Lr22a",
+      "Chr 5D: Lr 1", "Chr 7A: Lr34"
+    ),
+    title = str_c("Top 2.5% of Phi Statistics by Comparison")
+  )
+
+  # plot the ggmatrix to a png
+  png("Results\\closest_markers\\amova_genes.png",
+    family = "Times New Roman",
+    width = 200, height = 55, pointsize = 5, units = "mm", res = 300
+  )
   print(plots_matrix)
   dev.off()
 }

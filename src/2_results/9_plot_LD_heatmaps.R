@@ -46,7 +46,7 @@ snpgdsClose(wheat)
 # plot the matrices
 cex <- 0.8
 labels <- as.vector(t(outer(as.character(1:7), c("A", "B", "D"), paste, 
-                            sep="")))
+                            sep = "")))
 colours <- colorRampPalette(rev(brewer.pal(5, "RdYlBu")))(100)
 png("Results\\loci\\LD\\full_LD_heatmap_7_5.png",
     family = "Times New Roman", width = 140, height = 287, pointsize = 12,
