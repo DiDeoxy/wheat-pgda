@@ -6,40 +6,6 @@ library(RColorBrewer)
 
 source("src\\R_functions\\funcs_gds_parse_create.R")
 
-retrieve_phi <- function(amova) {
-  phis <- vector()
-  for (i in 1:length(amova)) {
-    if (length(amova[[i]]) == 0 || is.na(amova[[i]])) {
-      phis[i] <- 0
-    } else {
-      phis[i] <- abs(amova[[i]]$statphi[1, 1])
-    }
-  }
-  return(phis)
-}
-
-closest_markers <- function(wheat_data, known_genes, gene, dist) {
-  amova <- read_rds(
-    str_c("Data\\Intermediate\\Adegenet\\", gene, "_amova.rds")
-  )
-  wheat_data$snp <- wheat_data$snp %>% add_column(phi = retrieve_phi(amova))
-
-  gene_row <- which(known_genes$id == gene)
-  gene_chrom <- known_genes$chrom[gene_row]
-  gene_pos <- known_genes$pos[gene_row]
-
-  snp_subset <- wheat_data$snp %>%
-    filter(chrom == gene_chrom & abs(pos_mb - gene_pos) < dist) %>%
-    transmute(id, chrom, diff = pos_mb - gene_pos, phi)
-  signif <- quantile(wheat_data$snp$phi, prob = 0.975, na.rm = T)
-  snp_subset_signif <- snp_subset %>%
-    filter(phi > signif)
-  write_csv(snp_subset, str_c("Results\\closest_markers\\", gene, "_full.csv"))
-  write_csv(
-    snp_subset_signif, str_c("Results\\closest_markers\\", gene, "_signif.csv")
-  )
-}
-
 calc_eh <- function (genotypes) {
   apply(genotypes, 1, function (snp) {
     2 * ((sum(snp == 0) / sum(snp == 0 | 2)) *
@@ -146,7 +112,7 @@ calc_length_num_gaps <- function(snp_data) {
   return(list(leng = leng, num = num, gaps = gaps))
 }
 
-calc_map_stats_plot <- function (subset, plot_title) {
+calc_plot_map_stats <- function (subset, plot_title) {
   wheat_data <- parse_gds(subset)
   # find the maf and mr
   maf_mr <- calc_maf_mr(wheat_data$genotypes)

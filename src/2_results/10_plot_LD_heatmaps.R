@@ -17,7 +17,7 @@ ld_mat <- by(data, snp_chrom, function (chrom) {
   dist = 7.5
   for (cur in chrom$pos) {
     if (cur - prev > dist) {
-      gap_pos <- c(gap_pos, 
+      gap_pos <- c(gap_pos,
                    # finding the average positions between two markers that are
                    # ~ dist apart
                    rowMeans(cbind(seq(prev, cur, dist), # forward

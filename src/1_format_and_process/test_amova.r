@@ -1,11 +1,16 @@
-genind <- read_rds(str_c(
-  "Data\\Intermediate\\Adegenet\\Lr21_genind.rds"
+library(adegenet)
+library(tidyverse)
+
+comp_genind <- read_rds(str_c(
+  "Data\\Intermediate\\Adegenet\\Lr34_genind.rds"
 ))
 
-marker_index <- which(names(genind$all.names) == "RAC875_c10925_1887")
-table(cbind(genind$tab[, marker_index], genind$strata))
+markers <- c("Kukri_c92151_216", "Kukri_c32845_116",
+  "TA002473-0717")
 
-install.packages("DEMEtics")
-library(DEMEtics)
-data(Example.transformed)
-Example.transformed
+for (marker in markers) {
+  print(marker)
+  cbind(
+    allele = comp_genind$tab[, str_c(marker, ".A")], comp_genind$strata
+    ) %>% table() %>% print()
+}
