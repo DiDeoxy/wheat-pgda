@@ -103,9 +103,9 @@ plots <- by(
 # turn plot list into ggmatrix
 plots_matrix <- ggmatrix(
   plots,
-  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Phi",
+  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Jost D",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = "Markers in Top 2.5% of Jost D Values For Resistance Gene Groups",
+  title = "Markers in Top 2.5% of Jost D Values for Resistance Gene Groups",
   legend = c(1, 1)
 )
 

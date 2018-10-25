@@ -102,7 +102,7 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png(str_c("Results\\loci\\EH\\All_EH.png"),
+png("Results\\loci\\EH\\All_EH.png",
   family = "Times New Roman", width = 210, height = 277, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix

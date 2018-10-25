@@ -3,7 +3,6 @@ library(tidyverse)
 library(GGally)
 library(ggrepel)
 library(extrafont)
-library(SNPRelate)
 
 # load custom functions
 source("src\\R_functions\\funcs_gds_parse_create.R")
@@ -22,8 +21,9 @@ max_genome_lengths <- c(
 
 # add columns of the D values of each comparison
 for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {
-  comp_Jost_D <- read_rds(str_c("Data\\Intermediate\\mmod\\", group,
-    "_Jost_D.rds"))[[1]]
+  comp_Jost_D <- read_rds(
+    str_c("Data\\Intermediate\\mmod\\", group, "_Jost_D.rds")
+  )[[1]]
   wheat_data$snp <- wheat_data$snp %>% add_column(!!group := comp_Jost_D)
 }
 
@@ -53,13 +53,13 @@ pheno_genes <- read_csv(
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
-  mutate(pos_mb = pos / 1000000, comparison = "pheno_gene")
+  mutate(pos_mb = pos / 1e6, comparison = "pheno_gene")
 resi_genes <- read_csv(
   "Data\\Intermediate\\Aligned_genes\\selected_alignments\\resi_genes.csv",
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
-  mutate(pos_mb = pos / 1000000, comparison = "resi_gene")
+  mutate(pos_mb = pos / 1e6, comparison = "resi_gene")
 # join them together
 genes <- pheno_genes %>% full_join(resi_genes)
 
@@ -77,21 +77,20 @@ genes <- cbind(genes, min_extreme = min(extremes))
 # add the genes in and make longer
 wheat_data$snp_long_genes <- wheat_data$snp_long %>%
   full_join(genes) %>%
-  arrange(chrom, comparison, pos_mb) %>%
-  mutate_at(vars(matches("comparison")), factor)
+  arrange(chrom, comparison, pos_mb)
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
 lables <- c(
-  "CHRS vs CSWS", "CHRS vs CHRW", "CSWS vs CHRW", "Phenotype Genes",
+  "CHRS vs CHRW", "CHRS vs CSWS", "CSWS vs CHRW", "Phenotype Genes",
   "Resistance Genes"
 )
 legend_title <- "Comparisons and Genes"
 plots <- by(
   wheat_data$snp_long_genes, wheat_data$snp_long_genes$chrom,
-  function(data_chrom) {
-    chrom_num <- data_chrom$chrom[1]
-    data_chrom %>%
+  function(chrom) {
+    chrom_num <- chrom$chrom[1]
+    chrom %>%
       ggplot() +
       ylim(min(extremes), 1) +
       xlim(
@@ -114,11 +113,11 @@ plots <- by(
       ) +
       scale_colour_manual(
         legend_title, labels = lables, values = colours_comparisons_genes,
-        limits = levels(wheat_data$snp_long_genes$comparison)
+        limits = levels(as.factor(wheat_data$snp_long_genes$comparison))
       ) +
       scale_shape_manual(
         legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
-        limits = levels(wheat_data$snp_long_genes$comparison)
+        limits = levels(as.factor(wheat_data$snp_long_genes$comparison))
       )
   }
 )
@@ -126,9 +125,9 @@ plots <- by(
 # turn plot list into ggmatrix
 plots_matrix <- ggmatrix(
   plots,
-  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Phi",
+  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Jost D",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = "Markers in Top 2.5% of Jost D Values By comparison",
+  title = "Markers in Top 2.5% of Jost D Values By Comparison",
   legend = c(1, 1)
 )
 

@@ -93,9 +93,9 @@ wheat_data$snp_long <- wheat_data$snp %>%
   arrange(chrom, pos)
 
 # plot the EH values for each group in each comparison on each chromosome
-lables <- c("CHRS vs CSWS", "CHRS vs HRW", "CSWS vs HRW")
+lables <- c("CHRS vs CHRW", "CHRS vs CSWS", "CSWS vs CHRW")
 legend_title <- "Comparisons"
-plots <- by(wheat_data$snp_long, wheat_data$snp_long$chrom, 
+plots <- by(wheat_data$snp_long, wheat_data$snp_long$chrom,
   function (data_chrom) {
     chrom_num <- data_chrom$chrom[1]
     data_chrom %>%
@@ -129,7 +129,7 @@ plots_matrix <- ggmatrix(
 
 # plot the matrix
 png(str_c("Results\\loci\\EH\\extreme_D_eh_comps.png"),
-    family = "Times New Roman", width = 210, height = 277, pointsize = 5,
+    family = "Times New Roman", width = 210, height = 267, pointsize = 5,
     units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()
