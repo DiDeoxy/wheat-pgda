@@ -56,12 +56,13 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys.gds",
 )
 
 ## construct the SNPRelate GDS object form the input data with genetic map
+gen_order <- order(maps$chrom, maps$gen_pos)
 snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen.gds",
-  genmat = data.matrix(genotypes),
+  genmat = data.matrix(genotypes[gen_order, ]),
   sample.id = metadata$`Real Name`,
-  snp.id = maps$marker,
-  snp.chromosome = as.integer(as.factor(maps$chrom)),
-  snp.position = maps$gen_pos,
+  snp.id = maps$marker[gen_order],
+  snp.chromosome = as.integer(as.factor(maps$chrom[gen_order])),
+  snp.position = maps$gen_pos[gen_order],
   other.vars = list(samp_annot = samp_annot),
   snpfirstdim = T
 )

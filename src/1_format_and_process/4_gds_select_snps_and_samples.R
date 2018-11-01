@@ -21,6 +21,7 @@ snpgds_create_snp_subset(wheat_data, "phys_select_snp", kept_index)
 
 # same aas above but for gen map gds
 wheat_data <- parse_gds("full_gen")
+kept_index <- sort(match(kept_id, wheat_data$snp$id))
 snpgds_create_snp_subset(wheat_data, "gen_select_snp", kept_index)
 
 # eliminate those individuals that show identity by state

@@ -1,6 +1,7 @@
 library(tidyverse)
 library(plyr)
 library(GGally)
+library(ggrepel)
 library(SNPRelate)
 library(extrafont)
 
@@ -13,7 +14,7 @@ source("src\\R_functions\\colour_sets.R")
 wheat_data <- parse_gds("phys_subset_sample")
 
 # find the max position of any marker on each genome for xlims
-chrom_lengths <- by(wheat_data$snp$pos, wheat_data$snp$chrom, max)
+chrom_lengths <- by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max)
 max_genome_lengths <- c(max(chrom_lengths[seq(1, 19, 3)]), # A genome
                         max(chrom_lengths[seq(2, 20, 3)]), # B genome
                         max(chrom_lengths[seq(3, 21, 3)])) # D genome
@@ -92,10 +93,43 @@ wheat_data$snp_long <- wheat_data$snp %>%
   ) %>%
   arrange(chrom, pos)
 
+# load gene data
+pheno_genes <- read_csv(
+  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\pheno_genes.csv",
+  col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
+) %>%
+  select(id, chrom, pos) %>%
+  mutate(pos_mb = pos / 1e6, comparison = "pheno_gene")
+resi_genes <- read_csv(
+  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\resi_genes.csv",
+  col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
+) %>%
+  select(id, chrom, pos) %>%
+  mutate(pos_mb = pos / 1e6, comparison = "resi_gene")
+# join them together
+genes <- pheno_genes %>% full_join(resi_genes)
+
+# convert known genes chromosome  names to appropriate integer
+chroms <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
+  t() %>% as.vector()
+for (i in seq_along(chroms)) {
+  genes$chrom[genes$chrom == chroms[i]] <- i
+}
+genes$chrom <- as.integer(genes$chrom)
+
+# add min phi values of plotting to each gene so they appear at bottom of plots
+genes <- cbind(genes, min_extreme = -0.5)
+
+# add the genes in and make longer
+wheat_data$snp_long_genes <- wheat_data$snp_long %>%
+  full_join(genes) %>%
+  arrange(chrom, comparison, pos_mb)
+
 # plot the EH values for each group in each comparison on each chromosome
-lables <- c("CHRS vs CHRW", "CHRS vs CSWS", "CSWS vs CHRW")
+lables <- c("CHRS vs CHRW", "CHRS vs CSWS", "CSWS vs CHRW", "Phenotype Genes",
+  "Resistance Genes")
 legend_title <- "Comparisons"
-plots <- by(wheat_data$snp_long, wheat_data$snp_long$chrom,
+plots <- by(wheat_data$snp_long_genes, wheat_data$snp_long_genes$chrom,
   function (data_chrom) {
     chrom_num <- data_chrom$chrom[1]
     data_chrom %>%
@@ -105,17 +139,34 @@ plots <- by(wheat_data$snp_long, wheat_data$snp_long$chrom,
           0,
           max_genome_lengths[ifelse(chrom_num %% 3, chrom_num %% 3, 3)]
         ) +
-        geom_point(aes(pos, eh, colour = comparison, shape = comparison),
+        geom_point(aes(pos_mb, eh, colour = comparison, shape = comparison),
           size = 0.75
         ) +
         geom_hline(yintercept = 0) +
+        geom_text_repel(
+          aes(pos_mb, min_extreme, colour = comparison, label = id),
+          angle = 90, hjust = 0, vjust = 1, size = 3, segment.colour = "black",
+          nudge_y = 0.07, show.legend = FALSE,
+          nudge_x =  ifelse(chrom_num == 3, 80,
+            ifelse(chrom_num %in% c(6, 10), -60, 40)
+          )
+        ) +
         scale_colour_manual(
-          legend_title, labels = lables,
-          values = colours_comparisons_genes[1:3]
+          legend_title, labels = lables, values = colours_comparisons_genes,
+          limits = levels(as.factor(wheat_data$snp_long_genes$comparison))
         ) +
         scale_shape_manual(
-          legend_title, labels = lables, values = points[1:3]
+          legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
+          limits = levels(as.factor(wheat_data$snp_long_genes$comparison))
         )
+        # +
+        # scale_colour_manual(
+        #   legend_title, labels = lables,
+        #   values = colours_comparisons_genes[1:3]
+        # ) +
+        # scale_shape_manual(
+        #   legend_title, labels = lables, values = points[1:3]
+        # )
   }
 )
 

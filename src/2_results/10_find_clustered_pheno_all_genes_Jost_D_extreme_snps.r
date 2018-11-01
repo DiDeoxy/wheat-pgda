@@ -165,7 +165,7 @@ blah <- by(wheat_data$snp[, -3], wheat_data$snp$chrom, function (chrom) {
       ),
     ],
     file.path(base, chrom$chrom[1],
-      "chrs_vs_csws_and_chrs_vs_chrw_extreme.csv")
+      "chrs_vs_chrw_and_chrs_vs_csws_extreme.csv")
   )
   write_csv(
     chrom[
