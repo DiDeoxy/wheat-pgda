@@ -1,14 +1,14 @@
 library(tidyverse)
 library(SNPRelate)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load data into R object from the GDS object using the script at the source
 # location
 wheat_data <- parse_gds("full_phys")
 
 # open the GDS object again and select SNPs with a missing data rate below 0.1
-wheat_gds <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/full_phys.gds")
 kept_id <- unlist(snpgdsSelectSNP(
   wheat_gds,
   autosome.only = F, missing.rate = 0.1
@@ -27,7 +27,7 @@ snpgds_create_snp_subset(wheat_data, "gen_select_snp", kept_index)
 # eliminate those individuals that show identity by state
 # (IBS, fractional identity) greater than 0.99
 wheat_gds <- snpgdsOpen(
-  "Data\\Intermediate\\GDS\\phys_select_snp.gds"
+  "Data/Intermediate/GDS/phys_select_snp.gds"
 )
 IBS <- snpgdsIBS(wheat_gds, autosome.only = F)
 snpgdsClose(wheat_gds)

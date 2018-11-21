@@ -5,7 +5,7 @@ library(extrafont)
 library(SNPRelate)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -20,7 +20,7 @@ max_genome_lengths <- c(
 
 # create a list of the ld between markers on each chromosome add NA column 
 # and rows every 7.5 Mb so that gaps appear on image
-wheat_gds <- snpgdsOpen("Data\\Intermediate\\GDS\\phys_subset_sample.gds")
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/phys_subset_sample.gds")
 ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
   gap_pos <- vector()
   prev <- 0
@@ -60,7 +60,7 @@ cex <- 0.8
 labels <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
   t() %>% as.vector()
 colours <- colorRampPalette(rev(brewer.pal(5, "RdYlBu")))(100)
-png("Results\\loci\\LD\\LD_heatmap_7_5.png",
+png("Results/loci/LD/LD_heatmap_7_5.png",
     family = "Times New Roman", width = 135, height = 267, pointsize = 12,
     units = "mm", res = 300)
 par(mfrow = c(7, 3), oma = c(7, 1, 3, 2), mar = c(0, 2, 0, 0))

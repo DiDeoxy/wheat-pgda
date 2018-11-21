@@ -5,9 +5,9 @@ library(SNPRelate)
 library(extrafont)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
-source("src\\R_functions\\funcs_calc_stats.R")
-source("src\\R_functions\\colour_sets.R")
+source("src/R_functions/funcs_gds_parse_create.R")
+source("src/R_functions/funcs_calc_stats.R")
+source("src/R_functions/colour_sets.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -101,7 +101,7 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png("Results\\loci\\EH\\All_EH_phys.png",
+png("Results/loci/EH/All_EH_phys.png",
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix
@@ -164,7 +164,7 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png("Results\\loci\\EH\\All_EH_gen.png",
+png("Results/loci/EH/All_EH_gen.png",
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix

@@ -2,7 +2,7 @@ library(ape)
 library(tidyverse)
 
 # load the filtered gen map
-poz_filtered <- read_rds("Data\\Intermediate\\Maps\\pozniak_filtered_map.rds")
+poz_filtered <- read_rds("Data/Intermediate/Maps/pozniak_filtered_map.rds")
 
 # create a vector of the chromosomes
 chrs <- paste0("chr", as.vector(t(outer(as.character(1:7), c("A", "B", "D"),
@@ -13,7 +13,7 @@ alignments <- data.frame()
 for (chr in chrs) {
   chr_feats <- read.gff(
     paste0(
-      "Data\\Raw\\Maps\\90K_RefSeqv1_physical_maps\\Infinium90K-", chr, ".gff3"
+      "Data/Raw/Maps/90K_RefSeqv1_physical_maps/Infinium90K-", chr, ".gff3"
     )
   )
   parsed_pos <- apply(chr_feats, 1, function (feat) {
@@ -75,7 +75,7 @@ maps <- phys_map %>%
 
 # format the genotype data into the proper format for snpgds format
 genotypes <- read_csv(
-    "Data\\Raw\\Genotypes\\Jan_6_wheat_genotypes_curtis.csv"
+    "Data/Raw/Genotypes/Jan_6_wheat_genotypes_curtis.csv"
   ) %>%
   select(-X1, -X3, -X4, -X5, -Name) %>%
   .[-1:-2, ] %>%
@@ -125,4 +125,4 @@ maps_genotypes_deduplicated <- maps_genotypes %>%
 nrow(maps_genotypes_deduplicated)
 
 write_rds(maps_genotypes_deduplicated,
-    path = "Data\\Intermediate\\Maps\\maps_genotypes.rds")
+    path = "Data/Intermediate/Maps/maps_genotypes.rds")

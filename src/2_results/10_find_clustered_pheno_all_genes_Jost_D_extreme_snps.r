@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -23,7 +23,7 @@ max_genome_lengths <- data.frame(
 # add columns of the D values of each comparison
 for (group in c("chrs_chrw", "chrs_csws", "csws_chrw")) {
   comp_Jost_D <- read_rds(
-    str_c("Data\\Intermediate\\mmod\\", group, "_Jost_D.rds")
+    str_c("Data/Intermediate/mmod/", group, "_Jost_D.rds")
   )[[1]]
   wheat_data$snp <- wheat_data$snp %>% add_column(!!group := comp_Jost_D)
 }
@@ -38,13 +38,13 @@ extremes <- wheat_data$snp %>%
 
 # load gene data
 pheno_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\pheno_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/pheno_genes.csv",
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
   mutate(pos_mb = pos / 1e6, comparison = "pheno_gene")
 resi_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\resi_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/resi_genes.csv",
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
@@ -57,7 +57,7 @@ genes <- add_column(
   genes, chrs_csws = 0, chrs_chrw = 0, csws_chrw = 0, dist = 20
 )
 
-base <- "Results\\loci\\D\\closest_markers"
+base <- "Results/loci/D/closest_markers"
 
 for (i in 1:nrow(genes)) {
   row <- genes[i, ]

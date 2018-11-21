@@ -1,11 +1,12 @@
 library(tidyverse)
 library(SNPRelate)
 library(adegenet)
+library(plyr)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 wheat_data <- parse_gds("phys_subset_sample")
-cluster <- read_rds("Data\\Intermediate\\hdbscan\\wheat_hdbscan.rds")$cluster
+cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
 
 # making the genotype data palatable by genind
 wheat_data$genotypes <- wheat_data$genotypes %>%
@@ -18,43 +19,43 @@ wheat_data$genotypes <- wheat_data$genotypes %>%
 # making subsetted geninds of groups containing and not containing alleles of
 # certain lR genes
 gene_pres <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\gene_presence_randhawa.csv",
+  "Data/Intermediate/Aligned_genes/gene_presence_randhawa.csv",
   col_names = c("sample", "gene_A", "gene_B", "gene_C")
 )
 
-for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")) {
-  carriers <- c(which(gene_pres$gene_A == gene), 
-    which(gene_pres$gene_B == gene), which(gene_pres$gene_C == gene)
-  )
-  index_carriers <- which(gene_pres$sample[carriers] %in% wheat_data$sample$id)
+# for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")) {
+#   carriers <- c(which(gene_pres$gene_A == gene), 
+#     which(gene_pres$gene_B == gene), which(gene_pres$gene_C == gene)
+#   )
+#   index_carriers <- which(gene_pres$sample[carriers] %in% wheat_data$sample$id)
   
-  index_not_carriers <-
-    which(gene_pres$sample[-carriers] %in% wheat_data$sample$id)
-  num_carriers <- length(index_carriers)
+#   index_not_carriers <-
+#     which(gene_pres$sample[-carriers] %in% wheat_data$sample$id)
+#   num_carriers <- length(index_carriers)
 
-  # print out how many of each kind there are for each gene
-  print(gene)
-  print(num_carriers)
-  print(length(index_not_carriers))
+#   # print out how many of each kind there are for each gene
+#   print(gene)
+#   print(num_carriers)
+#   print(length(index_not_carriers))
 
-  pop <- c(
-    rep(gene, length(index_carriers)),
-    rep(str_c("not_", gene), length(index_not_carriers))
-  )
+#   pop <- c(
+#     rep(gene, length(index_carriers)),
+#     rep(str_c("not_", gene), length(index_not_carriers))
+#   )
 
-  subset_genind <- df2genind(
-    t(wheat_data$genotypes[, c(index_carriers, index_not_carriers)]),
-    ind.names =
-      as.character(wheat_data$sample$id)[
-        c(index_carriers, index_not_carriers)
-      ],
-    loc.names = wheat_data$snp$id, ploidy = 1, type = "codom",
-    ncode = 1, pop = pop
-  )
+#   subset_genind <- df2genind(
+#     t(wheat_data$genotypes[, c(index_carriers, index_not_carriers)]),
+#     ind.names =
+#       as.character(wheat_data$sample$id)[
+#         c(index_carriers, index_not_carriers)
+#       ],
+#     loc.names = wheat_data$snp$id, ploidy = 1, type = "codom",
+#     ncode = 1, pop = pop
+#   )
 
-  write_rds(subset_genind,
-    path = str_c("Data\\Intermediate\\Adegenet\\", gene, "_genind.rds"))
-}
+#   write_rds(subset_genind,
+#     path = str_c("Data/Intermediate/Adegenet/", gene, "_genind.rds"))
+# }
 
 
 ###############################################################################
@@ -107,7 +108,7 @@ df2genind(
   loc.names = wheat_data$snp$id, ploidy = 1, type = "codom", ncode = 1,
   strata = strata
 ) %>%
-write_rds(path = str_c("Data\\Intermediate\\Adegenet\\strata_genind.rds"))
+write_rds(path = str_c("Data/Intermediate/Adegenet/strata_genind.rds"))
 
 
 ###############################################################################
@@ -148,6 +149,6 @@ for (i in 1:length(grouping[[1]])) {
   )
 
   write_rds(subset_genind,
-    path = str_c("Data\\Intermediate\\Adegenet\\", name, "_genind.rds")
+    path = str_c("Data/Intermediate/Adegenet/", name, "_genind.rds")
   )
 }

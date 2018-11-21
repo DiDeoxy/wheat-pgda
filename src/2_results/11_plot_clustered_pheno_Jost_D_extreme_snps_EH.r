@@ -6,9 +6,9 @@ library(SNPRelate)
 library(extrafont)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
-source("src\\R_functions\\funcs_calc_stats.R")
-source("src\\R_functions\\colour_sets.R")
+source("src/R_functions/funcs_gds_parse_create.R")
+source("src/R_functions/funcs_calc_stats.R")
+source("src/R_functions/colour_sets.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -21,7 +21,7 @@ max_genome_lengths <- c(max(chrom_lengths[seq(1, 19, 3)]), # A genome
 
 # add columns of the D values of each comparison
 for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {
-  comp_Jost_D <- read_rds(str_c("Data\\Intermediate\\mmod\\", group,
+  comp_Jost_D <- read_rds(str_c("Data/Intermediate/mmod/", group,
     "_Jost_D.rds"))[[1]]
   wheat_data$snp <- wheat_data$snp %>%
     add_column(!!str_c(group, "_D") := comp_Jost_D)
@@ -36,7 +36,7 @@ extremes <- wheat_data$snp %>%
   )
 
 # load the cluster data and make indexes of the individuals in each comparison
-cluster <- read_rds("Data\\Intermediate\\hdbscan\\wheat_hdbscan.rds")$cluster
+cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
 pheno_indices <- list()
 pheno_indices[["CHRW"]] <- which(
   wheat_data$sample$annot$pheno == "HRW" & cluster == 1
@@ -95,13 +95,13 @@ wheat_data$snp_long <- wheat_data$snp %>%
 
 # load gene data
 pheno_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\pheno_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/pheno_genes.csv",
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
   mutate(pos_mb = pos / 1e6, comparison = "pheno_gene")
 resi_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\resi_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/resi_genes.csv",
   col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(id, chrom, pos) %>%
@@ -179,7 +179,7 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png(str_c("Results\\loci\\EH\\extreme_D_eh_comps.png"),
+png(str_c("Results/loci/EH/extreme_D_eh_comps.png"),
     family = "Times New Roman", width = 210, height = 267, pointsize = 5,
     units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")

@@ -1,10 +1,10 @@
 library(SNPRelate)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 wheat_data <- parse_gds("phys_subset_sample")
 
-wheat_gds <- snpgdsOpen("Data\\Intermediate\\GDS\\phys_subset_sample.gds")
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/phys_subset_sample.gds")
 
 # ld pruned set of markes
 set.seed(1000)

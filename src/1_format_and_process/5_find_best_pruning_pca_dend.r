@@ -5,9 +5,9 @@ library(dendextend)
 library(GGally)
 library(extrafont)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
-source("src\\R_functions\\funcs_draw_dend.R")
-source("src\\R_functions\\colour_sets.R")
+source("src/R_functions/funcs_gds_parse_create.R")
+source("src/R_functions/funcs_draw_dend.R")
+source("src/R_functions/colour_sets.R")
 
 wheat_data <- parse_gds("phys_subset_sample")
 
@@ -16,7 +16,7 @@ wheat_data <- parse_gds("phys_subset_sample")
 # estimation of relationships genome wide (i.e. clustering)
 # applies multiple values of maf, bps, and ld, visual inspection of the
 # resulting PCA plots identified the best subset
-wheat_gds <- snpgdsOpen("Data\\Intermediate\\GDS\\phys_subset_sample.gds")
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/phys_subset_sample.gds")
 maf <- 0.05
 for (max_dist in c(5e6, 1e7, 2e7, 3e7)) {
   for (ld in seq(0.8, 0.8, 0.1)) {
@@ -42,7 +42,7 @@ for (max_dist in c(5e6, 1e7, 2e7, 3e7)) {
     # plot pairs
     png(
       str_c(
-        "Results\\pca\\tests\\pca_", "max_dist_", max_dist / 1e6,
+        "Results/pca/tests/pca_", "max_dist_", max_dist / 1e6,
         "_LD_", ld * 10, "_num_snps_", length(kept_id), ".png"
       ),
       family = "Times New Roman", width = 200, height = 200, pointsize = 12,
@@ -61,7 +61,7 @@ for (max_dist in c(5e6, 1e7, 2e7, 3e7)) {
     # plot dend
     png(
       str_c(
-        "Results\\dend\\tests\\dend_", "max_dist_", max_dist / 1e6,
+        "Results/dend/tests/dend_", "max_dist_", max_dist / 1e6,
         "_LD_", ld * 10, "_num_snps_", length(kept_id), ".png"
       ),
       family = "Times New Roman", width = 200, height = 200, pointsize = 15,

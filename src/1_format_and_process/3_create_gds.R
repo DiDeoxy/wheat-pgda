@@ -3,7 +3,7 @@ library(SNPRelate)
 
 # load the phys map with the genotypes
 maps_genotypes <- read_rds(
-  "Data\\Intermediate\\Maps\\maps_genotypes.rds"
+  "Data/Intermediate/Maps/maps_genotypes.rds"
 )
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
@@ -15,12 +15,12 @@ genotypes <- maps_genotypes %>%
 
 # import categorical information on wheat varieites (market class,
 # breeding program, year of release, phenotype, etc.)
-metadata <- read_csv("Data\\Raw\\Parsed\\metadata_final.csv") %>%
+metadata <- read_csv("Data/Raw/Parsed/metadata_final.csv") %>%
   arrange(`Real Name`)
 
 # print out ordered sample names for perl cliques
 write(metadata$`Real Name`,
-  file = "Data\\Intermediate\\ordered_names.txt",
+  file = "Data/Intermediate/ordered_names.txt",
   sep = "\n"
 )
 
@@ -45,7 +45,7 @@ samp_annot <- list(
 )
 
 ## construct the SNPRelate GDS object fromt the input data with physical map
-snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys.gds",
+snpgdsCreateGeno("Data/Intermediate/GDS/full_phys.gds",
   genmat = data.matrix(genotypes),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker,
@@ -57,7 +57,7 @@ snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_phys.gds",
 
 ## construct the SNPRelate GDS object form the input data with genetic map
 gen_order <- order(maps$chrom, maps$gen_pos)
-snpgdsCreateGeno("Data\\Intermediate\\GDS\\full_gen.gds",
+snpgdsCreateGeno("Data/Intermediate/GDS/full_gen.gds",
   genmat = data.matrix(genotypes[gen_order, ]),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker[gen_order],

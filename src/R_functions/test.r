@@ -180,7 +180,7 @@ prune_window <- function (chrom, kept, in_window, i, max_window) {
   }
 }
 
-full <- snpgdsOpen("Data\\Intermediate\\GDS\\full_phys.gds")
+full <- snpgdsOpen("Data/Intermediate/GDS/full_phys.gds")
 set.seed(1000) # so that repeated runs produce same output
 kept_id <- ld_floor_prune(full, 0.2, 1e7)
 snpgdsClose(full)
@@ -190,7 +190,7 @@ snpgdsClose(full)
 # kept_id[[1]][816]
 # which(kept_id[[1]] == kept_id[[1]][816])
 # kept_id[[1]][818]
-# gds <- "Data\\Intermediate\\GDS\\full_phys.gds"
-# source("src\\R_functions\\data_loading_no_mb.R")
+# gds <- "Data/Intermediate/GDS/full_phys.gds"
+# source("src/R_functions/data_loading_no_mb.R")
 
 # which(snp_id[which(snp_chrom == 2)] == kept_id[[1]][831])

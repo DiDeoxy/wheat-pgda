@@ -6,8 +6,8 @@ library(extrafont)
 library(SNPRelate)
 
 # load custom functions
-source("src\\R_functions\\funcs_plot_loci.R")
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_plot_loci.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -22,7 +22,7 @@ max_genome_lengths <- c(
 
 # find the phi values of each marker in each Gene and add to data set
 for (group in c("Lr34", "Lr22a", "Lr21", "Lr10", "Lr1")) {
-  gene_Jost_D <- read_rds(str_c("Data\\Intermediate\\mmod\\", group,
+  gene_Jost_D <- read_rds(str_c("Data/Intermediate/mmod/", group,
     "_Jost_D.rds"))[[1]]
   wheat_data$snp <- wheat_data$snp %>% add_column(!!group := gene_Jost_D)
 }
@@ -51,7 +51,7 @@ wheat_data$snp_long <- wheat_data$snp %>%
 
 # load the gene positions
 known_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\known_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/known_genes.csv",
   col_names = c("Gene", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(Gene, chrom, pos) %>%
@@ -121,8 +121,8 @@ plots_matrix[7, 3] <- plots_matrix[7, 3] +
   theme(panel.border = element_rect(fill = NA, colour = "#E76BF3", size = 2))
 
 # plot the matrix
-png(str_c("Results\\loci\\D\\known_genes_D.png"),
-  family = "Times New Roman", width = 210, height = 277, pointsize = 5,
+png(str_c("Results/loci/D/known_genes_D.png"),
+  family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300
 )
 print(plots_matrix + theme(legend.position = "bottom"))

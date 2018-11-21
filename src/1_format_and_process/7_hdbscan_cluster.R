@@ -3,7 +3,7 @@ library(SNPRelate)
 library(dbscan)
 library(scrime)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 wheat_data <- parse_gds("phys_subset_sample")
 
@@ -16,7 +16,7 @@ wheat_imputed <- wheat_data$genotypes %>%
 wheat_hdbscan <- wheat_imputed %>% hdbscan(minPts = 8)
 
 write_rds(wheat_hdbscan,
-    path = "Data\\Intermediate\\hdbscan\\wheat_hdbscan.rds"
+    path = "Data/Intermediate/hdbscan/wheat_hdbscan.rds"
 )
 
 # examine group composition

@@ -5,20 +5,20 @@ library(dendextend)
 library(extrafont)
 library(ape)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
-source("src\\R_functions\\funcs_draw_dend.R")
-source("src\\R_functions\\colour_sets.R")
+source("src/R_functions/funcs_gds_parse_create.R")
+source("src/R_functions/funcs_draw_dend.R")
+source("src/R_functions/colour_sets.R")
 
 ## setting up the data
 wheat_data <- parse_gds("phys_subset_sample_ld_pruned")
 
 clusters <- factor(
-  read_rds("Data\\Intermediate\\hdbscan\\wheat_hdbscan.rds")$cluster)
+  read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster)
 levels(clusters) <- c("Noise", "Cluster 1", "Cluster 2", "Cluster 3",
                       "Cluster 4", "Cluster 5")
 
 wheat_gds <- snpgdsOpen(
-  "Data\\Intermediate\\GDS\\phys_subset_sample_ld_pruned.gds")
+  "Data/Intermediate/GDS/phys_subset_sample_ld_pruned.gds")
 ## making the distance object
 ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
@@ -28,7 +28,7 @@ upgma_dend <- color_branches(upgma_dend, k = 7, col = colours_dend)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
-png("Results\\dend\\UPGMA_hdbscan_annot.png",
+png("Results/dend/UPGMA_hdbscan_annot.png",
     family = "Times New Roman", width = 200, height = 200, pointsize = 15,
     units = "mm", res = 500
     )

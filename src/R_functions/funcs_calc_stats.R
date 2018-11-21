@@ -4,7 +4,7 @@ library(GGally)
 library(extrafont)
 library(RColorBrewer)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 calc_eh <- function (genotypes) {
   apply(genotypes, 1, function (snp) {
@@ -69,7 +69,7 @@ plot_gaps <- function(gaps, subset, plot_title) {
   )
 
   # plot the matrix
-  png(str_c("Results\\gaps\\gaps_dist_", subset, ".png"),
+  png(str_c("Results/gaps/gaps_dist_", subset, ".png"),
     family = "Times New Roman", width = 100, height = 143, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + theme(legend.position = "bottom"))
@@ -78,7 +78,7 @@ plot_gaps <- function(gaps, subset, plot_title) {
 
 calc_pairwise_ld <- function (subset, snp_data) {
   wheat_internal <- snpgdsOpen(
-    str_c("Data\\Intermediate\\GDS\\", subset, ".gds"))
+    str_c("Data/Intermediate/GDS/", subset, ".gds"))
   # Calcualte ld between all snps on each chromosome
   mean_ld <- by(snp_data, snp_data$chrom, function (chrom) {
     snpgdsLDMat(wheat_internal, method = "composite",
@@ -171,7 +171,7 @@ calc_plot_map_stats <- function (subset, plot_title) {
     "Overall average pairwise ld ",
     mean(unlist(pairwise_ld), na.rm = TRUE), "\n"
   )
-  out <- file(str_c("Results\\gaps\\gaps_dist_", subset, ".txt"))
+  out <- file(str_c("Results/gaps/gaps_dist_", subset, ".txt"))
   writeLines(report, out)
   close(out)
 }

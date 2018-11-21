@@ -1,10 +1,10 @@
 library(adegenet)
 library(tidyverse)
 
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 comp_genind <- read_rds(str_c(
-  "Data\\Intermediate\\Adegenet\\Lr34_genind.rds"
+  "Data/Intermediate/Adegenet/Lr34_genind.rds"
 ))
 
 markers <- c(
@@ -36,7 +36,7 @@ which(wheat_data$snp$id == "wsnp_CAP7_c44_26549")
 wheat_data$snp$pos[14260:14272]
 
 comp_genind <- read_rds(str_c(
-  "Data\\Intermediate\\Adegenet\\csws_chrw_genind.rds"
+  "Data/Intermediate/Adegenet/csws_chrw_genind.rds"
 ))
 
 markers <- c("BS00022055_51", "RAC875_c34939_963")

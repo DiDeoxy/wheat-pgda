@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -9,7 +9,7 @@ wheat_data <- parse_gds("phys_subset_sample")
 # add columns of the D values of each comparison
 for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {
     comp_Jost_D <- read_rds(str_c(
-        "Data\\Intermediate\\mmod\\", group,
+        "Data/Intermediate/mmod/", group,
         "_Jost_D.rds"
     ))[[1]]
     wheat_data$snp <- wheat_data$snp %>% add_column(!!group := comp_Jost_D)
@@ -44,4 +44,4 @@ jost_d_stats <- by(
 
 chroms_arranged <- c(seq(1, 19, 3), seq(2, 20, 3), seq(3, 21, 3), 22)
 
-write_csv(jost_d_stats[chroms_arranged, ], "Results\\loci\\D\\D_stats.csv")
+write_csv(jost_d_stats[chroms_arranged, ], "Results/loci/D/D_stats.csv")

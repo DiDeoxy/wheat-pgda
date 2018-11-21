@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # load custom functions
-source("src\\R_functions\\funcs_gds_parse_create.R")
+source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
 wheat_data <- parse_gds("phys_subset_sample")
@@ -22,7 +22,7 @@ max_genome_lengths <- data.frame(
 
 # find the phi values of each marker in each Gene and add to data set
 for (group in c("Lr34", "Lr22a", "Lr21", "Lr10", "Lr1")) {
-  gene_Jost_D <- read_rds(str_c("Data\\Intermediate\\mmod\\", group,
+  gene_Jost_D <- read_rds(str_c("Data/Intermediate/mmod/", group,
     "_Jost_D.rds"))[[1]]
   wheat_data$snp <- wheat_data$snp %>% add_column(!!group := gene_Jost_D)
 }
@@ -39,7 +39,7 @@ extremes <- wheat_data$snp %>%
 
 # load the gene positions
 known_genes <- read_csv(
-  "Data\\Intermediate\\Aligned_genes\\selected_alignments\\known_genes.csv",
+  "Data/Intermediate/Aligned_genes/selected_alignments/known_genes.csv",
   col_names = c("Gene", "chrom", "pos", "sleng", "salign", "%id")
 ) %>%
   select(Gene, chrom, pos) %>%
@@ -56,7 +56,7 @@ known_genes_responsible <- cbind(
   known_genes[c(1, 6, 9, 11, 15), ], dist = c(6.11, 6.11, 11.25, 1.64, 11.25)
 ) %>% as.tibble()
 
-base <- "Results\\loci\\D\\closest_markers"
+base <- "Results/loci/D/closest_markers"
 
 for (i in 1:nrow(known_genes_responsible)) {
   row <- known_genes_responsible[i, ]
