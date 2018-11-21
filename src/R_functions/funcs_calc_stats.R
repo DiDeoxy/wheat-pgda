@@ -3,6 +3,8 @@ library(ggplot2)
 library(GGally)
 library(extrafont)
 library(RColorBrewer)
+# install.packages("pracma")
+library(pracma)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
@@ -29,6 +31,67 @@ calc_maf_mr <- function (genotypes) {
     mr <- snp[3] / sum(snp)
     return(c(maf = maf, mr = mr))
   })))
+}
+
+plot_neighbour_ld <- function(subset, snp_data, plot_title) {
+  wheat_internal <- snpgdsOpen(
+    str_c("Data/Intermediate/GDS/", subset, ".gds"))
+  # Calcualte ld between all snps on each chromosome
+  neighbour_ld_chrom <- by(snp_data, snp_data$chrom, function (chrom) {
+    neighbour_ld <- snpgdsLDMat(wheat_internal, method = "composite",
+      slide = -1, snp.id = chrom$id)$LD %>%
+      abs() %>%
+      Diag(., 1)
+  })
+  snpgdsClose(wheat_internal)
+
+  A <- unlist(neighbour_ld_chrom[seq(1, 19, 3)])
+  B <- unlist(neighbour_ld_chrom[seq(2, 20, 3)])
+  D <- unlist(neighbour_ld_chrom[seq(3, 21, 3)])
+
+  # histograms and boxplots depicting the distribution of gaps on each genome
+  neighbour_ld_genome <- tibble(
+    Genome = factor(
+      c(rep("A", length(A)),
+        rep("B", length(B)),
+        rep("D", length(D)),
+        rep("All", length(c(A, B, D)))
+      ),
+      levels = c("A", "B", "D", "All")
+    ),
+    ld = c(
+      A, B, D,
+      A, B, D
+    )
+  )
+
+  plots <- list()
+  plots[[2]] <- ggplot(neighbour_ld_genome, aes(ld, colour = Genome)) +
+    geom_freqpoly() +
+    scale_color_manual(values = brewer.pal(4, "Dark2")) +
+    xlim(0, 1)
+  neighbour_ld_genome$Genome <- factor(neighbour_ld_genome$Genome,
+    rev(levels(neighbour_ld_genome$Genome)))
+  plots[[1]] <- ggplot(neighbour_ld_genome, aes(Genome, ld, colour = Genome)) +
+    geom_boxplot() +
+    ylim(0, 1) +
+    coord_flip() +
+    scale_color_manual(values = rev(brewer.pal(4, "Dark2")))
+
+  # turn plot list into ggmatrix
+  plots_matrix <- ggmatrix(
+    plots, nrow = 2, ncol = 1, xlab = "LD between Neighbours",
+    yAxisLabels = c("a) Boxplots", "b) Frequency Plots"),
+    title = plot_title,
+    legend = c(2, 1)
+  )
+
+  # plot the matrix
+  png(str_c("Results/gaps/neighbour_ld_", subset, ".png"),
+    family = "Times New Roman", width = 100, height = 143, pointsize = 10,
+    units = "mm", res = 300)
+  print(plots_matrix + theme(legend.position = "bottom"))
+  dev.off()
 }
 
 plot_gaps <- function(gaps, subset, plot_title) {
@@ -76,7 +139,7 @@ plot_gaps <- function(gaps, subset, plot_title) {
   dev.off()
 }
 
-calc_pairwise_ld <- function (subset, snp_data) {
+calc_mean_pairwise_ld <- function (subset, snp_data) {
   wheat_internal <- snpgdsOpen(
     str_c("Data/Intermediate/GDS/", subset, ".gds"))
   # Calcualte ld between all snps on each chromosome
@@ -112,7 +175,7 @@ calc_length_num_gaps <- function(snp_data) {
   return(list(leng = leng, num = num, gaps = gaps))
 }
 
-calc_plot_map_stats <- function (subset, plot_title) {
+calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   wheat_data <- parse_gds(subset)
   # find the maf and mr
   maf_mr <- calc_maf_mr(wheat_data$genotypes)
@@ -125,12 +188,15 @@ calc_plot_map_stats <- function (subset, plot_title) {
   gaps <- length_num_gaps$gaps
 
   # plot the gaps
-  plot_gaps(gaps, subset, plot_title)
+  plot_gaps(gaps, subset, plot_title_1)
+
+  # plot the ld
+  plot_neighbour_ld(subset, wheat_data$snp, plot_title_2)
 
   # find the min length of the top percentile of gaps
   top_percentile <- quantile(unlist(gaps), prob = 0.99, na.rm = T)
 
-  pairwise_ld <- calc_pairwise_ld(subset, wheat_data$snp)
+  mean_pairwise_ld <- calc_mean_pairwise_ld(subset, wheat_data$snp)
 
   # find which chrom of each genome has the longest gap
   chr_A <- str_c(lapply(gaps$A, max) %>% which.max() %/% 3 + 1, "A")
@@ -163,13 +229,13 @@ calc_plot_map_stats <- function (subset, plot_title) {
     "Genome D: longest gap ", max(unlist(gaps$D)), " on chr ", chr_D, ".\n",
     "############################################\n",
     "Genome A: average pairwise ld ",
-    mean(unlist(pairwise_ld[seq(1, 19, 3)]), na.rm = TRUE), "\n",
+    mean(unlist(mean_pairwise_ld[seq(1, 19, 3)]), na.rm = TRUE), "\n",
     "Genome B: average pairwise ld ",
-    mean(unlist(pairwise_ld[seq(2, 20, 3)]), na.rm = TRUE), "\n",
+    mean(unlist(mean_pairwise_ld[seq(2, 20, 3)]), na.rm = TRUE), "\n",
     "Genome D: average pairwise ld ",
-    mean(unlist(pairwise_ld[seq(3, 21, 3)]), na.rm = TRUE), "\n",
+    mean(unlist(mean_pairwise_ld[seq(3, 21, 3)]), na.rm = TRUE), "\n",
     "Overall average pairwise ld ",
-    mean(unlist(pairwise_ld), na.rm = TRUE), "\n"
+    mean(unlist(mean_pairwise_ld), na.rm = TRUE), "\n"
   )
   out <- file(str_c("Results/gaps/gaps_dist_", subset, ".txt"))
   writeLines(report, out)
