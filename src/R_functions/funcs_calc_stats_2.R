@@ -89,7 +89,7 @@ plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
 
   # plot the matrix
   png(str_c("Results/gaps/gaps_nbs_ld_", subset, ".png"),
-    family = "Times New Roman", width = 140, height = 88, pointsize = 10,
+    family = "Times New Roman", width = 100, height = 62, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + theme(legend.position = "bottom"))
   dev.off()
