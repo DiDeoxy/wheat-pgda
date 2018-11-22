@@ -33,7 +33,7 @@ calc_maf_mr <- function (genotypes) {
   })))
 }
 
-plot_gaps <- function(gaps, subset, plot_title) {
+plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(
     Genome = factor(
@@ -49,36 +49,6 @@ plot_gaps <- function(gaps, subset, plot_title) {
     )
   )
 
-  plots <- list()
-  plots[[2]] <- ggplot(gaps_log10, aes(gaps, colour = Genome)) +
-    geom_freqpoly() +
-    scale_color_manual(values = brewer.pal(4, "Dark2")) +
-    xlim(min(gaps_log10$gaps), max(gaps_log10$gaps))
-  gaps_log10$Genome <- factor(gaps_log10$Genome,
-    rev(levels(gaps_log10$Genome)))
-  plots[[1]] <- ggplot(gaps_log10, aes(Genome, gaps, colour = Genome)) +
-    geom_boxplot() +
-    ylim(min(gaps_log10$gaps), max(gaps_log10$gaps)) +
-    coord_flip() +
-    scale_color_manual(values = rev(brewer.pal(4, "Dark2")))
-
-  # turn plot list into ggmatrix
-  plots_matrix <- ggmatrix(
-    plots, nrow = 2, ncol = 1, xlab = "Log10 Transformed Gap Distance",
-    yAxisLabels = c("a) Boxplots", "b) Frequency Plots"),
-    title = plot_title,
-    legend = c(2, 1)
-  )
-
-  # plot the matrix
-  png(str_c("Results/gaps/gaps_dist_", subset, ".png"),
-    family = "Times New Roman", width = 100, height = 143, pointsize = 10,
-    units = "mm", res = 300)
-  print(plots_matrix + theme(legend.position = "bottom"))
-  dev.off()
-}
-
-plot_nbs_ld <- function(genome_ld, subset, plot_title) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   nbs_ld_genome <- tibble(
     Genome = factor(
@@ -98,34 +68,36 @@ plot_nbs_ld <- function(genome_ld, subset, plot_title) {
   )
 
   plots <- list()
+  plots[[1]] <- ggplot(gaps_log10, aes(gaps, colour = Genome)) +
+    geom_freqpoly() +
+    scale_color_manual(values = brewer.pal(4, "Dark2")) +
+    xlim(min(gaps_log10$gaps), max(gaps_log10$gaps)) +
+    ylim(0, 500)
   plots[[2]] <- ggplot(nbs_ld_genome, aes(ld, colour = Genome)) +
     geom_freqpoly() +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
-    xlim(0, 1)
-  nbs_ld_genome$Genome <- factor(nbs_ld_genome$Genome,
-    rev(levels(nbs_ld_genome$Genome)))
-  plots[[1]] <- ggplot(nbs_ld_genome, aes(Genome, ld, colour = Genome)) +
-    geom_boxplot() +
-    ylim(0, 1) +
-    coord_flip() +
-    scale_color_manual(values = rev(brewer.pal(4, "Dark2")))
+    xlim(0, 1) +
+    ylim(0, 500)
 
   # turn plot list into ggmatrix
   plots_matrix <- ggmatrix(
-    plots, nrow = 2, ncol = 1, xlab = "LD between nbss",
-    yAxisLabels = c("a) Boxplots", "b) Frequency Plots"),
+    plots, nrow = 1, ncol = 2, yAxisLabels = "Num Markers",
+    xAxisLabels = c("Gap Distances", "Neigbouring LD"),
     title = plot_title,
-    legend = c(2, 1)
+    legend = c(1, 2)
   )
 
   # plot the matrix
-  png(str_c("Results/gaps/nbs_ld_", subset, ".png"),
-    family = "Times New Roman", width = 100, height = 143, pointsize = 10,
+  png(str_c("Results/gaps/gaps_nbs_ld_", subset, ".png"),
+    family = "Times New Roman", width = 140, height = 88, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + theme(legend.position = "bottom"))
   dev.off()
 }
 
+# subset <- "phys_subset_sample_ld_pruned"
+# wheat_data <- parse_gds(subset)
+# snp_data <- wheat_data$snp
 calc_ld_stats <- function (subset, snp_data) {
   wheat_internal <- snpgdsOpen(
     str_c("Data/Intermediate/GDS/", subset, ".gds"))
@@ -159,7 +131,6 @@ calc_ld_stats <- function (subset, snp_data) {
 
   genome_ld
 }
-
 
 calc_length_num_gaps <- function(snp_data) {
   ## number of snps and mean distances between the genome
@@ -196,14 +167,11 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   num <- length_num_gaps$num
   gaps <- length_num_gaps$gaps
 
-  # plot the gaps
-  plot_gaps(gaps, subset, plot_title_1)
-
   # calc ld stats
   genome_ld <- calc_ld_stats(subset, wheat_data$snp)
 
   # plot the ld
-  plot_nbs_ld(genome_ld, subset, plot_title_2)
+  plot_gaps_nbs_ld(gaps, genome_ld, subset, plot_title_2)
 
   # find the min length of the top percentile of gaps
   top_percentile <- quantile(unlist(gaps), prob = 0.99, na.rm = T)
