@@ -68,13 +68,15 @@ plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
   )
 
   plots <- list()
-  plots[[1]] <- ggplot(gaps_log10, aes(gaps, colour = Genome)) +
-    geom_freqpoly() +
+  plots[[1]] <- gaps_log10 %>%
+    ggplot() +
+    geom_freqpoly(aes(gaps, colour = Genome), size = 0.3) +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
     xlim(min(gaps_log10$gaps), max(gaps_log10$gaps)) +
     ylim(0, 500)
-  plots[[2]] <- ggplot(nbs_ld_genome, aes(ld, colour = Genome)) +
-    geom_freqpoly() +
+  plots[[2]] <- nbs_ld_genome %>%
+    ggplot() +
+    geom_freqpoly(aes(ld, colour = Genome), size = 0.3) +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
     xlim(0, 1) +
     ylim(0, 500)
@@ -91,10 +93,13 @@ plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
   png(str_c("Results/gaps/gaps_nbs_ld_", subset, ".png"),
     family = "Times New Roman", width = 100, height = 62, pointsize = 10,
     units = "mm", res = 300)
-  print(plots_matrix + theme(legend.position = "bottom"))
+  print(plots_matrix + 
+    theme(legend.position = "bottom",
+      text = element_text(
+        size = 8, lineheight = 0.1)))
   dev.off()
 }
-
+theme()
 # subset <- "phys_subset_sample_ld_pruned"
 # wheat_data <- parse_gds(subset)
 # snp_data <- wheat_data$snp
