@@ -159,14 +159,6 @@ plots <- by(wheat_data$snp_long_genes, wheat_data$snp_long_genes$chrom,
           legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
           limits = levels(as.factor(wheat_data$snp_long_genes$comparison))
         )
-        # +
-        # scale_colour_manual(
-        #   legend_title, labels = lables,
-        #   values = colours_comparisons_genes[1:3]
-        # ) +
-        # scale_shape_manual(
-        #   legend_title, labels = lables, values = points[1:3]
-        # )
   }
 )
 

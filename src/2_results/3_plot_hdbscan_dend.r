@@ -75,7 +75,7 @@ legend("bottomleft", legend = levels(wheat_data$sample$annot$mc),
 legend("topleft", legend = levels(wheat_data$sample$annot$pheno),
   title = "Phenotype", pch = pch, col = colours_pheno, cex = cex,
   bg = colors()[525])
-legend("center", legend = levels(clusters), title = "Hhdbscan Clusters",
+legend("center", legend = levels(clusters), title = "HDBSCAN Clusters",
   pch = pch, col = colours_hdbscan_legend, cex = cex, bg = colors()[109])
 
 title(

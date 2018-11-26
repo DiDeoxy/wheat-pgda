@@ -19,39 +19,20 @@ write_rds(wheat_hdbscan,
     path = "Data/Intermediate/hdbscan/wheat_hdbscan.rds"
 )
 
-# examine group composition
-table(wheat_hdbscan$cluster)
+wheat_hdbscan <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")
 
-# cluster 1
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 1])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HRW"])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HWW"])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SRW"])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SWW"])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$habit == "Winter"])
+clusters <- wheat_hdbscan$cluster %>%
+  replace(. == 0, "Noise") 
+  # %>%
+  # replace(. == 1, "Cluster 1") %>%
+  # replace(. == 2, "Cluster 2") %>%
+  # replace(. == 3, "Cluster 3") %>%
+  # replace(. == 4, "Cluster 4") %>%
+  # replace(. == 5, "Cluster 5")
 
-# cluster 2
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 2])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "SWS"])
-
-# cluster 3
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 3])
-table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 3])
-table(wheat_data$sample$annot$mc[wheat_data$sample$annot$pheno == "HWS" &
-  wheat_hdbscan$cluster == 3])
-
-# cluster 4
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 4])
-table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 4])
-table(wheat_data$sample$annot$pheno[wheat_data$sample$annot$mc == "CWGP" &
-  wheat_hdbscan$cluster == 4])
-table(wheat_data$sample$annot$pheno[wheat_data$sample$annot$mc == "N/A" &
-  wheat_hdbscan$cluster == 4])
-
-# cluster 5
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 5])
-
-# Noise
-table(wheat_data$sample$annot$pheno[wheat_hdbscan$cluster == 0])
-table(wheat_data$sample$annot$mc[wheat_hdbscan$cluster == 0])
-table(wheat_hdbscan$cluster[wheat_data$sample$annot$pheno == "HRS"])
+table(data.frame(wheat_data$sample$annot$pheno, clusters)) %>%
+  as.data.frame.matrix() %>%
+  write.csv("Results/pheno_cluster.csv", quote = FALSE)
+table(data.frame(wheat_data$sample$annot$mc, clusters)) %>%
+  as.data.frame.matrix() %>%
+  write.csv("Results/mc_cluster.csv", quote = FALSE)
