@@ -211,19 +211,19 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
       sum(lng$D$leng) / 1000,
       sum(lng$A$leng, lng$B$leng, lng$D$leng) / 1000
     ),
-    "Num SNPs" = c(
+    "Num. SNPs" = c(
       sum(lng$A$num),
       sum(lng$B$num),
       sum(lng$D$num),
       sum(lng$A$num, lng$B$num, lng$D$num)
     ),
-    "Average Gap Size" = c(
+    "Mean Gap Size" = c(
       mean(lng$A$gaps),
       mean(lng$B$gaps),
       mean(lng$D$gaps),
       mean(c(lng$A$gaps, lng$B$gaps, lng$D$gaps))
     ),
-    "Num Top 1% Gaps" = c(
+    "Num. Top 1% Gaps" = c(
       sum(lng$A$gaps >= top_percentile),
       sum(lng$B$gaps >= top_percentile),
       sum(lng$D$gaps >= top_percentile),
@@ -235,25 +235,25 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
         )
       )
     ),
-    "Min length top 1% Gaps" = c(
+    "Min length top 1% Gap" = c(
       min(lng$A$gaps[which(lng$A$gaps >= top_percentile)]),
       min(lng$B$gaps[which(lng$B$gaps >= top_percentile)]),
       min(lng$D$gaps[which(lng$D$gaps >= top_percentile)]),
       top_percentile
     ),
-    "Max length Gaps" = c(
+    "Max length Gap" = c(
       max(lng$A$gaps),
       max(lng$B$gaps),
       max(lng$D$gaps),
       max(c(lng$A$gaps, lng$B$gaps, lng$D$gaps))
     ),
-    "Pairwise LD" = c(
+    "Mean Pairwise LD" = c(
       mean(genome_ld$A$pw, na.rm = TRUE),
       mean(genome_ld$B$pw, na.rm = TRUE),
       mean(genome_ld$D$pw, na.rm = TRUE),
       mean(c(genome_ld$A$pw, genome_ld$B$pw, genome_ld$D$pw), na.rm = TRUE)
     ),
-    "Neighbour LD" = c(
+    "Mean Neighbour LD" = c(
       mean(genome_ld$A$nbs, na.rm = TRUE),
       mean(genome_ld$B$nbs, na.rm = TRUE),
       mean(genome_ld$D$nbs, na.rm = TRUE),
