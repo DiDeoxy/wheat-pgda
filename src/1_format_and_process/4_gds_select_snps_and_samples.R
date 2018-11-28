@@ -55,6 +55,7 @@ NILs <- c(
   "SWS241", "SWS345", "SWS363", "SWS390", "SWS408", "SWS410"
 )
 
+
 # find the indices of the NILs
 sample_index <- match(NILs, wheat_data$sample$id)
 

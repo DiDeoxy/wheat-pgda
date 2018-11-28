@@ -5,7 +5,8 @@ library(scrime)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
-wheat_data <- parse_gds("phys_subset_sample")
+wheat_data <- parse_gds("phys_subset_sample_ld_pruned")
+# length(wheat_data$snp$id)
 
 wheat_imputed <- wheat_data$genotypes %>%
     replace(. == 0, 1) %>%

@@ -1,0 +1,88 @@
+write_delim               package:readr                R Documentation
+
+_W_r_i_t_e _a _d_a_t_a _f_r_a_m_e _t_o _a _d_e_l_i_m_i_t_e_d _f_i_l_e
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     This is about twice as fast as ‘write.csv()’, and never writes row
+     names. ‘output_column()’ is a generic method used to coerce
+     columns to suitable output.
+
+_U_s_a_g_e:
+
+     write_delim(x, path, delim = " ", na = "NA", append = FALSE,
+       col_names = !append)
+     
+     write_csv(x, path, na = "NA", append = FALSE, col_names = !append)
+     
+     write_excel_csv(x, path, na = "NA", append = FALSE, col_names = !append)
+     
+     write_tsv(x, path, na = "NA", append = FALSE, col_names = !append)
+     
+_A_r_g_u_m_e_n_t_s:
+
+       x: A data frame to write to disk
+
+    path: Path or connection to write to.
+
+   delim: Delimiter used to separate values. Defaults to ‘" "’. Must be
+          a single character.
+
+      na: String used for missing values. Defaults to NA. Missing
+          values will never be quoted; strings with the same value as
+          ‘na’ will always be quoted.
+
+  append: If ‘FALSE’, will overwrite existing file. If ‘TRUE’, will
+          append to existing file. In both cases, if file does not
+          exist a new file is created.
+
+col_names: Write columns names at the top of the file?
+
+_V_a_l_u_e:
+
+     ‘write_*()’ returns the input ‘x’ invisibly.
+
+_O_u_t_p_u_t:
+
+     Factors are coerced to character. Doubles are formatted using the
+     grisu3 algorithm. POSIXct's are formatted as ISO8601.
+
+     All columns are encoded as UTF-8. ‘write_excel_csv()’ also
+     includes a UTF-8 Byte order mark which indicates to Excel the csv
+     is UTF-8 encoded.
+
+     Values are only quoted if needed: if they contain a comma, quote
+     or newline.
+
+_R_e_f_e_r_e_n_c_e_s:
+
+     Florian Loitsch, Printing Floating-Point Numbers Quickly and
+     Accurately with Integers, PLDI '10, <URL:
+     http://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf>
+
+_E_x_a_m_p_l_e_s:
+
+     tmp <- tempfile()
+     write_csv(mtcars, tmp)
+     head(read_csv(tmp))
+     
+     # format_* is useful for testing and reprexes
+     cat(format_csv(head(mtcars)))
+     cat(format_tsv(head(mtcars)))
+     cat(format_delim(head(mtcars), ";"))
+     
+     df <- data.frame(x = c(1, 2, NA))
+     format_csv(df, na = ".")
+     
+     # Quotes are automatically as needed
+     df <- data.frame(x = c("a", '"', ",", "\n"))
+     cat(format_csv(df))
+     
+     # A output connection will be automatically created for output filenames
+     # with appropriate extensions.
+     dir <- tempdir()
+     write_tsv(mtcars, file.path(dir, "mtcars.tsv.gz"))
+     write_tsv(mtcars, file.path(dir, "mtcars.tsv.bz2"))
+     write_tsv(mtcars, file.path(dir, "mtcars.tsv.xz"))
+     
+

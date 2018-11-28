@@ -6,6 +6,7 @@ library(plyr)
 source("src/R_functions/funcs_gds_parse_create.R")
 
 wheat_data <- parse_gds("phys_subset_sample")
+
 cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
 
 # making the genotype data palatable by genind
@@ -15,15 +16,15 @@ wheat_data$genotypes <- wheat_data$genotypes %>%
   replace(. == 3, "")
 
 
-###############################################################################
-# making subsetted geninds of groups containing and not containing alleles of
-# certain lR genes
-gene_pres <- read_csv(
-  "Data/Intermediate/Aligned_genes/gene_presence_randhawa.csv",
-  col_names = c("sample", "gene_A", "gene_B", "gene_C")
-)
+# ###############################################################################
+# # making subsetted geninds of groups containing and not containing alleles of
+# # certain lR genes
+# gene_pres <- read_csv(
+#   "Data/Intermediate/Aligned_genes/gene_presence_randhawa.csv",
+#   col_names = c("sample", "gene_A", "gene_B", "gene_C")
+# )
 
-# for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")) {
+# for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")[2]) {
 #   carriers <- c(which(gene_pres$gene_A == gene), 
 #     which(gene_pres$gene_B == gene), which(gene_pres$gene_C == gene)
 #   )
