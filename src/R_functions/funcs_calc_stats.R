@@ -4,7 +4,6 @@ library(GGally)
 library(extrafont)
 library(RColorBrewer)
 library(pracma)
-library(rlist)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
@@ -135,35 +134,35 @@ calc_maf_mr <- function (wheat_data) {
 }
 
 calc_lng <- function(snp_data) {
-  ## number of snps and mean distances between the genome
-  # A <- list(leng = vector(), num = vector(), gaps = vector())
-  # B <- list(leng = vector(), num = vector(), gaps = vector())
-  # D <- list(leng = vector(), num = vector(), gaps = vector())
+  # number of snps and mean distances between the genome
   lng <- by(snp_data, snp_data$chrom, function (chrom) {
-    tibble(
+    list(
       leng = max(chrom$pos_mb),
       num = length(chrom$pos_mb),
       gaps = diff(chrom$pos_mb)
     )
-    # if (chrom$chrom[1] %in% seq(1, 19, 3)) {
-    #   A$leng <<- c(A$leng, max(chrom$pos_mb))
-    #   A$num <<- c(A$num, length(chrom$pos_mb)) # number of snps on group
-    #   A$gaps <<- list.append(A$gaps, diff(chrom$pos_mb))
-    # } else if (chrom$chrom[1] %in% seq(2, 20, 3)) {
-    #   B$leng <<- c(B$leng, max(chrom$pos_mb))
-    #   B$num <<- c(B$num, length(chrom$pos_mb))
-    #   B$gaps <<- list.append(B$gaps, diff(chrom$pos_mb))
-    # } else {
-    #   D$leng <<- c(D$leng, max(chrom$pos_mb))
-    #   D$num <<- c(D$num, length(chrom$pos_mb))
-    #   D$gaps <<- list.append(D$gaps, diff(chrom$pos_mb))
-    # }
   })
-  list(
-    A = lng[seq(1, 19, 3)] %>% bind_rows(),
-    B = lng[seq(2, 20, 3)] %>% bind_rows(),
-    D = lng[seq(3, 21, 3)] %>% bind_rows()
+  ret <- list(
+    A = list(leng = vector(), num = vector(), gaps = vector()),
+    B = list(leng = vector(), num = vector(), gaps = vector()),
+    D = list(leng = vector(), num = vector(), gaps = vector())
   )
+  for (i in 1:length(lng)) {
+    if (i %in% seq(1, 19, 3)) {
+      ret$A$leng <- c(ret$A$leng, lng[[i]]$leng)
+      ret$A$num <- c(ret$A$num, lng[[i]]$num)
+      ret$A$gaps <- c(ret$A$gaps, lng[[i]]$gaps)
+    } else if (i %in% seq(2, 20, 3)) {
+      ret$B$leng <- c(ret$B$leng, lng[[i]]$leng)
+      ret$B$num <- c(ret$B$num, lng[[i]]$num)
+      ret$B$gaps <- c(ret$B$gaps, lng[[i]]$gaps)
+    } else {
+      ret$D$leng <- c(ret$D$leng, lng[[i]]$leng)
+      ret$D$num <- c(ret$D$num, lng[[i]]$num)
+      ret$D$gaps <- c(ret$D$gaps, lng[[i]]$gaps)
+    }
+  }
+  ret
 }
 
 calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
@@ -175,6 +174,7 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   # find the most distant snp on each chroms, the number of snps on each,
   # and the sizes of the gaps between snps
   lng <- calc_lng(wheat_data$snp)
+  print(lng$A$num)
 
   # plot the ld
   plot_gaps_nbs_ld(
@@ -205,11 +205,11 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
       mean(maf_mr$D$mr),
       mean(c(maf_mr$A$mr, maf_mr$B$mr, maf_mr$D$mr))
     ),
-    "Covered Bases" = c(
-      sum(lng$A$leng),
-      sum(lng$B$leng),
-      sum(lng$D$leng),
-      sum(lng$A$leng, lng$B$leng, lng$D$leng)
+    "Covered Bases (Gb)" = c(
+      sum(lng$A$leng) / 1000,
+      sum(lng$B$leng) / 1000,
+      sum(lng$D$leng) / 1000,
+      sum(lng$A$leng, lng$B$leng, lng$D$leng) / 1000
     ),
     "Num SNPs" = c(
       sum(lng$A$num),
@@ -262,77 +262,3 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   )
   write_csv(map_stats, str_c("Results/gaps/map_stats_", subset, ".csv"))
 }
-
-# calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
-#   wheat_data <- parse_gds(subset)
-#   # find the maf and mr
-#   maf_mr <- calc_maf_mr(wheat_data)
-
-#   # fidn the most distant snp on each chroms, the number of snps on each,
-#   # and the sizes of the gaps between snps
-#   length_num_gaps <- calc_length_num_gaps(wheat_data$snp)
-#   leng <- length_num_gaps$leng
-#   num <- length_num_gaps$num
-#   gaps <- length_num_gaps$gaps
-
-#   # calc ld stats
-#   genome_ld <- calc_ld_stats(subset, wheat_data$snp)
-
-#   # plot the ld
-#   plot_gaps_nbs_ld(gaps, genome_ld, subset, plot_title_2)
-
-#   # find the min length of the top percentile of gaps
-#   top_percentile <- quantile(unlist(gaps), prob = 0.99, na.rm = T)
-
-#   # find which chrom of each genome has the longest gap
-#   chr_A <- str_c(lapply(gaps$A, max) %>% which.max() %/% 3 + 1, "A")
-#   chr_B <- str_c(lapply(gaps$B, max) %>% which.max() %/% 3 + 1, "B")
-#   chr_D <- str_c(lapply(gaps$D, max) %>% which.max() %/% 3 + 1, "D")
-
-#   # print out all the data nicely
-#   report <- str_c(
-#     "A maf of ", mean(maf_mr$maf), "\n",
-#     "A missing rate of ", mean(maf_mr$mr), "\n",
-#     "############################################\n",
-#     "Genome A: num SNPs ", sum(num$A), " covering ", sum(leng$A), " Mb.\n",
-#     "Genome B: num SNPs ", sum(num$B), " covering ", sum(leng$B), " Mb.\n",
-#     "Genome D: num SNPs ", sum(num$D), " covering ", sum(leng$D), " Mb.\n",
-#     "Overall: num SNPs ", sum(unlist(num)), " covering ", sum(unlist(leng)),
-#     "\n",
-#     "############################################\n",
-#     "Genome A: average gap size ", mean(unlist(gaps$A)), " Mb.\n",
-#     "Genome B: average gap size ", mean(unlist(gaps$B)), " Mb.\n",
-#     "Genome D: average gap size ", mean(unlist(gaps$D)), " Mb.\n",
-#     "Overall: average gap size ", mean(unlist(gaps)), " Mb.\n",
-#     "############################################\n",
-#     "Genome A: num top 1% gaps ", sum(unlist(gaps$A) >= top_percentile), "\n",
-#     "Genome B: num top 1% gaps ", sum(unlist(gaps$B) >= top_percentile), "\n",
-#     "Genome D: num top 1% gaps ", sum(unlist(gaps$D) >= top_percentile), "\n",
-#     "############################################\n",
-#     "Min length top 1% gap: ", top_percentile, "\n",
-#     "Genome A: longest gap ", max(unlist(gaps$A)), " on chr ", chr_A, ".\n",
-#     "Genome B: longest gap ", max(unlist(gaps$B)), " on chr ", chr_B, ".\n",
-#     "Genome D: longest gap ", max(unlist(gaps$D)), " on chr ", chr_D, ".\n",
-#     "############################################\n",
-#     "Genome A: average pairwise ld ",
-#     mean(genome_ld$A$pw, na.rm = TRUE), "\n",
-#     "Genome B: average pairwise ld ",
-#     mean(genome_ld$B$pw, na.rm = TRUE), "\n",
-#     "Genome D: average pairwise ld ",
-#     mean(genome_ld$D$pw, na.rm = TRUE), "\n",
-#     "Overall average pairwise ld ",
-#     mean(c(genome_ld$A$pw, genome_ld$B$pw, genome_ld$D$pw), na.rm = TRUE), "\n",
-#     "############################################\n",
-#     "Genome A: average neighbouring ld ",
-#     mean(genome_ld$A$nbs), "\n",
-#     "Genome B: average neighbouring ld ",
-#     mean(genome_ld$B$nbs), "\n",
-#     "Genome D: average neighbouring ld ",
-#     mean(genome_ld$D$nbs), "\n",
-#     "Overall average neighbouring ld ",
-#     mean(c(genome_ld$A$nbs, genome_ld$B$nbs, genome_ld$D$nbs)), "\n"
-#   )
-#   out <- file(str_c("Results/gaps/gaps_dist_", subset, ".txt"))
-#   writeLines(report, out)
-#   close(out)
-# }

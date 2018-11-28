@@ -10,7 +10,6 @@ loadfonts()
 source("https://bioconductor.org/biocLite.R")
 biocLite("SNPRelate")
 
-install.packages("rlist")
 install.packages("tidyverse")
 install.packages("GGally")
 install.packages("ggrepel")
