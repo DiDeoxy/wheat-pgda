@@ -235,13 +235,13 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
         )
       )
     ),
-    "Min length top 1% Gap" = c(
+    "Min Length Top 1% Gap" = c(
       min(lng$A$gaps[which(lng$A$gaps >= top_percentile)]),
       min(lng$B$gaps[which(lng$B$gaps >= top_percentile)]),
       min(lng$D$gaps[which(lng$D$gaps >= top_percentile)]),
       top_percentile
     ),
-    "Max length Gap" = c(
+    "Max Length Gap" = c(
       max(lng$A$gaps),
       max(lng$B$gaps),
       max(lng$D$gaps),
