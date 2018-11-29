@@ -174,7 +174,6 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   # find the most distant snp on each chroms, the number of snps on each,
   # and the sizes of the gaps between snps
   lng <- calc_lng(wheat_data$snp)
-  print(lng$A$num)
 
   # plot the ld
   plot_gaps_nbs_ld(
@@ -217,7 +216,7 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
       sum(lng$D$num),
       sum(lng$A$num, lng$B$num, lng$D$num)
     ),
-    "Mean Gap Size" = c(
+    "Mean Gap Size (Mb)" = c(
       mean(lng$A$gaps),
       mean(lng$B$gaps),
       mean(lng$D$gaps),
@@ -235,13 +234,13 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
         )
       )
     ),
-    "Min Length Top 1% Gap" = c(
+    "Min Length Top 1% Gap (Mb)" = c(
       min(lng$A$gaps[which(lng$A$gaps >= top_percentile)]),
       min(lng$B$gaps[which(lng$B$gaps >= top_percentile)]),
       min(lng$D$gaps[which(lng$D$gaps >= top_percentile)]),
       top_percentile
     ),
-    "Max Length Gap" = c(
+    "Max Length Gap (Mb)" = c(
       max(lng$A$gaps),
       max(lng$B$gaps),
       max(lng$D$gaps),
