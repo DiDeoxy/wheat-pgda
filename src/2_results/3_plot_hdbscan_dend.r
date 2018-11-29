@@ -24,7 +24,7 @@ ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
 upgma_dend <- as.dendrogram(hclust(ibs_dist), method = "average")
-upgma_dend <- color_branches(upgma_dend, k = 7, col = colours_dend)
+upgma_dend <- color_branches(upgma_dend, k = 9, col = colours_dend)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
@@ -43,15 +43,20 @@ circos.track(ylim = c(0, 1), panel.fun = function(x, y) {
 track.height = 0.15, bg.border = NA)
 
 draw_rects(
-  wheat_data$sample$annot$era, colours_era, label_order, colors()[468])
+  wheat_data$sample$annot$era, colours_era, label_order, colors()[468]
+)
 draw_rects(
-  wheat_data$sample$annot$bp, colours_bp, label_order, colors()[383])
+  wheat_data$sample$annot$bp, colours_bp, label_order, colors()[383]
+)
 draw_rects(
-  wheat_data$sample$annot$mc, colours_mc, label_order, colors()[105])
+  wheat_data$sample$annot$mc, colours_mc, label_order, colors()[105]
+)
 draw_rects(
-  wheat_data$sample$annot$pheno, colours_pheno, label_order, colors()[525])
+  wheat_data$sample$annot$pheno, colours_pheno, label_order, colors()[525]
+)
 draw_rects(
-  clusters, colours_hdbscan, label_order, colors()[109])
+  clusters, colours_hdbscan, label_order, colors()[109]
+)
 
 max_height <- max(attr(upgma_dend, "height"))
 circos.track(ylim = c(0, max_height), panel.fun = function(x, y) {
