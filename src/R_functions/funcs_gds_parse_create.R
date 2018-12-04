@@ -43,6 +43,13 @@ snpgds_create_snp_subset <- function(wheat_data, subset, snp_index) {
 }
 
 snpgds_create_sample_subset <- function(wheat_data, subset, sample_index) {
+  # eliminate the given samples from the annotations
+  for (name in names(wheat_data$sample$annot)) {
+    wheat_data$sample$annot[[name]] <- factor(
+      wheat_data$sample$annot[[name]][-sample_index]
+    )
+  }
+  
   snpgdsCreateGeno(
     str_c("Data/Intermediate/GDS/", subset, ".gds"),
     genmat = wheat_data$genotypes[, -sample_index],

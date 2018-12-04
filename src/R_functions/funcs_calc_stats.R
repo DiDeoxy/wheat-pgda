@@ -14,20 +14,23 @@ calc_eh <- function (genotypes) {
   })
 }
 
-plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
+plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(
     Genome = factor(
-      c(rep("A", length(gaps$A)),
-        rep("B", length(gaps$B)),
-        rep("D", length(gaps$D)),
-        rep("All", gaps %>% unlist() %>% length())
+      c(rep("A", length(lng$A$gaps)),
+        rep("B", length(lng$B$gaps)),
+        rep("D", length(lng$D$gaps)),
+        rep("All", length(c(lng$A$gaps, lng$B$gaps, lng$D$gaps)))
       ),
       levels = c("A", "B", "D", "All")
     ),
-    gaps = log10(
-      c(gaps$A, gaps$B, gaps$D, unlist(gaps))
-    )
+    gaps = c(
+      lng$A$gaps,
+      lng$B$gaps,
+      lng$D$gaps,
+      lng$A$gaps, lng$B$gaps, lng$D$gaps
+    ) %>% log10()
   )
 
   # histograms and boxplots depicting the distribution of gaps on each genome
@@ -59,19 +62,22 @@ plot_gaps_nbs_ld <- function(gaps, genome_ld, subset, plot_title) {
     ggplot() +
     geom_freqpoly(aes(ld, colour = Genome), size = 0.3) +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
-    xlim(0, 1) +
+    xlim(0, 1.0001) +
     ylim(0, 500)
 
   # turn plot list into ggmatrix
   plots_matrix <- ggmatrix(
     plots, nrow = 1, ncol = 2, yAxisLabels = "Num Markers",
-    xAxisLabels = c("Gap Distances", "Neigbouring LD"),
+    xAxisLabels = c(
+      "Log 10 of Mb Gap Distances",
+      "Absolute Composite LD of Neighbouring Markers"
+    ),
     title = plot_title,
     legend = c(1, 2)
   )
 
   # plot the matrix
-  png(str_c("Results/gaps/gaps_nbs_ld_", subset, ".png"),
+  png(str_c("Results/gaps/gaps_nbs_", subset, ".png"),
     family = "Times New Roman", width = 100, height = 62, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + 
@@ -135,13 +141,15 @@ calc_maf_mr <- function (wheat_data) {
 
 calc_lng <- function(snp_data) {
   # number of snps and mean distances between the genome
-  lng <- by(snp_data, snp_data$chrom, function (chrom) {
-    list(
-      leng = max(chrom$pos_mb),
-      num = length(chrom$pos_mb),
-      gaps = diff(chrom$pos_mb)
-    )
-  })
+  lng <- by(snp_data, snp_data$chrom, 
+    function (chrom) {
+      list(
+        leng = max(chrom$pos_mb),
+        num = length(chrom$pos_mb),
+        gaps = diff(chrom$pos_mb)
+      )
+    }
+  )
   ret <- list(
     A = list(leng = vector(), num = vector(), gaps = vector()),
     B = list(leng = vector(), num = vector(), gaps = vector()),
@@ -176,10 +184,7 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   lng <- calc_lng(wheat_data$snp)
 
   # plot the ld
-  plot_gaps_nbs_ld(
-    list(A = lng$A$gaps, B = lng$B$gaps, D = lng$D$gaps), genome_ld, subset,
-    plot_title_2
-  )
+  plot_gaps_nbs_ld(lng, genome_ld, subset, plot_title_2)
 
   # find the min length of the top percentile of gaps
   top_percentile <- quantile(

@@ -11,7 +11,7 @@ source("src/R_functions/funcs_calc_stats.R")
 source("src/R_functions/colour_sets.R")
 
 # load the data from the gds object
-wheat_data <- parse_gds("phys_subset_sample")
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
 chrom_lengths <- by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max)

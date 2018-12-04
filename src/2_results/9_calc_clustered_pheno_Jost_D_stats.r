@@ -4,7 +4,7 @@ library(tidyverse)
 source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
-wheat_data <- parse_gds("phys_subset_sample")
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # add columns of the D values of each comparison
 for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {

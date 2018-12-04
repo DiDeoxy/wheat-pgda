@@ -9,7 +9,7 @@ strata_genind <- read_rds("Data/Intermediate/Adegenet/strata_genind.rds")
 
 # create an IBS distance object of the sample genotypes
 wheat_gds <- snpgdsOpen(
-  "Data/Intermediate/GDS/phys_subset_sample_ld_pruned.gds"
+  "Data/Intermediate/GDS/ld_pruned_phys_sample_subset.gds"
 )
 sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)

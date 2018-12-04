@@ -1,33 +1,29 @@
-library(tidyverse)
 library(SNPRelate)
+library(tidyverse)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
-# load data into R object from the GDS object using the script at the source
-# location
-wheat_data <- parse_gds("full_phys")
-
-# open the GDS object again and select SNPs with a missing data rate below 0.1
+# find markers with a a missing rate below 0.1
 wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/full_phys.gds")
 kept_id <- unlist(snpgdsSelectSNP(
-  wheat_gds,
-  autosome.only = F, missing.rate = 0.1
+  wheat_gds, autosome.only = F, missing.rate = 0.1
 ))
 snpgdsClose(wheat_gds)
+
+# reomve these markers from the phys map
+wheat_data <- parse_gds("full_phys")
 kept_index <- match(kept_id, wheat_data$snp$id)
+snpgds_create_snp_subset(wheat_data, "mr_pruned_phys", kept_index)
 
-# create a new gds object with only the snps with less than 10% missing data
-snpgds_create_snp_subset(wheat_data, "phys_select_snp", kept_index)
-
-# same aas above but for gen map gds
+# remove these markers from the gen map
 wheat_data <- parse_gds("full_gen")
-kept_index <- sort(match(kept_id, wheat_data$snp$id))
-snpgds_create_snp_subset(wheat_data, "gen_select_snp", kept_index)
+kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
+snpgds_create_snp_subset(wheat_data, "mr_pruned_gen", kept_index)
 
 # eliminate those individuals that show identity by state
 # (IBS, fractional identity) greater than 0.99
 wheat_gds <- snpgdsOpen(
-  "Data/Intermediate/GDS/phys_select_snp.gds"
+  "Data/Intermediate/GDS/mr_pruned_phys.gds"
 )
 IBS <- snpgdsIBS(wheat_gds, autosome.only = F)
 snpgdsClose(wheat_gds)
@@ -55,30 +51,18 @@ NILs <- c(
   "SWS241", "SWS345", "SWS363", "SWS390", "SWS408", "SWS410"
 )
 
-
 # find the indices of the NILs
 sample_index <- match(NILs, wheat_data$sample$id)
 
-# phys map
-wheat_data <- parse_gds("phys_select_snp")
-# eliminate the nils from the sample annotation info
-for (name in names(wheat_data$sample$annot)) {
-  wheat_data$sample$annot[[name]] <- factor(
-    wheat_data$sample$annot[[name]][-sample_index]
-  )
-}
+# mr pruned phys map
+wheat_data <- parse_gds("mr_pruned_phys")
 # create gds object without the NILs
 snpgds_create_sample_subset(
-  wheat_data, "phys_subset_sample", sample_index
+  wheat_data, "mr_pruned_phys_sample_subset", sample_index
 )
 
-# gen map
-wheat_data <- parse_gds("gen_select_snp")
-for (name in names(wheat_data$sample$annot)) {
-  wheat_data$sample$annot[[name]] <- factor(
-    wheat_data$sample$annot[[name]][-sample_index]
-  )
-}
+# mr pruned gen map
+wheat_data <- parse_gds("mr_pruned_gen")
 snpgds_create_sample_subset(
-  wheat_data, "gen_subset_sample", sample_index
+  wheat_data, "mr_pruned_gen_sample_subset", sample_index
 )

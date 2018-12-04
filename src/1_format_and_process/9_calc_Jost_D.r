@@ -6,6 +6,7 @@ locus_by_locus_comps <- c(
 )
 
 for (comp in locus_by_locus_comps) {
+  print(comp)
   comp_genind <- read_rds(
     str_c("Data/Intermediate/Adegenet/", comp, "_genind.rds")
   )

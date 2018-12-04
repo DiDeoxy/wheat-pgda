@@ -8,7 +8,7 @@ library(SNPRelate)
 source("src/R_functions/funcs_gds_parse_create.R")
 
 # load the data from the gds object
-wheat_data <- parse_gds("phys_subset_sample")
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
 chrom_lengths <- by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max)
@@ -20,7 +20,7 @@ max_genome_lengths <- c(
 
 # create a list of the ld between markers on each chromosome add NA column 
 # and rows every 7.5 Mb so that gaps appear on image
-wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/phys_subset_sample.gds")
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/mr_pruned_phys_sample_subset.gds")
 ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
   gap_pos <- vector()
   prev <- 0

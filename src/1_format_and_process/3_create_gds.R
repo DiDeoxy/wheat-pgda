@@ -38,10 +38,10 @@ levels(era)[7] <- "UNKNOWN"
 
 ## construct the sample annotation information from the metadata
 samp_annot <- list(
-  bp = metadata$`Breeding Program`, era = era,
-  origin = metadata$Origin, texture = metadata$Texture,
-  colour = metadata$Colour, habit = metadata$Habit,
-  pheno = metadata$Designation, mc = metadata$Consensus
+  bp = factor(metadata$`Breeding Program`), era = factor(era),
+  origin = factor(metadata$Origin), texture = factor(metadata$Texture),
+  colour = factor(metadata$Colour), habit = factor(metadata$Habit),
+  pheno = factor(metadata$Designation), mc = factor(metadata$Consensus)
 )
 
 ## construct the SNPRelate GDS object fromt the input data with physical map

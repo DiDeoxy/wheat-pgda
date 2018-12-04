@@ -9,7 +9,7 @@ source("src/R_functions/funcs_gds_parse_create.R")
 source("src/R_functions/colour_sets.R")
 
 # load the data from the gds object
-wheat_data <- parse_gds("phys_subset_sample")
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
 chrom_lengths <- by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max)
@@ -26,6 +26,7 @@ for (group in c("chrs_csws", "chrs_chrw", "csws_chrw")) {
   )[[1]]
   wheat_data$snp <- wheat_data$snp %>% add_column(!!group := comp_Jost_D)
 }
+# wheat_data$snp <- wheat_data$snp[kept_index, ]
 
 # find the top 2.5% quantile for each of the three comparisons
 extremes <- wheat_data$snp %>%

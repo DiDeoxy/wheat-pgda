@@ -10,7 +10,7 @@ source("src/R_functions/colour_sets.R")
 
 ## PCA
 full <- snpgdsOpen(
-  "Data/Intermediate/GDS/phys_subset_sample_ld_pruned.gds"
+  "Data/Intermediate/GDS/ld_pruned_phys_sample_subset.gds"
 )
 pca <- snpgdsPCA(full, num.thread = 4, autosome.only = F)
 snpgdsClose(full)
