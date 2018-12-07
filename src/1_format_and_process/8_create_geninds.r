@@ -69,6 +69,12 @@ write_rds(path = str_c("Data/Intermediate/Adegenet/strata_genind.rds"))
 ################################################################################
 wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
+# making the genotype data palatable by genind
+wheat_data$genotypes <- wheat_data$genotypes %>%
+  replace(. == 0, "A") %>%
+  replace(. == 2, "B") %>%
+  replace(. == 3, "")
+
 # making subsetted geninds of groups containing and not containing alleles of
 # certain lR genes
 gene_pres <- read_csv(
@@ -76,7 +82,7 @@ gene_pres <- read_csv(
   col_names = c("sample", "gene_A", "gene_B", "gene_C")
 )
 
-for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")[-1]) {
+for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")) {
   carriers <- c(which(gene_pres$gene_A == gene), 
     which(gene_pres$gene_B == gene), which(gene_pres$gene_C == gene)
   )
@@ -113,6 +119,13 @@ for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")[-1]) {
 
 ################################################################################
 wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+
+# making the genotype data palatable by genind
+wheat_data$genotypes <- wheat_data$genotypes %>%
+  replace(. == 0, "A") %>%
+  replace(. == 2, "B") %>%
+  replace(. == 3, "")
+
 cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
 
 # making indices in order to create subsets containing just the varieties of

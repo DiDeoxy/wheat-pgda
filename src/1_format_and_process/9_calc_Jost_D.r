@@ -2,7 +2,7 @@ library(tidyverse)
 library(mmod)
 
 locus_by_locus_comps <- c(
-  "Lr1", "Lr10", "Lr21", "Lr22a", "Lr34", "chrs_csws", "chrs_chrw", "csws_chrw"
+  "Lr10", "Lr21", "Lr22a", "Lr1", "Lr34", "chrs_csws", "chrs_chrw", "csws_chrw"
 )
 
 for (comp in locus_by_locus_comps) {
