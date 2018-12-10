@@ -36,6 +36,7 @@ group_extreme_freqs_known <- group_extreme_freqs %>%
   rbind.fill(known_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
+group_extreme_freqs_known[which(group_extreme_freqs_known$id == "Lr1"), ]
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by Gene or gene type
@@ -53,10 +54,10 @@ plots <- by(group_extreme_freqs_known, group_extreme_freqs_known$chrom,
           ]
         ) +
         geom_point(
-          aes(pos_mb, freq, colour = group, shape = group), size = 0.75
+          aes(pos_mb, freq, colour = group, shape = group), size = 0.5
         ) +
         geom_text_repel(
-          aes(pos_mb, base, colour = id, label = id), angle = 90, hjust = 0,
+          aes(pos_mb, base, colour = group, label = group), angle = 90, hjust = 0,
           vjust = 1, size = 3, segment.colour = "black", nudge_y = 0.15,
           nudge_x = 60, show.legend = FALSE
         )

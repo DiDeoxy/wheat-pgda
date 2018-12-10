@@ -35,10 +35,10 @@ calc_extremes <- function(wheat_data, groups, prob = 0.975) {
 calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
   by(wheat_data$snp, wheat_data$snp$chrom,
     function(snp_data) {
-      # initialize an empyt tibble with columns for the important data
+      # initialize an empty tibble with columns for the important data
       ret <- tibble(
-        group = character(), chrom = integer(), pos_mb = double(),
-        freq = double(), extreme_phi = double(), id = character()
+        chrom = integer(), group = character(), pos_mb = double(),
+        freq = double(), extreme_D = double(), id = character()
       )
       # 
       for (group in names(extremes)) {
@@ -65,9 +65,9 @@ calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
         }
           ret <- ret %>%
             add_row(
-              group = group, chrom = snp_data$chrom[1],
+              chrom = snp_data$chrom[i], group = group,
               pos_mb = snp_data$pos_mb[i], freq = freq,
-              extreme_phi = ifelse(
+              extreme_D = ifelse(
                 snp_data[[group]][i] > extremes[[group]], snp_data[[group]][i],
                 NA
               ),
@@ -98,9 +98,9 @@ calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
 load_groups <- function(csv) {
   read_csv(
     str_c("Data/Intermediate/Aligned_genes/selected_alignments/", csv),
-    col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
+    col_names = c("group", "chrom", "pos", "sleng", "salign", "%id")
   ) %>%
     mutate(pos_mb = pos / 1e6) %>%
-    select(id, chrom, pos_mb) %>%
+    select(group, chrom, pos_mb) %>%
     cbind(base = 0)
 }
