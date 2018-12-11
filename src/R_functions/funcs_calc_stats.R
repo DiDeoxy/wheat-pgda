@@ -7,13 +7,6 @@ library(pracma)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
-calc_eh <- function (genotypes) {
-  apply(genotypes, 1, function (snp) {
-    2 * ((sum(snp == 0) / sum(snp == 0 | 2)) *
-      (sum(snp == 2) / sum(snp == 0 | 2)))
-  })
-}
-
 plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(

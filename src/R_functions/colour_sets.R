@@ -20,4 +20,4 @@ colours_hdbscan_legend <- colour_set[c(22, 6, 7, 5, 17, 1)]
 colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
 colours_groups_genes <- colour_set[c(1, 2, 4, 15, 19)]
 points <- c(15, 16, 18, 17, 8)
-# pie(rep(1, 22), col = colour_set)
+# pie(rep(1, 5), col = colours_groups_genes)

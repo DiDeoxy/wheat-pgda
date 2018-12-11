@@ -1,5 +1,12 @@
 library(tidyverse)
 
+calc_eh <- function (genotypes) {
+  apply(genotypes, 1, function (snp) {
+    2 * ((sum(snp == 0) / sum(snp == 0 | 2)) *
+      (sum(snp == 2) / sum(snp == 0 | 2)))
+  })
+}
+
 calc_max_genome_lengths <- function(wheat_data) {
   by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max) %>% 
     (function (max_chrom_lengths) {
