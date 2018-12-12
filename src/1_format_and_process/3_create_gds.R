@@ -62,7 +62,7 @@ snpgdsCreateGeno("Data/Intermediate/GDS/full_gen.gds",
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker[gen_order],
   snp.chromosome = as.integer(as.factor(maps$chrom[gen_order])),
-  snp.position = maps$gen_pos[gen_order],
+  snp.position = maps$gen_pos[gen_order] * 100,
   other.vars = list(samp_annot = samp_annot),
   snpfirstdim = T
 )

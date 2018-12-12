@@ -9,13 +9,32 @@ calc_eh <- function (genotypes) {
 
 calc_max_genome_lengths <- function(wheat_data) {
   by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max) %>% 
-    (function (max_chrom_lengths) {
-      c(
-        A = max(max_chrom_lengths[seq(1, 19, 3)]),
-        B = max(max_chrom_lengths[seq(2, 20, 3)]),
-        D = max(max_chrom_lengths[seq(3, 21, 3)])
-      )
-    })
+    (
+      function (max_chrom_lengths) {
+        c(
+          A = max(max_chrom_lengths[seq(1, 19, 3)]),
+          B = max(max_chrom_lengths[seq(2, 20, 3)]),
+          D = max(max_chrom_lengths[seq(3, 21, 3)])
+        )
+      }
+    )
+}
+
+calc_max_homeolog_lengths <- function(wheat_data) {
+  by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>%
+    (
+      function (max_chrom_lengths) {
+        c(
+          one = max(max_chrom_lengths[c(1, 2, 3)]),
+          two = max(max_chrom_lengths[c(4, 5, 6)]),
+          three = max(max_chrom_lengths[c(7, 8, 9)]),
+          four = max(max_chrom_lengths[c(10, 11, 12)]),
+          five = max(max_chrom_lengths[c(13, 14, 15)]),
+          six = max(max_chrom_lengths[c(16, 17, 18)]),
+          seven = max(max_chrom_lengths[c(19, 20, 21)])
+        )
+      }
+    )
 }
 
 add_group_stat <- function(wheat_data, groups) {

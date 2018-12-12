@@ -3,7 +3,6 @@ library(tidyverse)
 library(GGally)
 library(ggrepel)
 library(extrafont)
-library(SNPRelate)
 
 # load custom functions
 source("src/R_functions/funcs_gds_parse_create.R")

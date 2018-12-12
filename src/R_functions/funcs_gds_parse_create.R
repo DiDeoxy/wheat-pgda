@@ -7,11 +7,9 @@ parse_gds <- function(gds_name) {
   # make a tibble of the snp data
   snp <- tibble(
     id = as.character(read.gdsn(index.gdsn(gds, "snp.id"))),
-    chrom = as.integer(
-      read.gdsn(index.gdsn(gds, "snp.chromosome"))
-    ),
-    # pos = as.integer(read.gdsn(index.gdsn(gds, "snp.position"))),
-    pos_mb = as.integer(read.gdsn(index.gdsn(gds, "snp.position"))) / 1e6
+    chrom = read.gdsn(index.gdsn(gds, "snp.chromosome")),
+    pos = read.gdsn(index.gdsn(gds, "snp.position")),
+    pos_mb = read.gdsn(index.gdsn(gds, "snp.position")) / 1e6
   )
 
   # convert chroms values from integer to names
