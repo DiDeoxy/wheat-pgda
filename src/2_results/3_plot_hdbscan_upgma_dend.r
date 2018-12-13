@@ -4,8 +4,6 @@ library(circlize)
 library(dendextend)
 library(extrafont)
 library(ape)
-# install.packages("cairoDevice")
-# library(cairoDevice)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 source("src/R_functions/funcs_draw_dend.R")
@@ -28,7 +26,7 @@ snpgdsClose(wheat_gds)
 upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
   color_branches(k = 9, col = colours_dend) %>%
-  set("branches_lwd", 2)
+  set("branches_lwd", 3)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot

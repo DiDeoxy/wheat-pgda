@@ -5,7 +5,7 @@ draw_rects <- function(pop_code, colour_subset, label_order, border) {
       0.05:(leng - 0.95), rep(0, leng),
       0.95:(leng - 0.05), rep(1, leng),
       border = border,
-      lwd = 0.8,
+      lwd = 1.2,
       col = sapply(
         as.numeric(pop_code)[label_order],
         function(x) {
