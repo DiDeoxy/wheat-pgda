@@ -26,13 +26,13 @@ snpgdsClose(wheat_gds)
 upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
   color_branches(k = 9, col = colours_dend) %>%
-  set("branches_lwd", 3)
+  set("branches_lwd", 1.5)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
 png(
   "Results/dend/UPGMA_hdbscan_annot.png",
-  family = "Times New Roman", width = 420, height = 420, pointsize = 30,
+  family = "Times New Roman", width = 210, height = 210, pointsize = 15,
   units = "mm", res = 500
 )
 circos.par(cell.padding = c(0, 0, 0, 0), gap.degree = 0.5,
