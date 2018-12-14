@@ -58,41 +58,219 @@ calc_extremes <- function(wheat_data, groups, prob = 0.975) {
   temp
 }
 
-calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
+# calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
+#   by(wheat_data$snp, wheat_data$snp$chrom,
+#     function(snp_data) {
+#       # initialize an empty tibble with columns for the important data
+#       ret <- tibble(
+#         chrom = integer(), group = character(), pos_mb = double(),
+#         freq = double(), extreme_D = double(), id = character()
+#       )
+#       # 
+#       for (group in names(extremes)) {
+#         for (i in 1:length(snp_data$id)) {
+#         num_nearby <- which(
+#           snp_data$pos_mb >= snp_data$pos_mb[i] - 5 &
+#           snp_data$pos_mb <= snp_data$pos_mb[i] + 5
+#         ) %>% length()
+#         freq <- integer()
+#         if (num_nearby >= 5 && i >= 3 && i <= (length(snp_data$id) - 2)) {
+#           freq <- sum(
+#             snp_data[[group]][(i - 2):(i + 2)] > extremes[[group]]
+#           ) / 5
+#         } else if (
+#           (i < 3 || i > (length(snp_data$id) - 2)) &&
+#           snp_data[[group]][i] > extremes[[group]]
+#         ) {
+#           freq <- 0.1
+#         } else {
+#           freq <- NA
+#         }
+#         if (is.na(freq) || freq == 0) {
+#           next
+#         }
+#         ret <- ret %>%
+#           add_row(
+#             chrom = snp_data$chrom[i], group = group,
+#             pos_mb = snp_data$pos_mb[i], freq = freq,
+#             extreme_D = ifelse(
+#               snp_data[[group]][i] > extremes[[group]], snp_data[[group]][i],
+#               NA
+#             ),
+#             id = snp_data$id[i]
+#           )
+#         }
+#       }
+#       # set all markers that don't have the highest frequency of extreme nearby
+#       # markers to zero for each contiguous region of extreme markers
+#       if (prune) {
+#         temp <- vector()
+#         for (i in 1:nrow(ret)) {
+#           if (! is.na(ret[i, ]$freq)) {
+#             temp <- c(temp, i)
+#           } else if (length(temp) > 0) {
+#             highest <- which(ret[temp, "freq"][[1]] == max(ret[temp, "freq"]))
+#             ret[temp[-highest], "freq"] <- NA
+#             temp <- vector()
+#           }
+#         }
+#       }
+#       print(ret)
+#       ret
+#     }
+#   ) %>% do.call(rbind, .)
+# }
+
+snp_densities <- function(chrom) {
+  # the distances between markers on the chromosome
+  gaps <- diff(chrom$pos_mb)
+  # a vector for holding the average density of snps near snp i
+  densities <- vector()
+  for (i in 1:nrow(chrom)) {
+    # a vector for holding the inices of the 10 snps upstream and 10 snps
+    # downstream from snp i, as well as snp i
+    nearest <- vector()
+    if (i < 5 && length(gaps) >= 8) {
+      # position 1 in gaps is the gap between snps 1 and 2
+      # position 20 in gaps is the gap between snps 20 and 21
+      nearest <- 1:(i + 4)
+    } else if (i > length(gaps) - 5 && length(gaps) >= 8) {
+      # position length(gaps) - 20 in gaps is the gap between snps
+      # length(chrom) - 21  and length(chrom) - 20
+      # position length(gaps) in gaps is the gap between snp length(chrom) - 1
+      # and length(chrom)
+      nearest <- (i - 4):length(gaps)
+    } else if (length(gaps) < 8) {
+      nearest <- 1:length(gaps)
+    } else {
+      # the positon i - 9 in gaps is the gap between snps i - 10 and i - 9
+      # the psotion i + 9 in gaps is the gap between snps i + 9 and i + 10
+      nearest <- (i - 4):(i + 4)
+    }
+    # calc the density of the regions aorund marker i and add it to the
+    # densities vector
+    densities <- c(densities, mean(gaps[nearest]))
+  }
+  densities
+}
+
+# calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
+#   by(wheat_data$snp, wheat_data$snp$chrom,
+#     function(snp_data) {
+#       # calc the local densities of each marker
+#       # snp_data <- snp_data %>% add_column(density = snp_densities(snp_data))
+#       # initialize an empty tibble with columns for the important data
+#       ret <- tibble(
+#         chrom = integer(), group = character(), pos_mb = double(),
+#         freq = double(), num = integer(), extreme_D = double(),
+#         id = character()
+#       )
+#       # 
+#       for (group in names(extremes)) {
+#         for (i in 1:nrow(snp_data)) {
+#           # n <- round(log((snp_data$density[i] + 1)/snp_data$density[i]) * 8) + 1
+#           # n <- round((snp_data$density[i] + 1.5)/ snp_data$density[i])
+#           nearby <- length(
+#             which(
+#               snp_data$pos >= snp_data$pos[i] - 2.5 &
+#               snp_data$pos <= snp_data$pos[i] + 2.5
+#             )
+#           )
+#           print(str_c("n: ", n))
+#           half <- n %/% 2
+#           if (n == 1) {
+#             freq <- sum(snp_data[[group]][i] > extremes[[group]])
+#           } else if (i - half < 1 && i + half > nrow(snp_data)) {
+#             freq <- sum(
+#               snp_data[[group]][1:nrow(snp_data)] > extremes[[group]]
+#             ) / (n + 1)
+#           } else if (i - half < 1) {
+#             freq <- sum(
+#               snp_data[[group]][1:(i + half)] > extremes[[group]]
+#             ) / (n + 1)
+#           } else if (i + half > nrow(snp_data)) {
+#             freq <- sum(
+#               snp_data[[group]][(i - half):nrow(snp_data)] > extremes[[group]]
+#             ) / (n + 1)
+#           } else {
+#             freq <- sum(
+#               snp_data[[group]][(i - half):(i + half)] > extremes[[group]]
+#             ) / (n + 1)
+#           }
+#           ret <- ret %>%
+#             add_row(
+#               chrom = snp_data$chrom[i], group = group,
+#               pos_mb = snp_data$pos_mb[i], freq = freq, num = 0,
+#               extreme_D = ifelse(
+#                 snp_data[[group]][i] > extremes[[group]], snp_data[[group]][i],
+#                 NA
+#               ),
+#               id = snp_data$id[i]
+#             )
+#         }
+#       }
+#       temp <- vector()
+#       # for (i in 1:nrow(ret)) {
+#       #   if (ret$freq[i] != 0) {
+#       #     temp <- c(temp, i)
+#       #   } else if (length(temp) > 0) {
+#       #     highest <- which(ret$freq[temp] == max(ret$freq[temp]))
+#       #     if (length(highest) > 1) {
+#       #       highest <- highest[round((length(highest) + 1) / 2)]
+#       #     }
+#       #     ret$freq[temp[-highest]] <- 0
+#       #     ret$num[temp[highest]] <- length(temp)
+#       #     temp <- vector()
+#       #   }
+#       # }
+#       for (i in 1:nrow(ret)) {
+#         if (ret$freq[i] != 0) {
+#           temp <- c(temp, i)
+#         } else if (length(temp) > 0) {
+#           middle <- round((length(temp) + 1) %/% 2)
+#           ret$freq[temp[middle]] <- mean(ret$freq[temp])
+#           ret$num[temp[middle]] <- length(temp)
+#           ret$freq[temp[-middle]] <- 0
+#           temp <- vector()
+#         }
+#       }
+#       print(ret[which(ret$freq != 0), ])
+#       ret[which(ret$freq != 0), ]
+#     }
+#   ) %>% do.call(rbind, .)
+# }
+
+calc_group_extreme_freqs <- function(wheat_data, extremes) {
   by(wheat_data$snp, wheat_data$snp$chrom,
+    # wheat_data$snp[which(wheat_data$snp$chrom == "5D"), ], wheat_data$snp$chrom[which(wheat_data$snp$chrom == "5D")],
     function(snp_data) {
+      # calc the local densities of each marker
+      snp_data <- snp_data %>% add_column(density = snp_densities(snp_data))
       # initialize an empty tibble with columns for the important data
-      ret <- tibble(
-        chrom = integer(), group = character(), pos_mb = double(),
-        freq = double(), extreme_D = double(), id = character()
+      inter <- tibble(
+        chrom = character(), group = character(), pos_mb = double(),
+        freq = double(), num = integer(),
+        extreme_D = double(),
+        id = character()
       )
       # 
       for (group in names(extremes)) {
-        for (i in 1:length(snp_data$id)) {
-        num_nearby <- which(
-          snp_data$pos_mb >= snp_data$pos_mb[i] - 5 &
-          snp_data$pos_mb <= snp_data$pos_mb[i] + 5
-        ) %>% length()
-        freq <- integer()
-        if (num_nearby >= 5 && i >= 3 && i <= (length(snp_data$id) - 2)) {
+        for (i in 1:nrow(snp_data)) {
+          nearby <- which(
+            (snp_data$pos_mb >= 
+              snp_data$pos_mb[i] - min((snp_data$density[i] * 5), 1)
+            ) &
+            (snp_data$pos_mb <= 
+              snp_data$pos_mb[i] + min((snp_data$density[i] * 5), 1)
+            )
+          )
           freq <- sum(
-            snp_data[[group]][(i - 2):(i + 2)] > extremes[[group]]
-          ) / 5
-        } else if (
-          (i < 3 || i > (length(snp_data$id) - 2)) &&
-          snp_data[[group]][i] > extremes[[group]]
-        ) {
-          freq <- 0.1
-        } else {
-          freq <- NA
-        }
-        if (! is.na(freq) && freq == 0) {
-          freq <- NA
-        }
-          ret <- ret %>%
+            snp_data[[group]][nearby] > extremes[[group]]
+          ) / length(nearby)
+          inter <- inter %>%
             add_row(
               chrom = snp_data$chrom[i], group = group,
-              pos_mb = snp_data$pos_mb[i], freq = freq,
+              pos_mb = snp_data$pos_mb[i], freq = freq, num = NA,
               extreme_D = ifelse(
                 snp_data[[group]][i] > extremes[[group]], snp_data[[group]][i],
                 NA
@@ -101,21 +279,33 @@ calc_group_extreme_freqs <- function(wheat_data, extremes, prune = FALSE) {
             )
         }
       }
-      # set all markers that don't have the highest frequency of extreme nearby
-      # markers to zero for each contiguous region of extreme markers
-      if (prune) {
-        temp <- vector()
-        for (i in 1:nrow(ret)) {
-          if (! is.na(ret[i, ]$freq)) {
-            temp <- c(temp, i)
-          } else if (length(temp) > 0) {
-            highest <- which(ret[temp, "freq"][[1]] == max(ret[temp, "freq"]))
-            ret[temp[-highest], "freq"] <- NA
-            temp <- vector()
-          }
+      temp <- vector()
+      ret <- tibble(
+        chrom = character(), group = character(), pos_mb = double(),
+        freq = double(), num = integer(), extreme_Ds = character(),
+        id = character()
+      )
+      ret <- ret %>% add_row(
+        chrom = inter$chrom[i], group = unique(inter$group)
+      )
+      for (i in 1:nrow(inter)) {
+        if (inter$freq[i] > 0) {
+          temp <- c(temp, i)
+        }
+        if (((inter$freq[i] == 0 && length(temp) > 0) ||
+             (i == nrow(inter) && length(temp) > 0)
+            ) && mean(inter$freq[temp]) >= 0.2) {
+              ret <- ret %>% add_row(
+                chrom = inter$chrom[i], group = inter$group[i],
+                pos_mb = mean(inter$pos_mb[temp]),
+                freq = mean(inter$freq[temp]), num = length(temp), 
+                extreme_Ds = paste(inter$extreme_D[temp], collapse= ' '),
+                id = paste(inter$id[temp], collapse= ' ')
+              )
+              temp <- vector()
         }
       }
-      print(ret)
+      print(ret, n = 50)
       ret
     }
   ) %>% do.call(rbind, .)

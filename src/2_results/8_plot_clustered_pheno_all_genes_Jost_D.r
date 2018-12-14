@@ -39,9 +39,6 @@ group_extreme_freqs_genes <- group_extreme_freqs %>%
   rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
-# group_extreme_freqs_genes[
-#   which(group_extreme_freqs_genes$group == "pheno_gene"),
-# ]
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
@@ -64,7 +61,7 @@ plots <- by(
         ]
       ) +
       geom_point(
-        aes(pos_mb, freq, colour = group, shape = group), size = 0.75
+        aes(pos_mb, freq, colour = group, size = num)
       ) +
       geom_point(
         aes(pos_mb, base, colour = group, shape = group), size = 0.75

@@ -24,7 +24,7 @@ wheat_data <- add_group_stat(wheat_data, groups)
 extremes <- calc_extremes(wheat_data, groups)
 
 group_extreme_freqs <- calc_group_extreme_freqs(
-  wheat_data, extremes, prune = TRUE
+  wheat_data, extremes
 )
 
 # load the gene positions
@@ -35,7 +35,8 @@ group_extreme_freqs_known <- group_extreme_freqs %>%
   rbind.fill(known_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
-group_extreme_freqs_known[which(group_extreme_freqs_known$id == "Lr1"), ]
+
+max(group_extreme_freqs$num, na.rm = T)
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by Gene or gene type
@@ -53,12 +54,16 @@ plots <- by(group_extreme_freqs_known, group_extreme_freqs_known$chrom,
           ]
         ) +
         geom_point(
-          aes(pos_mb, freq, colour = group, shape = group), size = 0.5
+          aes(pos_mb, freq, colour = group, size = num), shape = 10
         ) +
         geom_text_repel(
           aes(pos_mb, base, colour = group, label = group), angle = 90, hjust = 0,
           vjust = 1, size = 3, segment.colour = "black", nudge_y = 0.15,
           nudge_x = 60, show.legend = FALSE
+        ) +
+        labs(colour = "Comparison") +
+        scale_size_continuous(
+          name = "Number of Markers", trans = "sqrt", limits = c(1, 175)
         )
   }
 )
@@ -66,9 +71,13 @@ plots <- by(group_extreme_freqs_known, group_extreme_freqs_known$chrom,
 # turn plot list into ggmatrix
 plots_matrix <- ggmatrix(
   plots,
-  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Jost D",
+  nrow = 7, ncol = 3, xlab = "Position in Mb",
+  ylab = "Average Frequency of Exceptional Jost's D Values in Nearby Markers",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = "Frequency of Nearby Markers in Top 2.5% of Jost D Values for Resistance Gene Groups",
+  title = str_c(
+    "Average Frequency and Number of Markers in Regions with Exceptional ",
+    "Jost's D values"
+  ),
   legend = c(1, 1)
 )
 
