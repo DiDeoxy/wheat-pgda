@@ -25,7 +25,7 @@ wheat_data <- add_group_stat(wheat_data, groups)
 extremes <- calc_extremes(wheat_data, groups)
 
 group_extreme_freqs <- calc_group_extreme_freqs(
-  wheat_data, extremes, prune = TRUE
+  wheat_data, extremes
 )
 
 # load the gene positions
@@ -39,6 +39,14 @@ group_extreme_freqs_genes <- group_extreme_freqs %>%
   rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
+
+# read_csv(
+#     str_c("Data/Intermediate/Aligned_genes/selected_alignments/pheno_genes.csv"),
+#     col_names = c("group", "chrom", "pos", "sleng", "salign", "%id")
+#   )
+
+# max(group_extreme_freqs$num, na.rm = T)
+# group_extreme_freqs_genes[which(group_extreme_freqs_genes$chrom == "1A"), ]
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
@@ -61,18 +69,18 @@ plots <- by(
         ]
       ) +
       geom_point(
-        aes(pos_mb, freq, colour = group, size = num)
+        aes(pos_mb, freq, colour = group, size = num), shape = 10
       ) +
       geom_point(
         aes(pos_mb, base, colour = group, shape = group), size = 0.75
       ) +
       geom_text_repel(
-        aes(pos_mb, base, colour = id, label = id), angle = 90, hjust = 0,
+        aes(pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
         vjust = 1, size = 3, segment.colour = "black",
-        # nudge_y, = 0.07,
-        # nudge_x = ifelse(chrom == "1D", 80,
-        #   ifelse(chrom %in% c("2D", "4A"), -60, 40)
-        # )
+        nudge_y = 0.07,
+        nudge_x = ifelse(chrom == "1D", 80,
+          ifelse(chrom %in% c("2D", "4A"), -60, 40)
+        ),
         show.legend = FALSE
       ) +
       scale_colour_manual(
@@ -82,6 +90,10 @@ plots <- by(
       scale_shape_manual(
         legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
         limits = levels(as.factor(group_extreme_freqs_genes$group))
+      ) +
+      labs(colour = "Comparison") +
+      scale_size_continuous(
+        name = "Number of Markers", trans = "sqrt", limits = c(1, 125)
       )
   }
 )
@@ -89,9 +101,13 @@ plots <- by(
 # turn plot list into ggmatrix
 plots_matrix <- ggmatrix(
   plots,
-  nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Jost D",
+  nrow = 7, ncol = 3, xlab = "Position in Mb",
+  ylab = "Average Frequency of Exceptional Jost's D Values in Nearby Markers",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = "Markers in Top 2.5% of Jost D Values By Comparison",
+   title = str_c(
+    "Number of Markers in a Region and their Average Frequency of Exceptional ",
+    "Jost's D Values"
+  ),
   legend = c(1, 1)
 )
 
@@ -100,5 +116,5 @@ png(str_c("Results/loci/D/comps_D.png"),
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300
 )
-plots_matrix + theme(legend.position = "bottom")
+plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()

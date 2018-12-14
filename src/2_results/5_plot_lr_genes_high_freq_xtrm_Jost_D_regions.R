@@ -28,7 +28,8 @@ group_extreme_freqs <- calc_group_extreme_freqs(
 )
 
 # load the gene positions
-known_genes <- load_groups("known_genes.csv")
+known_genes <- load_groups("known_genes.csv") %>%
+  mutate(group = id)
 
 # add the genes in to the data frame
 group_extreme_freqs_known <- group_extreme_freqs %>%
@@ -36,7 +37,7 @@ group_extreme_freqs_known <- group_extreme_freqs %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
 
-max(group_extreme_freqs$num, na.rm = T)
+# max(group_extreme_freqs$num, na.rm = T)
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by Gene or gene type
@@ -97,5 +98,5 @@ png(str_c("Results/loci/D/known_genes_D_freq_point.png"),
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300
 )
-print(plots_matrix + theme(legend.position = "bottom"))
+plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
