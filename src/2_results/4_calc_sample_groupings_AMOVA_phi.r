@@ -33,3 +33,29 @@ names(results) <- c("Comparison", "Phi", "p-value")
 results
 
 write_csv(results, "Results//amova_results.csv", col_names = TRUE)
+
+poppr.amova(
+  strata_genind, hier = "~pheno" %>% as.formula(), cutoff = 0.1,
+  missing = "genotype", within = FALSE, clonecorrect = FALSE, 
+  dist = sample_dist, quiet = T
+)
+
+poppr.amova(
+  strata_genind, hier = "~bp_era" %>% as.formula(), cutoff = 0.1,
+  missing = "genotype", within = FALSE, clonecorrect = FALSE, 
+  dist = sample_dist, quiet = T
+) %>%
+randtest(nrepet = 999, output = "full", alter = "greater")
+
+poppr.amova(
+  strata_genind, hier = "~pheno/bp_era" %>% as.formula(), cutoff = 0.1,
+  missing = "genotype", within = FALSE, clonecorrect = FALSE, 
+  dist = sample_dist, quiet = T
+) %>%
+randtest(nrepet = 999, output = "full") %>%
+with(
+  as.krandtest(
+    sim, obs, alter = c("two-sided", "two-sided", "two-sided"),
+    call = call, names = names
+  )
+)

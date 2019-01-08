@@ -43,6 +43,7 @@ for (cluster_num in c(1, 2, 3, 4, 5)) {
 strata <- tibble(
   era = wheat_data$sample$annot$era,
   bp = wheat_data$sample$annot$bp,
+  bp_era = str_c(wheat_data$sample$annot$era, wheat_data$sample$annot$bp),
   texture = wheat_data$sample$annot$texture,
   colour = wheat_data$sample$annot$colour,
   habit = wheat_data$sample$annot$habit,
@@ -62,9 +63,9 @@ df2genind(
   t(wheat_data$genotypes),
   ind.names = wheat_data$sample$id,
   loc.names = wheat_data$snp$id, ploidy = 1, type = "codom", ncode = 1,
-  strata = strata
+  strata = strata, pop = as.factor(cluster)
 ) %>%
-write_rds(path = str_c("Data/Intermediate/Adegenet/strata_genind.rds"))
+  write_rds(path = str_c("Data/Intermediate/Adegenet/strata_genind.rds"))
 
 ################################################################################
 wheat_data <- parse_gds("mr_pruned_phys_sample_subset")

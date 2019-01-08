@@ -15,3 +15,4 @@ for (comp in locus_by_locus_comps) {
     str_c("Data/Intermediate/mmod/", comp, "_Jost_D.rds")
   )
 }
+pairwise_D(read_rds("Data/Intermediate/Adegenet/strata_genind.rds"))
