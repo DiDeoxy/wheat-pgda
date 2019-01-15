@@ -14,7 +14,10 @@ wheat_gds <- snpgdsOpen(
 sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
-strata <- c("bp", "era", "bp_era", "pheno", "pheno/bp_era", "clusters", "clusters/bp_era")
+strata <- c(
+  "bp", "era", "pheno", "pheno/bp", "pheno/era", "bp/era", "era/bp", "bp_era",
+  "pheno/bp_era", "clusters", "clusters/bp_era"
+)
 
 results <- tibble(
   Comparison = character(), `% Variation` = double(), `p-value` = double()
@@ -45,13 +48,13 @@ for (stratum in strata) {
     )
     results <- results %>%
       add_row(
-        Comparison = str_c(stratum, "-", strsplit(stratum, "/")[[1]][1]),
+        Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][1], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
         `p-value` = amova_randtest$pvalue[3]
       )
     results <- results %>%
       add_row(
-        Comparison = str_c(stratum, "-", strsplit(stratum, "/")[[1]][2]),
+        Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][2], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[2], 2),
         `p-value` = amova_randtest$pvalue[2]
       )

@@ -18,35 +18,52 @@ max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 # names of groups to be plotted
 groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
 
-# find the phi values of each marker in each Gene and add to data set
+# find the jost's D values of each marker in each Gene and add to data set
 wheat_data <- add_group_stat(wheat_data, groups)
 
 # find the extreme threshold for each Gene
 extremes <- calc_extremes(wheat_data, groups)
 
+# create a table of the regions with a high density of extreme markers
 group_extreme_freqs <- calc_group_extreme_freqs(
   wheat_data, extremes
 )
 
-# load the gene positions
-pheno_genes <- load_groups("pheno_genes.csv") %>%
-  mutate(group = "pheno_gene")
-resi_genes <- load_groups("resi_genes.csv") %>%
-  mutate(group = "resi_gene")
+# print our the markers involved in each linked region
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+base <- "Results/loci/D/closest_markers"
+for (row in 1:nrow(comp_gef)) {
+  file_name <- paste(
+    comp_gef[
+      row, c("chrom", "group", "mean_pos_mb", "num_linked", "freq_extreme", "mean_D")
+    ] %>% round_df(2), collapse = '_'
+  )
+  linked <- tibble(
+    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
+    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]],
+    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
+    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
+  )
+  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+  write_csv(linked, file.path(base, file_name))
+}
 
-# add the genes in to the data frame
+# group_extreme_freqs[which(group_extreme_freqs$chrom =="5A"),1:6] %>% as.data.frame()
+# max(group_extreme_freqs$num_linked, na.rm = T)
+
+# load the gene positions
+pheno_genes <- load_groups("pheno_genes.csv", base = 0.3) %>%
+  mutate(group = "pheno_gene") %>%
+  rename(mean_pos_mb = "pos_mb")
+resi_genes <- load_groups("resi_genes.csv", base = 0.3) %>%
+  mutate(group = "resi_gene") %>%
+  rename(mean_pos_mb = "pos_mb")
+
+# add the genes positons to the regions table
 group_extreme_freqs_genes <- group_extreme_freqs %>%
   rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as.tibble()
-
-# read_csv(
-#     str_c("Data/Intermediate/Aligned_genes/selected_alignments/pheno_genes.csv"),
-#     col_names = c("group", "chrom", "pos", "sleng", "salign", "%id")
-#   )
-
-# max(group_extreme_freqs$num, na.rm = T)
-# group_extreme_freqs_genes[which(group_extreme_freqs_genes$chrom == "1A"), ]
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
@@ -61,7 +78,7 @@ plots <- by(
     chrom <- chrom_data$chrom[1]
     chrom_data %>%
       ggplot() +
-      ylim(0, 1) +
+      ylim(0.3, 1) +
       xlim(
         0, 
         max_genome_lengths[
@@ -69,10 +86,10 @@ plots <- by(
         ]
       ) +
       geom_point(
-        aes(pos_mb, freq, colour = group, size = num), shape = 10
+        aes(mean_pos_mb, mean_D, colour = group, size = num_linked), shape = 10
       ) +
       geom_point(
-        aes(pos_mb, base, colour = group, shape = group), size = 0.75
+        aes(mean_pos_mb, base, colour = group, shape = group), size = 0.75
       ) +
       geom_text_repel(
         aes(pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
@@ -93,7 +110,9 @@ plots <- by(
       ) +
       labs(colour = "Comparison") +
       scale_size_continuous(
-        name = "Number of Markers", trans = "sqrt", limits = c(1, 125)
+        name = "Number of Markers", trans = "sqrt",
+        limits = c(1, max(group_extreme_freqs$num_linked, na.rm = T))
+        # breaks = c(5, 10, 20, 40, 80, 160)
       )
   }
 )
@@ -102,12 +121,11 @@ plots <- by(
 plots_matrix <- ggmatrix(
   plots,
   nrow = 7, ncol = 3, xlab = "Position in Mb",
-  ylab = "Average Frequency of Exceptional Jost's D Values in Nearby Markers",
-  xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-   title = str_c(
-    "Number of Markers in a Region and their Average Frequency of Exceptional ",
-    "Jost's D Values"
+  ylab = str_c(
+    "Average Jost's D Values in Regions with Nearby Exceptional Markers"
   ),
+  xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+  title = "Number of Markers in a Region and their Average Jost's D Values",
   legend = c(1, 1)
 )
 

@@ -58,14 +58,14 @@ calc_extremes <- function(wheat_data, groups, prob = 0.975) {
   temp
 }
 
-load_groups <- function(csv) {
+load_groups <- function(csv, base = 0) {
   read_csv(
     str_c("Data/Intermediate/Aligned_genes/selected_alignments/", csv),
     col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
   ) %>%
     mutate(pos_mb = pos / 1e6) %>%
     select(id, chrom, pos_mb) %>%
-    cbind(base = 0)
+    cbind(base = base)
 }
 
 snp_densities <- function(chrom) {
@@ -103,71 +103,145 @@ snp_densities <- function(chrom) {
 
 calc_group_extreme_freqs <- function(wheat_data, extremes) {
   by(wheat_data$snp, wheat_data$snp$chrom,
-    # wheat_data$snp[which(wheat_data$snp$chrom == "5D"), ], wheat_data$snp$chrom[which(wheat_data$snp$chrom == "5D")],
     function(snp_data) {
-      # calc the local densities of each marker
-      snp_data <- snp_data %>% add_column(density = snp_densities(snp_data))
-      # initialize an empty tibble with columns for the important data
+      # initialize an empty tibble with the needed columns
       inter <- tibble(
-        chrom = character(), group = character(), pos_mb = double(),
-        freq = double(), num = integer(),
-        extreme_D = double(),
-        id = character()
+        chrom = character(), pos_mb = double(),
+        num_nearby_extreme = double(), D = double(), id = character()
       )
-      # 
+      groups <- list("chrs_csws" = inter, "chrs_chrw" = inter, "csws_chrw" = inter)
+      # the number of markers upstream and downstream of the one considered for
+      # the identification of the local frequency of extreme markers
+      # num <- 10
+      # the max distance in Mb from the considered marker that the upstream and
+      # downstream markers of num can be
+      dist <- 4
+      # for each comparison
       for (group in names(extremes)) {
+        # for each snp in the comparison
         for (i in 1:nrow(snp_data)) {
-          nearby <- which(
-            (snp_data$pos_mb >= 
-              snp_data$pos_mb[i] - min((snp_data$density[i] * 5), 1)
-            ) &
-            (snp_data$pos_mb <= 
-              snp_data$pos_mb[i] + min((snp_data$density[i] * 5), 1)
-            )
-          )
-          freq <- sum(
-            snp_data[[group]][nearby] > extremes[[group]]
-          ) / length(nearby)
-          inter <- inter %>%
+          # for holding those markers considered nearby (within num & dist)
+          nearby <- i
+          # find upstream nearby markers
+          if (i > 1) {
+            for (j in (i - 1):1) {
+              if (
+                j >= 1
+                && snp_data$pos_mb[i] - snp_data$pos_mb[j] <= dist
+                # && i - j <= num
+              ) {
+                nearby <- c(j, nearby)
+              } else {
+                break
+              }
+            }
+          }
+          # find downstream nearby markers
+          if (i < nrow(snp_data)) {
+            for (j in (i + 1):nrow(snp_data)) {
+              if (
+                j <= nrow(snp_data)
+                && snp_data$pos_mb[j] - snp_data$pos_mb[i] <= dist
+                # && j - i <= num
+              ) {
+                nearby <- c(nearby, j)
+              } else {
+                break
+              }
+            }
+          }
+          # store the useful data for each marker in each group including its
+          # frequency of nearby extreme markers, its Jost's D values, and its id
+          groups[[group]] <- groups[[group]] %>%
             add_row(
-              chrom = snp_data$chrom[i], group = group,
-              pos_mb = snp_data$pos_mb[i], freq = freq, num = NA,
-              extreme_D = ifelse(
-                snp_data[[group]][i] > extremes[[group]], snp_data[[group]][i],
-                NA
+              chrom = snp_data$chrom[i], pos_mb = snp_data$pos_mb[i],
+              num_nearby_extreme = sum(
+                snp_data[[group]][nearby] > extremes[[group]]
               ),
-              id = snp_data$id[i]
+              D = snp_data[[group]][i], id = snp_data$id[i]
             )
         }
       }
-      temp <- vector()
+
+      linked <- vector()
       ret <- tibble(
-        chrom = character(), group = character(), pos_mb = double(),
-        freq = double(), num = integer(), extreme_Ds = character(),
-        id = character()
+        chrom = character(), group = character(), mean_pos_mb = double(),
+        num_linked = integer(), freq_extreme = double(), mean_D = double(),
+        extreme = character(), pos_mb = character(), Ds = character(),
+        ids = character()
       )
       ret <- ret %>% add_row(
-        chrom = inter$chrom[i], group = unique(inter$group)
+        chrom = groups[[group]]$chrom[i], group = names(groups)
       )
-      for (i in 1:nrow(inter)) {
-        if (inter$freq[i] > 0) {
-          temp <- c(temp, i)
-        }
-        if (((inter$freq[i] == 0 && length(temp) > 0) ||
-             (i == nrow(inter) && length(temp) > 0)
-            ) && mean(inter$freq[temp]) >= 0.2) {
-              ret <- ret %>% add_row(
-                chrom = inter$chrom[i], group = inter$group[i],
-                pos_mb = mean(inter$pos_mb[temp]),
-                freq = mean(inter$freq[temp]), num = length(temp), 
-                extreme_Ds = paste(inter$extreme_D[temp], collapse= ' '),
-                id = paste(inter$id[temp], collapse= ' ')
+      for (group in names(groups)) {
+        for (row in 1:nrow(groups[[group]])) {
+          if (groups[[group]]$num_nearby_extreme[row]) {
+            # print(groups[[group]]$num_nearby_extreme[row])
+            linked <- c(linked, row)
+          }
+          # needs to be a separate else because the last row can be in linked
+          if (
+            (
+              ! groups[[group]]$num_nearby_extreme[row] ||
+              row == nrow(groups[[group]])
+            )
+            && length(linked)
+          ) {
+            linked_extreme <- which(groups[[group]]$D[linked] > extremes[group])
+            linked_pruned <- linked[
+              linked_extreme[1]:linked_extreme[length(linked_extreme)]
+            ]
+            pos_pruned <- groups[[group]]$pos_mb[linked_pruned]
+            if (
+              # when there are markers within dist to a single extreme marker,
+              # skip it
+              (length(linked) > 1 && length(linked_extreme) == 1) ||
+              # when the most distant markers are less than 1 Mb apart skip them
+              (
+                length(linked_pruned) > 1
+                && pos_pruned[length(pos_pruned)] - pos_pruned[1] <= 1
               )
-              temp <- vector()
+            ) {
+              linked <- vector()
+              next
+            }
+            if (
+              mean(groups[[group]]$D[linked_pruned]) >= 0
+            ) {
+              ret <- ret %>% add_row(
+                chrom = groups[[group]]$chrom[i], group = group,
+                mean_pos_mb = mean(groups[[group]]$pos_mb[linked_pruned]),
+                num_linked = length(linked),
+                freq_extreme =
+                  sum(
+                    groups[[group]]$D[linked_pruned] >= extremes[group]
+                  ) / length(linked_pruned),
+                mean_D = mean(groups[[group]]$D[linked_pruned]),
+                extreme = paste(
+                  groups[[group]]$D[linked_pruned] > extremes[group],
+                  collapse = ' '
+                ),
+                pos_mb = paste(
+                  groups[[group]]$pos_mb[linked_pruned], collapse = ' '
+                ),
+                Ds = paste(groups[[group]]$D[linked_pruned], collapse = ' '),
+                ids = paste(groups[[group]]$id[linked_pruned], collapse = ' ')
+              )
+            }
+            linked <- vector()
+          }
         }
       }
       print(ret, n = 50)
       ret
     }
   ) %>% do.call(rbind, .)
+}
+
+round_df <- function(df, digits) {
+  nums <- vapply(df, is.numeric, FUN.VALUE = logical(1))
+
+  df[,nums] <- round(df[,nums], digits = digits)
+
+  (df)
 }
