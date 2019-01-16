@@ -49,7 +49,13 @@ for (row in 1:nrow(comp_gef)) {
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
   write_csv(linked, file.path(base, str_c(file_name, ".csv")))
 }
-
+sum(comp_gef$group == "chrs_chrw")
+comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
+sum(comp_gef$group == "chrs_csws")
+sum(comp_gef$group == "csws_chrw")
+sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
+sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
+comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.2), ] %>% print(n = Inf)
 # group_extreme_freqs[which(group_extreme_freqs$chrom =="5A"),1:6] %>% as.data.frame()
 # max(group_extreme_freqs$num_linked, na.rm = T)
 
