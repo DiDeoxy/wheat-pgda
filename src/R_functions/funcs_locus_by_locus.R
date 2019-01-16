@@ -115,7 +115,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
       # num <- 10
       # the max distance in Mb from the considered marker that the upstream and
       # downstream markers of num can be
-      dist <- 4
+      dist <- 1.65625
       # for each comparison
       for (group in names(extremes)) {
         # for each snp in the comparison
@@ -182,8 +182,8 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
           # needs to be a separate else because the last row can be in linked
           if (
             (
-              ! groups[[group]]$num_nearby_extreme[row] ||
-              row == nrow(groups[[group]])
+              ! groups[[group]]$num_nearby_extreme[row]
+              || row == nrow(groups[[group]])
             )
             && length(linked)
           ) {
@@ -195,17 +195,18 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
             if (
               # when there are markers within dist to a single extreme marker,
               # skip it
-              (length(linked) > 1 && length(linked_extreme) == 1) ||
-              # when there are maore than 1 extreme marker in a region less than
+              (length(linked) > 1 && length(linked_extreme) == 1)
+              # when there are more than 1 extreme marker in a region less than
               # 1.5 Mb with distal markers that are not extreme and more than
               # 75% of them are extreme skip it (looks like a bunch of markers
               # acting like a single marker)
-              (
+              || (
                 length(linked_pruned) > 1
                 && pos_pruned[length(pos_pruned)] - pos_pruned[1] <= 1.5
                 && length(linked_pruned) < length(linked)
                 && length(linked_extreme) / length(linked_pruned) > 0.75
               )
+              || length(linked_extreme) / length(linked_pruned) < 0.4
             ) {
               linked <- vector()
               next

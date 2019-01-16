@@ -29,36 +29,6 @@ group_extreme_freqs <- calc_group_extreme_freqs(
   wheat_data, extremes
 )
 
-# print our the markers involved in each linked region
-comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
-base <- "Results/loci/D/closest_markers"
-for (row in 1:nrow(comp_gef)) {
-  file_name <- paste(
-    cbind(
-      comp_gef[row, c("chrom", "group", "mean_pos_mb", "num_linked")] %>%
-      round_df(0),
-      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-    ), collapse = '_'
-  )
-  linked <- tibble(
-    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
-    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]],
-    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
-    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
-  )
-  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  write_csv(linked, file.path(base, str_c(file_name, ".csv")))
-}
-sum(comp_gef$group == "chrs_chrw")
-comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
-sum(comp_gef$group == "chrs_csws")
-sum(comp_gef$group == "csws_chrw")
-sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
-sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
-comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.2), ] %>% print(n = Inf)
-# group_extreme_freqs[which(group_extreme_freqs$chrom =="5A"),1:6] %>% as.data.frame()
-# max(group_extreme_freqs$num_linked, na.rm = T)
-
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 0.3) %>%
   mutate(group = "pheno_gene") %>%
@@ -143,3 +113,31 @@ png(str_c("Results/loci/D/comps_D.png"),
 )
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
+
+# print our the markers involved in each linked region
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+base <- "Results/loci/D/closest_markers"
+for (row in 1:nrow(comp_gef)) {
+  file_name <- paste(
+    cbind(
+      comp_gef[row, c("chrom", "group", "mean_pos_mb", "num_linked")] %>%
+      round_df(0),
+      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+    ), collapse = '_'
+  )
+  linked <- tibble(
+    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
+    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]],
+    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
+    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
+  )
+  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+  write_csv(linked, file.path(base, str_c(file_name, ".csv")))
+}
+# sum(comp_gef$group == "chrs_chrw")
+# comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
+# sum(comp_gef$group == "chrs_csws")
+# sum(comp_gef$group == "csws_chrw")
+# sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
+# sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
+# comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
