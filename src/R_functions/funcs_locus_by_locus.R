@@ -216,7 +216,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
               ret <- ret %>% add_row(
                 chrom = groups[[group]]$chrom[i], group = group,
                 mean_pos_mb = mean(groups[[group]]$pos_mb[linked_pruned]),
-                num_linked = length(linked),
+                num_linked = length(linked_pruned),
                 freq_extreme =
                   sum(
                     groups[[group]]$D[linked_pruned] >= extremes[group]
