@@ -34,9 +34,11 @@ comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 base <- "Results/loci/D/closest_markers"
 for (row in 1:nrow(comp_gef)) {
   file_name <- paste(
-    comp_gef[
-      row, c("chrom", "group", "mean_pos_mb", "num_linked", "freq_extreme", "mean_D")
-    ] %>% round_df(0), collapse = '_'
+    cbind(
+      comp_gef[row, c("chrom", "group", "mean_pos_mb", "num_linked")] %>%
+      round_df(0),
+      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+    ), collapse = '_'
   )
   linked <- tibble(
     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
