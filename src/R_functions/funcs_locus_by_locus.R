@@ -196,10 +196,15 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
               # when there are markers within dist to a single extreme marker,
               # skip it
               (length(linked) > 1 && length(linked_extreme) == 1) ||
-              # when the most distant markers are less than 1 Mb apart skip them
+              # when there are maore than 1 extreme marker in a region less than
+              # 1.5 Mb with distal markers that are not extreme and more than
+              # 75% of them are extreme skip it (looks like a bunch of markers
+              # acting like a single marker)
               (
                 length(linked_pruned) > 1
-                && pos_pruned[length(pos_pruned)] - pos_pruned[1] <= 1
+                && pos_pruned[length(pos_pruned)] - pos_pruned[1] <= 1.5
+                && length(linked_pruned) < length(linked)
+                && length(linked_extreme) / length(linked_pruned) > 0.75
               )
             ) {
               linked <- vector()
@@ -241,7 +246,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
 round_df <- function(df, digits) {
   nums <- vapply(df, is.numeric, FUN.VALUE = logical(1))
 
-  df[,nums] <- round(df[,nums], digits = digits)
+  df[,nums] <- round(df[,nums], digits = digits) * 10^digits
 
   (df)
 }

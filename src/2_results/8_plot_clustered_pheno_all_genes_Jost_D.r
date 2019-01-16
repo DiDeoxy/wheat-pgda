@@ -36,7 +36,7 @@ for (row in 1:nrow(comp_gef)) {
   file_name <- paste(
     comp_gef[
       row, c("chrom", "group", "mean_pos_mb", "num_linked", "freq_extreme", "mean_D")
-    ] %>% round_df(2), collapse = '_'
+    ] %>% round_df(0), collapse = '_'
   )
   linked <- tibble(
     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
@@ -45,7 +45,7 @@ for (row in 1:nrow(comp_gef)) {
     ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
   )
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  write_csv(linked, file.path(base, file_name))
+  write_csv(linked, file.path(base, str_c(file_name, ".csv")))
 }
 
 # group_extreme_freqs[which(group_extreme_freqs$chrom =="5A"),1:6] %>% as.data.frame()
@@ -92,7 +92,7 @@ plots <- by(
         aes(mean_pos_mb, base, colour = group, shape = group), size = 0.75
       ) +
       geom_text_repel(
-        aes(pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
+        aes(mean_pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
         vjust = 1, size = 3, segment.colour = "black",
         nudge_y = 0.07,
         nudge_x = ifelse(chrom == "1D", 80,
@@ -112,7 +112,6 @@ plots <- by(
       scale_size_continuous(
         name = "Number of Markers", trans = "sqrt",
         limits = c(1, max(group_extreme_freqs$num_linked, na.rm = T))
-        # breaks = c(5, 10, 20, 40, 80, 160)
       )
   }
 )
