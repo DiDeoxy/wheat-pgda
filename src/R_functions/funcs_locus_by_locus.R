@@ -166,9 +166,9 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
       linked <- vector()
       ret <- tibble(
         chrom = character(), group = character(), mean_pos_mb = double(),
-        num_linked = integer(), freq_extreme = double(), mean_D = double(),
-        extreme = character(), pos_mb = character(), Ds = character(),
-        ids = character()
+        num_linked = integer(), start = double(), end = double(), freq_extreme = double(),
+        mean_D = double(), extreme = character(), pos_mb = character(),
+        Ds = character(), ids = character()
       )
       ret <- ret %>% add_row(
         chrom = groups[[group]]$chrom[i], group = names(groups)
@@ -207,6 +207,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
                 && length(linked_extreme) / length(linked_pruned) > 0.75
               )
               || length(linked_extreme) / length(linked_pruned) < 0.4
+              || mean(groups[[group]]$D[linked_pruned]) < 0.5
             ) {
               linked <- vector()
               next
@@ -221,6 +222,9 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
                   groups[[group]]$pos_mb[linked_pruned[length(linked_pruned)]]
                 ),
                 num_linked = length(linked_pruned),
+                start = groups[[group]]$pos_mb[linked_pruned[1]],
+                end = 
+                  groups[[group]]$pos_mb[linked_pruned[length(linked_pruned)]],
                 freq_extreme =
                   sum(
                     groups[[group]]$D[linked_pruned] >= extremes[group]
