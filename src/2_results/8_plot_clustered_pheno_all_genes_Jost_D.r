@@ -220,4 +220,15 @@ sum(comp_gef$group == "chrs_csws")
 sum(comp_gef$group == "csws_chrw")
 # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
 # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
-# comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
+comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
+comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$num_linked > 20), ] %>% print(n = Inf)
+
+gef_chrs_chrw <- comp_gef[which(comp_gef$group == "chrs_chrw"), ]
+total_extreme <- 0
+total_D <- 0
+for (i in 1:nrow(gef_chrs_chrw)) {
+  total_extreme <- total_extreme + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$freq_extreme
+  total_D <- total_D + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$mean_D
+}
+total_extreme/sum(gef_chrs_chrw$num_linked)
+total_D/sum(gef_chrs_chrw$num_linked)

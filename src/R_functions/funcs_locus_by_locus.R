@@ -112,7 +112,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
       groups <- list("chrs_csws" = inter, "chrs_chrw" = inter, "csws_chrw" = inter)
       # the number of markers upstream and downstream of the one considered for
       # the identification of the local frequency of extreme markers
-      # num <- 10
+      num <- 5
       # the max distance in Mb from the considered marker that the upstream and
       # downstream markers of num can be
       dist <- 1.65625
@@ -128,7 +128,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
               if (
                 j >= 1
                 && snp_data$pos_mb[i] - snp_data$pos_mb[j] <= dist
-                # && i - j <= num
+                && i - j <= num
               ) {
                 nearby <- c(j, nearby)
               } else {
@@ -142,7 +142,7 @@ calc_group_extreme_freqs <- function(wheat_data, extremes) {
               if (
                 j <= nrow(snp_data)
                 && snp_data$pos_mb[j] - snp_data$pos_mb[i] <= dist
-                # && j - i <= num
+                && j - i <= num
               ) {
                 nearby <- c(nearby, j)
               } else {
