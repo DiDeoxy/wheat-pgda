@@ -131,7 +131,7 @@ base <- "Results/loci/D/closest_markers"
 for (row in 1:nrow(comp_gef)) {
   file_name <- paste(
     cbind(
-      comp_gef[row, c("chrom", "group", "mean_pos_mb", "num_linked")] %>%
+      comp_gef[row, c("chrom", "mean_pos_mb", "group", "num_linked")] %>%
       round_df(0),
       comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
     ), collapse = '_'
