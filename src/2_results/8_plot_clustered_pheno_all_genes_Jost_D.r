@@ -124,6 +124,7 @@ png(str_c("Results/loci/D/comps_D.png"),
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
 
+################################################################################
 # print our the markers involved in each linked region
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 genes <- rbind(pheno_genes, resi_genes)
@@ -156,6 +157,55 @@ for (row in 1:nrow(comp_gef)) {
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
   write_csv(linked, file.path(base, str_c(file_name, ".csv")))
 }
+
+num_chrs_chrw_chrs_csws <- 0
+num_chrs_chrw_csws_chrw <- 0
+num_chrs_csws_csws_chrw <- 0
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  if (nrow(chrom) > 1) {
+    pairs <- list()
+    for (i in 1:(nrow(chrom) - 1)) {
+        for (j in (i + 1):nrow(chrom)) {
+          if (1 %in%
+            findInterval(
+              c(chrom[i, ]$start, chrom[i, ]$end),
+              c(chrom[j, ]$start, chrom[j, ]$end)
+            )
+            ||
+            (
+              c(chrom[i, ]$start, chrom[i, ]$end) ==
+              c(chrom[j, ]$start, chrom[j, ]$end)
+            )
+          ) {
+            if (
+              (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "chrs_csws")
+              ||
+              (chrom[i, ]$group == "chrs_csws" && chrom[j, ]$group == "chrs_chrw")
+            ) {
+              num_chrs_chrw_chrs_csws <<- num_chrs_chrw_chrs_csws + 1
+              pairs[["chrs_chrw_chrs_csws"]][length(pairs[["chrs_chrw_chrs_csws"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+            } else if (
+              (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "csws_chrw")
+              ||
+              (chrom[i, ]$group == "csws_chrw" && chrom[j, ]$group == "chrs_chrw")
+            ) {
+              num_chrs_chrw_csws_chrw <<- num_chrs_chrw_csws_chrw + 1
+              pairs[["chrs_chrw_csws_chrw"]][length(pairs[["chrs_chrw_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+            } else {
+              num_chrs_csws_csws_chrw <<- num_chrs_csws_csws_chrw + 1
+              pairs[["chrs_csws_csws_chrw"]][length(pairs[["chrs_csws_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+            }
+          }
+        }
+      }
+    }
+    pairs
+  }
+)
+num_chrs_chrw_chrs_csws
+num_chrs_chrw_csws_chrw
+num_chrs_csws_csws_chrw
+blah
 
 sum(comp_gef$group == "chrs_chrw")
 # comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
