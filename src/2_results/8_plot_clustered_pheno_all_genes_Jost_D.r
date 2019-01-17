@@ -1,47 +1,47 @@
-# library(plyr)
-# library(tidyverse)
-# library(GGally)
-# library(ggrepel)
-# library(extrafont)
+library(plyr)
+library(tidyverse)
+library(GGally)
+library(ggrepel)
+library(extrafont)
 
-# # load custom functions
-# source("src/R_functions/funcs_gds_parse_create.R")
-# source("src/R_functions/colour_sets.R")
-# source("src/R_functions/funcs_locus_by_locus.R")
+# load custom functions
+source("src/R_functions/funcs_gds_parse_create.R")
+source("src/R_functions/colour_sets.R")
+source("src/R_functions/funcs_locus_by_locus.R")
 
-# # load the data from the gds object
-# wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+# load the data from the gds object
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
-# # find the max position of any marker on each genome for xlims
-# max_genome_lengths <- calc_max_genome_lengths(wheat_data)
+# find the max position of any marker on each genome for xlims
+max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 
-# # names of groups to be plotted
-# groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
+# names of groups to be plotted
+groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
 
-# # find the jost's D values of each marker in each Gene and add to data set
-# wheat_data <- add_group_stat(wheat_data, groups)
+# find the jost's D values of each marker in each Gene and add to data set
+wheat_data <- add_group_stat(wheat_data, groups)
 
-# # find the extreme threshold for each Gene
-# extremes <- calc_extremes(wheat_data, groups)
+# find the extreme threshold for each Gene
+extremes <- calc_extremes(wheat_data, groups)
 
-# # create a table of the regions with a high density of extreme markers
-# group_extreme_freqs <- calc_group_extreme_freqs(
-#   wheat_data, extremes
-# )
+# create a table of the regions with a high density of extreme markers
+group_extreme_freqs <- calc_group_extreme_freqs(
+  wheat_data, extremes
+)
 
-# # load the gene positions
-# pheno_genes <- load_groups("pheno_genes.csv", base = 0.5) %>%
-#   mutate(group = "pheno_gene") %>%
-#   rename(mean_pos_mb = "pos_mb")
-# resi_genes <- load_groups("resi_genes.csv", base = 0.5) %>%
-#   mutate(group = "resi_gene") %>%
-#   rename(mean_pos_mb = "pos_mb")
+# load the gene positions
+pheno_genes <- load_groups("pheno_genes.csv", base = 0.5) %>%
+  mutate(group = "pheno_gene") %>%
+  rename(mean_pos_mb = "pos_mb")
+resi_genes <- load_groups("resi_genes.csv", base = 0.5) %>%
+  mutate(group = "resi_gene") %>%
+  rename(mean_pos_mb = "pos_mb")
 
-# # add the genes positons to the regions table
-# group_extreme_freqs_genes <- group_extreme_freqs %>%
-#   rbind.fill(pheno_genes, resi_genes) %>%
-#   arrange(chrom, group, pos_mb) %>%
-#   as.tibble()
+# add the genes positons to the regions table
+group_extreme_freqs_genes <- group_extreme_freqs %>%
+  rbind.fill(pheno_genes, resi_genes) %>%
+  arrange(chrom, group, pos_mb) %>%
+  as.tibble()
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
@@ -124,8 +124,9 @@ png(str_c("Results/loci/D/comps_D.png"),
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
 
-# # print our the markers involved in each linked region
+# print our the markers involved in each linked region
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+genes <- rbind(pheno_genes, resi_genes)
 base <- "Results/loci/D/closest_markers"
 for (row in 1:nrow(comp_gef)) {
   file_name <- paste(
@@ -137,17 +138,29 @@ for (row in 1:nrow(comp_gef)) {
   )
   linked <- tibble(
     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
-    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]],
+    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
     Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
     ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
   )
+  for (row2 in 1:nrow(genes)) {
+    if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
+      print(genes[row2, ]$chrom)
+      linked <- linked %>%
+        add_row(
+          extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
+          ids = genes[row2, ]$id
+        )
+    }
+  }
+  linked <- linked %>% arrange(pos_mb)
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
   write_csv(linked, file.path(base, str_c(file_name, ".csv")))
 }
-# sum(comp_gef$group == "chrs_chrw")
+
+sum(comp_gef$group == "chrs_chrw")
 # comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
-# sum(comp_gef$group == "chrs_csws")
-# sum(comp_gef$group == "csws_chrw")
+sum(comp_gef$group == "chrs_csws")
+sum(comp_gef$group == "csws_chrw")
 # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
 # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
 # comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
