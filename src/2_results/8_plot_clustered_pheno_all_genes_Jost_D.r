@@ -130,9 +130,16 @@ comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 genes <- rbind(pheno_genes, resi_genes)
 base <- "Results/loci/D/closest_markers"
 for (row in 1:nrow(comp_gef)) {
-  file_name <- paste(
+  file_name1 <- paste(
     cbind(
       comp_gef[row, c("chrom", "mean_pos_mb", "group", "num_linked")] %>%
+      round_df(0),
+      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+    ), collapse = '_'
+  )
+  file_name2 <- paste(
+    cbind(
+      comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
       round_df(0),
       comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
     ), collapse = '_'
@@ -145,7 +152,6 @@ for (row in 1:nrow(comp_gef)) {
   )
   for (row2 in 1:nrow(genes)) {
     if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
-      print(genes[row2, ]$chrom)
       linked <- linked %>%
         add_row(
           extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
@@ -155,7 +161,8 @@ for (row in 1:nrow(comp_gef)) {
   }
   linked <- linked %>% arrange(pos_mb)
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  write_csv(linked, file.path(base, str_c(file_name, ".csv")))
+  write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
+  write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
 }
 
 num_chrs_chrw_chrs_csws <- 0
