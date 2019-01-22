@@ -15,7 +15,7 @@ sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
 strata <- c(
-  "bp", "era", "pheno", "pheno/bp", "pheno/era", "bp/era", "era/bp", "bp_era",
+  "bp", "era", "pheno", "pheno/bp", "pheno/era", "bp_era",
   "pheno/bp_era", "clusters", "clusters/bp_era"
 )
 
@@ -38,7 +38,7 @@ for (stratum in strata) {
         `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
         `p-value` = amova_randtest$pvalue
       )
-  } else {
+  } else if (nrow(amova_result$statphi) == 3) {
     amova_randtest <- randtest(amova_result, nrepet = 999, output = "full") %>%
     with(
       as.krandtest(
@@ -58,7 +58,33 @@ for (stratum in strata) {
         `% Variation` = round(amova_result$componentsofcovariance$`%`[2], 2),
         `p-value` = amova_randtest$pvalue[2]
       )
+  } else {
+    with(
+      as.krandtest(
+        sim, obs, alter = c("greater", "greater", "greater"), call = call,
+        names = names
+      )
+    )
+    results <- results %>%
+      add_row(
+        Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][1], ")"),
+        `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
+        `p-value` = amova_randtest$pvalue[3]
+      )
+    results <- results %>%
+      add_row(
+        Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][2], ")"),
+        `% Variation` = round(amova_result$componentsofcovariance$`%`[2], 2),
+        `p-value` = amova_randtest$pvalue[2]
+      )
+    results <- results %>%
+      add_row(
+        Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][3], ")"),
+        `% Variation` = round(amova_result$componentsofcovariance$`%`[3], 2),
+        `p-value` = amova_randtest$pvalue[2]
+      )
   }
 }
+results
 
 write_csv(results, "Results//amova_results.csv", col_names = TRUE)
