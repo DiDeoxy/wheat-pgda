@@ -15,9 +15,25 @@ sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
 strata <- c(
-  "bp", "era", "pheno", "pheno/bp", "pheno/era", "bp_era",
+  "bp", "era", "pheno", "pheno/bp", "pheno/era", "pheno/bp/era", "pheno/era/bp", "bp_era",
   "pheno/bp_era", "clusters", "clusters/bp_era"
 )
+
+# mis_pheno <- which(strata_genind$strata$pheno == "UNKNOWN")
+# mis_bp <- which(strata_genind$strata$bp == "N/A")
+# mis_era <- which(strata_genind$strata$era == "UNKNOWN")
+# mis_pheno_bp <- unique(c(mis_pheno, mis_bp))
+# mis_pheno_era <- unique(c(mis_pheno, mis_era))
+# mis_bp_era <- unique(c(mis_era, mis_bp))
+# mis_pheno_bp_era <- unique(c(mis_bp_era, mis_pheno))
+# table(strata_genind$strata$bp[-mis_pheno_bp], strata_genind$strata$pheno[-mis_pheno_bp])
+# cor.test(strata_genind$strata$bp[-mis_pheno_bp] %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_bp] %>% as.integer())
+# table(strata_genind$strata$era[-mis_pheno_era], strata_genind$strata$pheno[-mis_pheno_era])
+# cor.test(strata_genind$strata$era[-mis_pheno_era] %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_era] %>% as.integer())
+# table(strata_genind$strata$bp[-mis_bp_era], strata_genind$strata$era[-mis_bp_era])
+# cor.test(strata_genind$strata$bp[-mis_bp_era] %>% as.integer(), strata_genind$strata$era[-mis_bp_era] %>% as.integer())
+# table(strata_genind$strata$bp_era[-mis_pheno_bp_era], strata_genind$strata$pheno[-mis_pheno_bp_era])
+# cor.test(strata_genind$strata$bp[-mis_pheno_bp_era] %>% as.integer(), strata_genind$strata$era[-mis_pheno_bp_era] %>% as.integer())
 
 results <- tibble(
   Comparison = character(), `% Variation` = double(), `p-value` = double()
@@ -59,6 +75,7 @@ for (stratum in strata) {
         `p-value` = amova_randtest$pvalue[2]
       )
   } else {
+    amova_randtest <- randtest(amova_result, nrepet = 999, output = "full") %>%
     with(
       as.krandtest(
         sim, obs, alter = c("greater", "greater", "greater"), call = call,
