@@ -116,7 +116,7 @@ find_windows <- function (snp_data, extremes) {
   # num <- 4
   # the max distance in Mb from the considered marker that the upstream and
   # downstream markers of num can be
-  dist <- 7
+  dist <- 6
   # for each comparison
   for (group in names(extremes)) {
     # for each snp in the comparison

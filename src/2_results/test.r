@@ -1,145 +1,369 @@
 library(plyr)
 library(tidyverse)
 library(GGally)
+library(ggrepel)
 library(extrafont)
-library(pracma)
 
 # load custom functions
 source("src/R_functions/funcs_gds_parse_create.R")
-source("src/R_functions/funcs_locus_by_locus.R")
 source("src/R_functions/colour_sets.R")
+source("src/R_functions/funcs_locus_by_locus.R")
 
 # load the data from the gds object
-wheat_data_phys <- parse_gds("mr_pruned_phys_sample_subset")
-wheat_data_gen <- parse_gds("mr_pruned_gen_sample_subset")
-
-snp_phys_order <- match(wheat_data_phys$snp$id, wheat_data_gen$snp$id)
-
-# make a tibble with the relevant data
-phys_gen_snp_pos <- tibble(
-  chrom = wheat_data_phys$snp$chrom, phys = wheat_data_phys$snp$pos_mb,
-  gen = wheat_data_gen$snp$pos[snp_phys_order] / 100,
-  eh = calc_eh(wheat_data_phys$genotypes), ld = ld
-)
-
-# # identify those snps within the extended haplotypes
-# snp_index_1A <- which(wheat_data_phys$snp$chrom == "1A")
-# haplo_id_1A <- wheat_data_phys$snp$id[snp_index_1A][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_1A] > 70 &
-#     wheat_data_phys$snp$pos_mb[snp_index_1A] < 300)
-# ]
-# snp_index_2A <- which(wheat_data_phys$snp$chrom == "2A")
-# haplo_id_2A <- wheat_data_phys$snp$id[snp_index_2A][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_2A] > 210 &
-#     wheat_data_phys$snp$pos_mb[snp_index_2A] < 470)
-# ]
-# snp_index_4A <- which(wheat_data_phys$snp$chrom == "4A")
-# haplo_id_4A <- wheat_data_phys$snp$id[snp_index_4A][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_4A] > 230 &
-#     wheat_data_phys$snp$pos_mb[snp_index_4A] < 460)
-# ]
-# snp_index_5B <- which(wheat_data_phys$snp$chrom == "5B")
-# haplo_id_5B <- wheat_data_phys$snp$id[snp_index_5B][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_5B] > 110 &
-#     wheat_data_phys$snp$pos_mb[snp_index_5B] < 210)
-# ]
-# snp_index_6A <- which(wheat_data_phys$snp$chrom == "6A")
-# haplo_id_6A <- wheat_data_phys$snp$id[snp_index_6A][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_6A] > 170 &
-#     wheat_data_phys$snp$pos_mb[snp_index_6A] < 445)
-# ]
-# snp_index_6B <- which(wheat_data_phys$snp$chrom == "6B")
-# haplo_id_6B <- wheat_data_phys$snp$id[snp_index_6B][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_6B] > 250 &
-#     wheat_data_phys$snp$pos_mb[snp_index_6B] < 380)
-# ]
-# snp_index_7A <- which(wheat_data_phys$snp$chrom == "7A")
-# haplo_id_7A <- wheat_data_phys$snp$id[snp_index_7A][
-#   which(wheat_data_phys$snp$pos_mb[snp_index_7A] > 310 &
-#     wheat_data_phys$snp$pos_mb[snp_index_7A] < 445)
-# ]
-# haplo_ids <- c(
-#   haplo_id_1A, haplo_id_2A, haplo_id_4A, haplo_id_5B, haplo_id_6A, haplo_id_6B,
-#   haplo_id_7A
-# )
-# haplo_index_snps_phys <- match(haplo_ids, wheat_data_phys$snp$id)
-# haplo_index_snps_gen <- match(haplo_ids, wheat_data_gen$snp$id)
-
-# # create a column in the snp_data set that contains D values for only
-# # those markers in the extended haplotypes, NA for all else
-# phys_gen_snp_pos <- phys_gen_snp_pos %>% mutate(haplo_phys = phys)
-# phys_gen_snp_pos$haplo_phys[-haplo_index_snps_phys] <- NA
-# phys_gen_snp_pos <- phys_gen_snp_pos %>% mutate(haplo_gen = gen)
-# phys_gen_snp_pos$haplo_gen[-haplo_index_snps_gen] <- NA
-
-# allows application of same colour to each set of chromosomes
-chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
-  t() %>% as.vector()
-colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
-rep(6, 3), rep(7, 3))
-
-# create a function for making a gradient of colours
-colour_gradient <- colorRampPalette(c("Red", "Green", "Blue"))
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
-max_genome_lengths_phys <- calc_max_genome_lengths(wheat_data_phys)
-max_genome_lengths_gen <- calc_max_homeolog_lengths(wheat_data_gen) / 100
+max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 
-# create plots of phys position vs gen pos
-plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
-  function (data_chrom) {
-    chrom <- data_chrom$chrom[1]
-    data_chrom %>%
-      ggplot() +
-      xlim(
-        0,
-        max_genome_lengths_phys[
-          ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
-        ]
-      ) +
-      ylim(
-        0,
-        max_genome_lengths_gen[
-          ifelse(grepl("1", chrom), 1, 
-            ifelse(grepl("2", chrom), 2,
-              ifelse(grepl("3", chrom), 3,
-                ifelse(grepl("4", chrom), 4,
-                  ifelse(grepl("5", chrom), 5,
-                    ifelse(grepl("6", chrom), 6, 7)
-                  )
-                )
-              )
-            )
-          )
-        ]
-      ) +
-      geom_point(aes(phys, gen, colour = eh), size = 0.5) +
-      labs(
-        colour = "Expected Heterozygosity", size = "Linkage Disequilibrium"
-      ) +
-      scale_colour_gradientn(colours = colour_gradient(100)) +
-      scale_size_continuous() +
-      theme(legend.key.size = unit(15, "points"))
-      # geom_point(
-      #   aes(haplo_phys, haplo_gen),
-      #   colour = "black",
-      #   shape = 1, size = 0.75
-      # )
+# names of groups to be plotted
+groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
+
+# find the jost's D values of each marker in each Gene and add to data set
+wheat_data <- add_group_stat(wheat_data, groups)
+
+# find the extreme threshold for each Gene
+extremes <- calc_extremes(wheat_data, groups, prob = 0.955)
+
+# create a table of the regions with a high density of extreme markers
+group_extreme_freqs <- calc_group_extreme_freqs(
+  wheat_data, extremes
+)
+
+library(IRanges)
+?IRanges
+
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+by(comp_gef, comp_gef$chrom, function (chrom) {
+  by(chrom, chrom$group, function (group) {
+
+  })
+})
+
+?group_by
+
+ir_groups <- comp_gef %>% group_by(chrom, group) %>% do(ir_group = IRanges(start = .$start, end = .$end, names = .$group))
+
+by(ir_groups, ir_groups$chrom, function (chrom) {
+  irl <- IRangesList(chrom$ir_group)
+  print(irl)
+})
+
+################################################################################
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+
+find_groups <- function(region1, region2) {
+  groups <- c(region1[c(2, 3)], region2[c(2, 3)]) %>% unlist() %>% unique()
+  if (length(groups) == 1) {
+    return (c(groups, NA, NA))
+  } else if (length(groups) == 2) {
+    return (c(groups, NA))
+  } else {
+    return (groups)
   }
-)
+}
 
-plots_matrix <- ggmatrix(
-  plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
-  xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = str_c(
-    "Comparison of Order by Position between Location and Genetic Maps"
-  ),
-  legend = c(1, 1)
-)
+# having problem with double overlaps, insteat of looking for single overlaps first
+# look for total overlaps using a which statment follwoing logic of identifying single overlaps
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  single_overlaps <- tibble(
+    chromo = character(), group1 = character(), group2 = character(),
+    start = double(), end = double()
+  )
+  double_overlaps <- tibble(
+    chrom = character(), group1 = character(), group2 = character(),
+    group3 = character(), start = double(), end = double()
+  )
+  if (nrow(chrom) > 1) {
+    for (i in 1:(nrow(chrom) - 1)) {
+      for (j in (i + 1):nrow(chrom)) {
+        if (
+          chrom[i, ]$start <= chrom[j, ]$start
+          && chrom[i, ]$end >= chrom[j, ]$start
+        ) {
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+              group2 = NA, start = chrom[i, ]$start, end = chrom[j, ]$start
+            )
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+              group2 = chrom[j, ]$group, start = chrom[j, ]$start,
+              end = chrom[i, ]$end
+            )
+        } else if (
+          chrom[i, ]$start >= chrom[j, ]$start
+          && chrom[i, ]$end <= chrom[j, ]$end
+        ) {
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
+              group2 = NA, start = chrom[j, ]$start, end = chrom[i, ]$start
+            )
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+              group2 = chrom[j, ]$group, start = chrom[i, ]$start,
+              end = chrom[i, ]$end
+            )
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
+              group2 = NA, start = chrom[i, ]$end, end = chrom[j, ]$end
+            )
+        } else if (
+          chrom[i, ]$start <= chrom[j, ]$end
+          && chrom[i, ]$end >= chrom[j, ]$end
+        ) {
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+              group2 = chrom[j, ]$group, start = chrom[i, ]$start,
+              end = chrom[j, ]$end
+            )
+          single_overlaps <- single_overlaps %>%
+            add_row(
+              chromo = chrom$chrom[1], group1 = chrom[i, ]$group, group2 = NA,
+              start = chrom[j, ]$end, end = chrom[i, ]$end
+            )
+        }
+        # else {
+        #   single_overlaps <- single_overlaps %>%
+        #     add_row(
+        #       chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+        #       group2 = NA, start = chrom[i, ]$start, end = chrom[i, ]$end
+        #     )
+        #   break
+        # }
+      }
+    }
+    # for (i in 1:(nrow(single_overlaps) - 1)) {
+    #   for (j in i:nrow(single_overlaps)) {
+    #     groups <- find_groups(single_overlaps[i, ], single_overlaps[j, ])
+    #     # print(1)
+    #     if (
+    #       single_overlaps[i, ]$start <= single_overlaps[j, ]$start
+    #       && single_overlaps[i, ]$end >= single_overlaps[j, ]$start
+    #     ) {
+    #       # print(2)
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[i, ]$start, end = single_overlaps[j, ]$start
+    #         )
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[j, ]$start,
+    #           end = single_overlaps[i, ]$end
+    #         )
+    #     } else if (
+    #       single_overlaps[i, ]$start >= single_overlaps[j, ]$start
+    #       && single_overlaps[i, ]$end <= single_overlaps[j, ]$end
+    #     ) {
+    #       # print(3)
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[j, ]$start, end = single_overlaps[i, ]$start
+    #         )
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[i, ]$start, end = single_overlaps[i, ]$end
+    #         )
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[i, ]$end, end = single_overlaps[j, ]$end
+    #         )
+    #     } else if (
+    #       single_overlaps[i, ]$start <= single_overlaps[j, ]$end
+    #       && single_overlaps[i, ]$end >= single_overlaps[j, ]$end
+    #     ) {
+    #       # print(4)
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[i, ]$start, end = single_overlaps[j, ]$end
+    #         )
+    #       double_overlaps <- double_overlaps %>%
+    #         add_row(
+    #           chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #           group3 = groups[3], start = single_overlaps[j, ]$end, end = single_overlaps[i, ]$end
+    #         )
+    #     }
+    #     # else {
+    #     #   # print(5)
+    #     #   groups <- find_groups(single_overlaps[i, ], single_overlaps[i, ])
+    #     #   double_overlaps <- double_overlaps %>%
+    #     #     add_row(
+    #     #       chrom = single_overlaps$chromo[1], group1 = groups[1], group2 = groups[2], 
+    #     #       group3 = groups[3], start = single_overlaps[i, ]$start, end = single_overlaps[i, ]$end
+    #     #     )
+    #     # }
+    #   }
+    # }
+  }
+  single_overlaps
+  # double_overlaps
+})
+blah
 
-# plot the matrix
-png("Results/loci/EH/all_phys_vs_gen_pos_eh.png",
-  family = "Times New Roman", width = 210, height = 267, pointsize = 5,
-  units = "mm", res = 300)
-plots_matrix + theme(legend.position = "bottom")
-dev.off()
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("IRanges")
+# library(IRanges)
+
+# comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+# ?IRanges
+# comp_gef
+# by(comp_gef, comp_gef$chrom, function (chrom) {
+#   ir <- IRanges(
+#     start = chrom$start, end = chrom$end,
+#     # names = comp_gef$group
+#   )
+# })
+# ir <- IRanges(
+#   start = comp_gef$start, end = comp_gef$end,
+#   # names = str_c(comp_gef$chrom, comp_gef$group, collapse = " ")
+# )
+# install.packages("data.table")
+
+# num_chrs_chrw_chrs_csws <- 0
+# num_chrs_chrw_csws_chrw <- 0
+# num_chrs_csws_csws_chrw <- 0
+# blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+#   if (nrow(chrom) > 1) {
+#     pairs <- list()
+#     for (i in 1:(nrow(chrom) - 1)) {
+#       for (j in (i + 1):nrow(chrom)) {
+#         if (1 %in%
+#           findInterval(
+#             c(chrom[i, ]$start, chrom[i, ]$end),
+#             c(chrom[j, ]$start, chrom[j, ]$end)
+#           )
+#           ||
+#           (
+#             c(chrom[i, ]$start, chrom[i, ]$end) ==
+#             c(chrom[j, ]$start, chrom[j, ]$end)
+#           )
+#         ) {
+#           if (
+#             (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "chrs_csws")
+#             ||
+#             (chrom[i, ]$group == "chrs_csws" && chrom[j, ]$group == "chrs_chrw")
+#           ) {
+#             num_chrs_chrw_chrs_csws <<- num_chrs_chrw_chrs_csws + 1
+#             pairs[["chrs_chrw_chrs_csws"]][length(pairs[["chrs_chrw_chrs_csws"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+#           } else if (
+#             (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "csws_chrw")
+#             ||
+#             (chrom[i, ]$group == "csws_chrw" && chrom[j, ]$group == "chrs_chrw")
+#           ) {
+#             num_chrs_chrw_csws_chrw <<- num_chrs_chrw_csws_chrw + 1
+#             pairs[["chrs_chrw_csws_chrw"]][length(pairs[["chrs_chrw_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+#           } else {
+#             num_chrs_csws_csws_chrw <<- num_chrs_csws_csws_chrw + 1
+#             pairs[["chrs_csws_csws_chrw"]][length(pairs[["chrs_csws_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
+#           }
+#         }
+#       }
+#     }
+#   }
+#   pairs
+# })
+# num_chrs_chrw_chrs_csws
+# num_chrs_chrw_csws_chrw
+# num_chrs_csws_csws_chrw
+# blah
+
+# test <- function(regions, row) {
+#   (
+#     sum(regions[row - 1, 3:5] %in% regions[row, 3:5]) == 3
+#     && regions[row - 1, ]$interval == regions[row, ]$interval - 1
+#   )
+# }
+
+# comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+# comp_gef %>% print(n = Inf)
+# blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+#   regions <- tibble(
+#     chrom = character(), interval = integer(), group1 = character(),
+#     group2 = character(), group3 = character()
+#   )
+#   if (nrow(chrom) > 1) {
+#     for (i in 1:max(chrom$end %>% as.integer() + 1)) {
+#       groups <- NULL
+#       for (row in 1:nrow(chrom)) {
+#         if (chrom_start >= i - 1
+#           chrom[row, ]$start <= i  && i <= chrom[row, ]$end) {
+#           groups <- c(groups, chrom[row, ]$group)
+#         }
+#       }
+#       if (length(groups)) {
+#         if (length(groups) == 1) {
+#           regions <- regions %>%
+#             add_row(
+#               chrom = chrom$chrom[1], interval = i, group1 = groups[1]
+#             )
+#         } else if (length(groups) == 2) {
+#           regions <- regions %>%
+#             add_row(
+#               chrom = chrom$chrom[1], interval = i, group1 = groups[1],
+#               group2 = groups[2]
+#             )
+#         } else {
+#           regions <- regions %>%
+#             add_row(
+#               chrom = chrom$chrom[1], interval = i, group1 = groups[1],
+#               group2 = groups[2],group3 = groups[3]
+#             )
+#         }
+#       }
+#     }
+#   }
+#   over_ints <- tibble(
+#     chrom = character(), start = integer(), end = integer(),
+#     group1 = character(), group2 = character(), group3 = character()
+#   )
+#   if (nrow(regions)) {
+#     start <- regions[1, ]$interval
+#     end <- regions[1, ]$interval
+#     for (row in 2:nrow(regions)) {
+#       if (test(regions, row)) {
+#         end <- regions[row, ]$interval
+#       }
+#       if (row == nrow(regions) || ! test(regions, row)) {
+#         over_ints <- over_ints %>%
+#           add_row(
+#             chrom = chrom$chrom[1], start = start, end = end,
+#             group1 = regions[row - 1, ]$group1,
+#             group2 = regions[row - 1, ]$group2,
+#             group3 = regions[row - 1, ]$group3
+#           )
+#         start <- regions[row, ]$interval
+#         end <- regions[row, ]$interval
+#       }
+#     }
+#   }
+#   over_ints
+# })
+# for (ele in 1:length(blah)) {
+#   blah[[ele]] %>% print(n = Inf)
+# }
+# blah[[length(blah)]] %>% print(n = Inf)
+# num_chrs_chrw_chrs_csws
+# num_chrs_chrw_csws_chrw
+# num_chrs_csws_csws_chrw
+
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  chrom <- chrom %>% arrange(start)
+  for (i in 1:nrow(chrom)) {
+    ovlp <- which(chrom$start <= chrom$end[i])
+    if (any(ovlp > i)) {
+      for (j in 1:nrow(chrom[ovlp]))
+      }
+    }
+  }
+})
