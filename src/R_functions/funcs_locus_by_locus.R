@@ -169,7 +169,7 @@ find_windows <- function (snp_data, extremes) {
 find_regions <- function (groups) {
   linked <- vector()
   ret <- tibble(
-    chrom = character(), group = character(), mean_pos_mb = double(),
+    chrom = character(), group = character(),
     num_linked = integer(), start = double(), end = double(),
     freq_extreme = double(), mean_D = double(), extreme = character(),
     pos_mb = character(), Ds = character(), ids = character()
@@ -221,12 +221,6 @@ find_regions <- function (groups) {
         ) {
           ret <- ret %>% add_row(
             chrom = groups[[group]]$chrom[1], group = group,
-            mean_pos_mb = mean(
-              c(
-                groups[[group]]$pos_mb[linked_pruned[1]],
-                groups[[group]]$pos_mb[linked_pruned[length(linked_pruned)]]
-              )
-            ),
             num_linked = length(linked_pruned),
             start = groups[[group]]$pos_mb[linked_pruned[1]],
             end = 

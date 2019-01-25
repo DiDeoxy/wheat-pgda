@@ -22,31 +22,94 @@ groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
 wheat_data <- add_group_stat(wheat_data, groups)
 
 # find the extreme threshold for each Gene
-extremes <- calc_extremes(wheat_data, groups, prob = 0.955)
+extremes <- calc_extremes(wheat_data, groups, prob = 0.95)
 
 # create a table of the regions with a high density of extreme markers
 group_extreme_freqs <- calc_group_extreme_freqs(
   wheat_data, extremes
 )
 
-library(IRanges)
-?IRanges
-
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
-by(comp_gef, comp_gef$chrom, function (chrom) {
-  by(chrom, chrom$group, function (group) {
 
-  })
+all_overlaps <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  points <- c(chrom$start, chrom$end) %>% sort()
+  # ret <- NULL
+  chrom_all_overlaps <- tibble()
+  for (i in 1:(length(points) - 1)) {
+    # print(paste(points[i], points[i + 1]))
+    spannings <- chrom[which(chrom$start <= points[i] & chrom$end >= points[i + 1]), ]
+    # print(spannings)
+    overlaps_by_group <- list()
+    # print(nrow(spannings))
+    if (nrow(spannings)) {
+      for (j in 1:nrow(spannings)) {
+        temp <- tibble(
+          chrom = chrom$chrom[1],
+          pos_mb = strsplit(spannings[j, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
+          group = spannings$group[j],
+          extreme = strsplit(spannings[j, "extreme"] %>% as.character(), ' ')[[1]],
+          Ds = strsplit(spannings[j, "Ds"] %>% as.character(), ' ')[[1]],
+          ids = strsplit(spannings[j, "ids"] %>% as.character(), ' ')[[1]]
+        )
+        temp <- temp[which(temp$pos_mb >= points[i] & temp$pos_mb <= points[i + 1]), ]
+        names(temp)[3:5] <- str_c(names(temp)[3:5], spannings$group[j], sep = "_")
+        overlaps_by_group[[spannings$group[j]]] <- temp
+      }
+    }
+    # print(overlaps_by_group)
+    if (length(overlaps_by_group) > 1) {
+      chrom_all_overlaps <- bind_rows(chrom_all_overlaps, Reduce((function (x, y) { full_join(x, y) }), overlaps_by_group))
+    } else {
+      chrom_all_overlaps <- bind_rows(chrom_all_overlaps, overlaps_by_group)
+    }
+  }
+  chrom_all_overlaps
+}) %>% Reduce(function (x, y) { bind_rows(x, y) }, .)
+all_overlaps <- all_overlaps[,order(colnames(all_overlaps))]
+
+# print our the markers involved in each linked region
+genes <- rbind(pheno_genes, resi_genes)
+base <- "Results/loci/D/closest_markers"
+by(all_overlaps, list(paste(all_overlaps$group_chrs_chrw, all_overlaps$group_chrs_csws, all_overlaps$group_csws_chrw), all_overlaps$chrom), function (chrom_overlap) {
+  print(chrom_overlap)
+  # file_name <- paste(chrom$chrom[1])
 })
+for (row in 1:nrow(comp_gef)) {
+  file_name1 <- paste(
+    cbind(
+      comp_gef[row, c("chrom", "mean_pos_mb", "group", "num_linked")] %>%
+      round_df(0),
+      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+    ), collapse = '_'
+  )
+  file_name2 <- paste(
+    cbind(
+      comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
+      round_df(0),
+      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+    ), collapse = '_'
+  )
+  linked <- tibble(
+    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
+    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
+    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
+    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
+  )
+  for (row2 in 1:nrow(genes)) {
+    if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
+      linked <- linked %>%
+        add_row(
+          extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
+          ids = genes[row2, ]$id
+        )
+    }
+  }
+  linked <- linked %>% arrange(pos_mb)
+  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+  write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
+  write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
+}
 
-?group_by
-
-ir_groups <- comp_gef %>% group_by(chrom, group) %>% do(ir_group = IRanges(start = .$start, end = .$end, names = .$group))
-
-by(ir_groups, ir_groups$chrom, function (chrom) {
-  irl <- IRangesList(chrom$ir_group)
-  print(irl)
-})
 
 ################################################################################
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
