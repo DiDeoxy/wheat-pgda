@@ -1,0 +1,35 @@
+install.packages("installr")
+library(installr)
+updateR()
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("SNPRelate")
+biocLite("BHC")
+biocLite("GENESIS")
+biocLite("snpStats")
+biocLite("ggtree")
+
+# install.packages("devtools")
+# devtools::install_github("hadley/ggplot2")
+
+install.packages('extrafont')
+library(extrafont)
+font_import()
+loadfonts()
+
+install.packages("rgl")
+install.packages("dendextend")
+install.packages("circlize")
+install.packages("scrime")
+install.packages("randomForest")
+install.packages("tidyverse")
+
+install.packages("pvclust")
+install.packages("Hmisc")
+install.packages("pegas")
+install.packages("bclust")
+install.packages("adegenet")
+install.packages("data.table")
+install.packages("poppr")
+install.packages("StAMPP")
+

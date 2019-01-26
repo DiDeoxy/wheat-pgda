@@ -131,55 +131,70 @@ png(str_c("Results/loci/D/comps_D.png"),
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
 
-# # print our the markers involved in each linked region
+# print our the markers involved in each linked region
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 base <- "Results/loci/D/closest_markers"
 ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
 by(comp_gef, comp_gef$chrom, function (chrom) {
-  write_csv(chrom[, 1:7] %>% arrange(start), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
+  write_csv(chrom[, 1:7] %>% arrange(start, group), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
 })
-genes <- rbind(pheno_genes, resi_genes)
-base <- "Results/loci/D/closest_markers"
-for (row in 1:nrow(comp_gef)) {
-  file_name1 <- paste(
-    cbind(
-      comp_gef[row, c("chrom", "start", "end", "group", "num_linked")] %>%
-      round_df(0),
-      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-    ), collapse = '_'
-  )
-  # file_name2 <- paste(
-  #   cbind(
-  #     comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
-  #     round_df(0),
-  #     comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-  #   ), collapse = '_'
-  # )
-  linked <- tibble(
-    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
-    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
-    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
-    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
-  )
-  for (row2 in 1:nrow(genes)) {
-    if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
-      linked <- linked %>%
-        add_row(
-          extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
-          ids = genes[row2, ]$id
-        )
-    }
-  }
-  linked <- linked %>% arrange(pos_mb)
-  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
-  # write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
-}
+
+################################################################################
+# genes <- rbind(pheno_genes, resi_genes)
+# base <- "Results/loci/D/closest_markers"
+# for (row in 1:nrow(comp_gef)) {
+#   file_name1 <- paste(
+#     cbind(
+#       comp_gef[row, c("chrom", "start", "end", "group", "num_linked")] %>%
+#       round_df(0),
+#       comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+#     ), collapse = '_'
+#   )
+#   # file_name2 <- paste(
+#   #   cbind(
+#   #     comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
+#   #     round_df(0),
+#   #     comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+#   #   ), collapse = '_'
+#   # )
+#   linked <- tibble(
+#     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
+#     pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
+#     Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
+#     ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
+#   )
+#   for (row2 in 1:nrow(genes)) {
+#     if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
+#       linked <- linked %>%
+#         add_row(
+#           extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
+#           ids = genes[row2, ]$id
+#         )
+#     }
+#   }
+#   linked <- linked %>% arrange(pos_mb)
+#   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+#   write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
+#   # write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
+# }
 
 ################################################################################
 sum(comp_gef$group == "chrs_chrw")
+sum(comp_gef$group == "chrs_csws")
+sum(comp_gef$group == "csws_chrw")
 comp_gef[which(comp_gef$group == "chrs_chrw"), ] %>% print(n = Inf)
 
+# markers near Lr22A
+D2 <- which(wheat_data$snp$chrom == "2D")
+sum(wheat_data$snp$pos_mb[D2] >= 1.669121 & wheat_data$snp$pos_mb[D2] <= 31.04408)
+
+# markers near Tamyb10-D1
+D3 <- which(wheat_data$snp$chrom == "3D")
+wheat_data$snp$pos_mb[D3][which(wheat_data$snp$pos_mb[D3] >= 560 & wheat_data$snp$pos_mb[D3] <= 580)]
+
+# markers near Lr34 4A
+A4 <- which(wheat_data$snp$chrom == "4A")
+sum(wheat_data$snp$pos_mb[A4] >= 625.862234 & wheat_data$snp$pos_mb[A4] <= 744.309803)]
 
 
 library(adegenet)

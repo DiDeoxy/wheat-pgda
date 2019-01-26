@@ -116,7 +116,7 @@ find_windows <- function (snp_data, extremes) {
   # num <- 4
   # the max distance in Mb from the considered marker that the upstream and
   # downstream markers of num can be
-  dist <- 6
+  dist <- 6.1
   # for each comparison
   for (group in names(extremes)) {
     # for each snp in the comparison
@@ -169,10 +169,10 @@ find_windows <- function (snp_data, extremes) {
 find_regions <- function (groups) {
   linked <- vector()
   ret <- tibble(
-    chrom = character(), group = character(),
-    num_linked = integer(), start = double(), end = double(),
-    freq_extreme = double(), mean_D = double(), extreme = character(),
-    pos_mb = character(), Ds = character(), ids = character()
+    chrom = character(), start = double(), end = double(), group = character(),
+    num_linked = integer(), num_extreme = double(), mean_D = double(),
+    extreme = character(), pos_mb = character(), Ds = character(),
+    ids = character()
   )
   for (group in names(groups)) {
     # makes sure each group is represented on each chromosome
@@ -221,15 +221,15 @@ find_regions <- function (groups) {
         ) {
           ret <- ret %>% add_row(
             chrom = groups[[group]]$chrom[1], group = group,
-            num_linked = length(linked_pruned),
             start = groups[[group]]$pos_mb[linked_pruned[1]],
             end = 
               groups[[group]]$pos_mb[linked_pruned[length(linked_pruned)]],
-            freq_extreme =
+            num_linked = length(linked_pruned),
+            num_extreme =
               sum(
                 groups[[group]]$D[linked_pruned] >= extremes[group]
-              ) / length(linked_pruned),
-            mean_D = mean(groups[[group]]$D[linked_pruned]),
+              ),
+              mean_D = mean(groups[[group]]$D[linked_pruned]),
             extreme = paste(
               groups[[group]]$D[linked_pruned] > extremes[group],
               collapse = ' '

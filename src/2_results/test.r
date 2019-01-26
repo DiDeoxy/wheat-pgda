@@ -115,6 +115,80 @@ by(all_overlaps, all_overlaps$chrom, function (chrom_overlaps) {
   close(file_conn)
 })
 
+findInterval(c(1, 3), c(2, 3))
+findInterval(c(1, 4), c(2, 3))
+findInterval(c(2, 3), c(1, 4))
+
+num_chrs_chrw_chrs_csws <- 0
+num_chrs_chrw_csws_chrw <- 0
+num_chrs_csws_csws_chrw <- 0
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  if (nrow(chrom) > 1) {
+    pairs <- list()
+    for (i in 1:(nrow(chrom) - 1)) {
+      for (j in (i + 1):nrow(chrom)) {
+        if (
+          1 %in% findInterval(
+            c(chrom[i, ]$start, chrom[i, ]$end),
+            c(chrom[j, ]$start, chrom[j, ]$end)
+          )
+          || 1 %in% findInterval(
+            c(chrom[j, ]$start, chrom[j, ]$end),
+            c(chrom[i, ]$start, chrom[i, ]$end)
+          )
+          || chrom[i, ]$start == chrom[j, ]$start
+          || chrom[i, ]$end == chrom[j, ]$end
+        ) {
+          if (
+            (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "chrs_csws")
+            ||
+            (chrom[i, ]$group == "chrs_csws" && chrom[j, ]$group == "chrs_chrw")
+          ) {
+            num_chrs_chrw_chrs_csws <<- num_chrs_chrw_chrs_csws + 1
+            pairs[["chrs_chrw_chrs_csws"]][
+              length(pairs[["chrs_chrw_chrs_csws"]]) + 1
+            ] <- paste(
+              chrom$chrom[1],
+              chrom[i, ]$group, chrom[i, ]$start, chrom[i, ]$end,
+              chrom[j, ]$group, chrom[j, ]$start, chrom[j, ]$end,
+              collapse = " "
+            )
+          } else if (
+            (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "csws_chrw")
+            ||
+            (chrom[i, ]$group == "csws_chrw" && chrom[j, ]$group == "chrs_chrw")
+          ) {
+            num_chrs_chrw_csws_chrw <<- num_chrs_chrw_csws_chrw + 1
+            pairs[["chrs_chrw_csws_chrw"]][
+              length(pairs[["chrs_chrw_csws_chrw"]]) + 1
+            ] <- paste(
+              chrom$chrom[1],
+              chrom[i, ]$group, chrom[i, ]$start, chrom[i, ]$end,
+              chrom[j, ]$group, chrom[j, ]$start, chrom[j, ]$end,
+              collapse = " "
+            )
+          } else {
+            num_chrs_csws_csws_chrw <<- num_chrs_csws_csws_chrw + 1
+            pairs[["chrs_csws_csws_chrw"]][
+              length(pairs[["chrs_csws_csws_chrw"]]) + 1
+            ] <- paste(
+              chrom$chrom[1],
+              chrom[i, ]$group, chrom[i, ]$start, chrom[i, ]$end,
+              chrom[j, ]$group, chrom[j, ]$start, chrom[j, ]$end,
+              collapse = " "
+            )
+          }
+        }
+      }
+    }
+  }
+  pairs
+})
+num_chrs_chrw_chrs_csws
+num_chrs_chrw_csws_chrw
+num_chrs_csws_csws_chrw
+blah
+
 
 ################################################################################
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
@@ -297,53 +371,7 @@ blah
 # )
 # install.packages("data.table")
 
-# num_chrs_chrw_chrs_csws <- 0
-# num_chrs_chrw_csws_chrw <- 0
-# num_chrs_csws_csws_chrw <- 0
-# blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
-#   if (nrow(chrom) > 1) {
-#     pairs <- list()
-#     for (i in 1:(nrow(chrom) - 1)) {
-#       for (j in (i + 1):nrow(chrom)) {
-#         if (1 %in%
-#           findInterval(
-#             c(chrom[i, ]$start, chrom[i, ]$end),
-#             c(chrom[j, ]$start, chrom[j, ]$end)
-#           )
-#           ||
-#           (
-#             c(chrom[i, ]$start, chrom[i, ]$end) ==
-#             c(chrom[j, ]$start, chrom[j, ]$end)
-#           )
-#         ) {
-#           if (
-#             (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "chrs_csws")
-#             ||
-#             (chrom[i, ]$group == "chrs_csws" && chrom[j, ]$group == "chrs_chrw")
-#           ) {
-#             num_chrs_chrw_chrs_csws <<- num_chrs_chrw_chrs_csws + 1
-#             pairs[["chrs_chrw_chrs_csws"]][length(pairs[["chrs_chrw_chrs_csws"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
-#           } else if (
-#             (chrom[i, ]$group == "chrs_chrw" && chrom[j, ]$group == "csws_chrw")
-#             ||
-#             (chrom[i, ]$group == "csws_chrw" && chrom[j, ]$group == "chrs_chrw")
-#           ) {
-#             num_chrs_chrw_csws_chrw <<- num_chrs_chrw_csws_chrw + 1
-#             pairs[["chrs_chrw_csws_chrw"]][length(pairs[["chrs_chrw_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
-#           } else {
-#             num_chrs_csws_csws_chrw <<- num_chrs_csws_csws_chrw + 1
-#             pairs[["chrs_csws_csws_chrw"]][length(pairs[["chrs_csws_csws_chrw"]]) + 1] <- paste(chrom$chrom[1], mean(chrom[i, ]$start, chrom[i, ]$end), collapse = " ")
-#           }
-#         }
-#       }
-#     }
-#   }
-#   pairs
-# })
-# num_chrs_chrw_chrs_csws
-# num_chrs_chrw_csws_chrw
-# num_chrs_csws_csws_chrw
-# blah
+
 
 # test <- function(regions, row) {
 #   (
