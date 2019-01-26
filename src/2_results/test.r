@@ -65,50 +65,55 @@ all_overlaps <- by(comp_gef, comp_gef$chrom, function (chrom) {
   }
   chrom_all_overlaps
 }) %>% Reduce(function (x, y) { bind_rows(x, y) }, .)
-all_overlaps <- all_overlaps[,order(colnames(all_overlaps))]
+all_overlaps <- all_overlaps[, order(colnames(all_overlaps))][, c(1, 12, 5:7, 8:10, 2:4, 11)]
 
 # print our the markers involved in each linked region
-genes <- rbind(pheno_genes, resi_genes)
+genes <- rbind(pheno_genes, resi_genes) %>% as.tibble()
 base <- "Results/loci/D/closest_markers"
-by(all_overlaps, list(paste(all_overlaps$group_chrs_chrw, all_overlaps$group_chrs_csws, all_overlaps$group_csws_chrw), all_overlaps$chrom), function (chrom_overlap) {
-  print(chrom_overlap)
-  # file_name <- paste(chrom$chrom[1])
-})
-for (row in 1:nrow(comp_gef)) {
-  file_name1 <- paste(
-    cbind(
-      comp_gef[row, c("chrom", "mean_pos_mb", "group", "num_linked")] %>%
-      round_df(0),
-      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-    ), collapse = '_'
-  )
-  file_name2 <- paste(
-    cbind(
-      comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
-      round_df(0),
-      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-    ), collapse = '_'
-  )
-  linked <- tibble(
-    extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
-    pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
-    Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
-    ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
-  )
-  for (row2 in 1:nrow(genes)) {
-    if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
-      linked <- linked %>%
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+by(all_overlaps, all_overlaps$chrom, function (chrom_overlaps) {
+  for (row in 1:nrow(genes)) {
+    # print(genes[row, ]$chrom)
+    # print(chrom_overlaps$chrom[1])
+    if (genes[row, ]$chrom == chrom_overlaps$chrom[1]) {
+      chrom_overlaps <- chrom_overlaps %>%
         add_row(
-          extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
-          ids = genes[row2, ]$id
+          chrom = genes[row, ]$chrom, pos_mb = genes[row, ]$mean_pos_mb, ids = genes[row, ]$id
         )
     }
   }
-  linked <- linked %>% arrange(pos_mb)
-  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
-  write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
-}
+  chrom_overlaps <- chrom_overlaps %>% dplyr::arrange(pos_mb)
+  file_name <- paste0(chrom_overlaps$chrom[1], "_overlaps_genes_details.csv")
+  file_conn <- file(file.path(base, file_name))
+  writeLines(
+    c(
+      paste(names(chrom_overlaps), collapse = ","),
+      paste(chrom_overlaps[1, ], collapse = ",")
+    ), file_conn
+  )
+  close(file_conn)
+  file_conn <- file(file.path(base, file_name), open = "at")
+  for (row in 2:nrow(chrom_overlaps)) {
+    test1 <- chrom_overlaps[row - 1, 6:8]
+    test1[is.na(test1)] <- "None"
+    test2 <- chrom_overlaps[row , 6:8]
+    test2[is.na(test2)] <- "None"
+    if (
+      ! all(test1 == test2)
+    ) {
+      writeLines("", file_conn)
+      writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
+    } else if (
+      chrom_overlaps[row, ]$pos_mb - chrom_overlaps[row - 1, ]$pos_mb > 12
+    ) {
+      writeLines(rep("", 3), file_conn)
+      writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
+    } else {
+      writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
+    }
+  }
+  close(file_conn)
+})
 
 
 ################################################################################

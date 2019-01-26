@@ -133,6 +133,11 @@ dev.off()
 
 # # print our the markers involved in each linked region
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+base <- "Results/loci/D/closest_markers"
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+by(comp_gef, comp_gef$chrom, function (chrom) {
+  write_csv(chrom[, 1:7] %>% arrange(start), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
+})
 genes <- rbind(pheno_genes, resi_genes)
 base <- "Results/loci/D/closest_markers"
 for (row in 1:nrow(comp_gef)) {
@@ -143,13 +148,13 @@ for (row in 1:nrow(comp_gef)) {
       comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
     ), collapse = '_'
   )
-  file_name2 <- paste(
-    cbind(
-      comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
-      round_df(0),
-      comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-    ), collapse = '_'
-  )
+  # file_name2 <- paste(
+  #   cbind(
+  #     comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
+  #     round_df(0),
+  #     comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
+  #   ), collapse = '_'
+  # )
   linked <- tibble(
     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
     pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
@@ -168,7 +173,7 @@ for (row in 1:nrow(comp_gef)) {
   linked <- linked %>% arrange(pos_mb)
   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
   write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
-  write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
+  # write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
 }
 
 ################################################################################
