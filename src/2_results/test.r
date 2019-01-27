@@ -32,15 +32,15 @@ group_extreme_freqs <- calc_group_extreme_freqs(
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 
 all_overlaps <- by(comp_gef, comp_gef$chrom, function (chrom) {
-  points <- c(chrom$start, chrom$end) %>% sort()
-  # ret <- NULL
+  # points <- c(chrom$start, chrom$end) %>% sort()
+  points <- c(chrom$start, chrom$end) %>% unique() %>% sort()
   chrom_all_overlaps <- tibble()
   for (i in 1:(length(points) - 1)) {
-    # print(paste(points[i], points[i + 1]))
     spannings <- chrom[which(chrom$start <= points[i] & chrom$end >= points[i + 1]), ]
-    # print(spannings)
+    if (! nrow(spannings)) {
+      spannings <- chrom[which(chrom$start == points[i] & chrom$end == points[i]), ]
+    }
     overlaps_by_group <- list()
-    # print(nrow(spannings))
     if (nrow(spannings)) {
       for (j in 1:nrow(spannings)) {
         temp <- tibble(
@@ -56,7 +56,6 @@ all_overlaps <- by(comp_gef, comp_gef$chrom, function (chrom) {
         overlaps_by_group[[spannings$group[j]]] <- temp
       }
     }
-    # print(overlaps_by_group)
     if (length(overlaps_by_group) > 1) {
       chrom_all_overlaps <- bind_rows(chrom_all_overlaps, Reduce((function (x, y) { full_join(x, y) }), overlaps_by_group))
     } else {
@@ -114,10 +113,6 @@ by(all_overlaps, all_overlaps$chrom, function (chrom_overlaps) {
   }
   close(file_conn)
 })
-
-findInterval(c(1, 3), c(2, 3))
-findInterval(c(1, 4), c(2, 3))
-findInterval(c(2, 3), c(1, 4))
 
 num_chrs_chrw_chrs_csws <- 0
 num_chrs_chrw_csws_chrw <- 0
@@ -190,85 +185,117 @@ num_chrs_csws_csws_chrw
 blah
 
 
-################################################################################
-comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+# temp <- group_extreme_freqs
 
-find_groups <- function(region1, region2) {
-  groups <- c(region1[c(2, 3)], region2[c(2, 3)]) %>% unlist() %>% unique()
-  if (length(groups) == 1) {
-    return (c(groups, NA, NA))
-  } else if (length(groups) == 2) {
-    return (c(groups, NA))
-  } else {
-    return (groups)
-  }
-}
+# group_extreme_freqs <- 
 
-# having problem with double overlaps, insteat of looking for single overlaps first
-# look for total overlaps using a which statment follwoing logic of identifying single overlaps
-blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
-  single_overlaps <- tibble(
-    chromo = character(), group1 = character(), group2 = character(),
-    start = double(), end = double()
-  )
-  double_overlaps <- tibble(
-    chrom = character(), group1 = character(), group2 = character(),
-    group3 = character(), start = double(), end = double()
-  )
-  if (nrow(chrom) > 1) {
-    for (i in 1:(nrow(chrom) - 1)) {
-      for (j in (i + 1):nrow(chrom)) {
-        if (
-          chrom[i, ]$start <= chrom[j, ]$start
-          && chrom[i, ]$end >= chrom[j, ]$start
-        ) {
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
-              group2 = NA, start = chrom[i, ]$start, end = chrom[j, ]$start
-            )
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
-              group2 = chrom[j, ]$group, start = chrom[j, ]$start,
-              end = chrom[i, ]$end
-            )
-        } else if (
-          chrom[i, ]$start >= chrom[j, ]$start
-          && chrom[i, ]$end <= chrom[j, ]$end
-        ) {
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
-              group2 = NA, start = chrom[j, ]$start, end = chrom[i, ]$start
-            )
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
-              group2 = chrom[j, ]$group, start = chrom[i, ]$start,
-              end = chrom[i, ]$end
-            )
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
-              group2 = NA, start = chrom[i, ]$end, end = chrom[j, ]$end
-            )
-        } else if (
-          chrom[i, ]$start <= chrom[j, ]$end
-          && chrom[i, ]$end >= chrom[j, ]$end
-        ) {
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
-              group2 = chrom[j, ]$group, start = chrom[i, ]$start,
-              end = chrom[j, ]$end
-            )
-          single_overlaps <- single_overlaps %>%
-            add_row(
-              chromo = chrom$chrom[1], group1 = chrom[i, ]$group, group2 = NA,
-              start = chrom[j, ]$end, end = chrom[i, ]$end
-            )
-        }
+# by(temp, temp$chrom, function (chrom) {
+#   fillers <- which(is.na(chrom$start))
+#   chrom2 <- chrom[-fillers, ]
+#   print(chrom2)
+#   # print(chrom)
+#   single <- vector()
+#   if (nrow(chrom2) > 1)
+#   for (i in 1:(nrow(chrom2) - 1)) {
+#     if (chrom2$start[i] == chrom2$end[i]) {
+#       # print(1)
+#       single <- c(single, i)
+#       for (j in (i + 1):nrow(chrom2)) {
+#         if (
+#           chrom2$start[i] == chrom2$start[j] && chrom2$end[i] == chrom2$end[j]
+#         ) {
+#           single <- single[-length(single)]
+#           break
+#         }
+#       }
+      
+#     }
+#   }
+#   if (length(single)) {
+#     chrom2 <- chrom2[-single, ]
+#   }
+#   rbind(chrom2, chrom[fillers, ])
+# }) %>% do.call(rbind, .)
+
+# ################################################################################
+# comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+
+# find_groups <- function(region1, region2) {
+#   groups <- c(region1[c(2, 3)], region2[c(2, 3)]) %>% unlist() %>% unique()
+#   if (length(groups) == 1) {
+#     return (c(groups, NA, NA))
+#   } else if (length(groups) == 2) {
+#     return (c(groups, NA))
+#   } else {
+#     return (groups)
+#   }
+# }
+
+# # having problem with double overlaps, insteat of looking for single overlaps first
+# # look for total overlaps using a which statment follwoing logic of identifying single overlaps
+# blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+#   single_overlaps <- tibble(
+#     chromo = character(), group1 = character(), group2 = character(),
+#     start = double(), end = double()
+#   )
+#   double_overlaps <- tibble(
+#     chrom = character(), group1 = character(), group2 = character(),
+#     group3 = character(), start = double(), end = double()
+#   )
+#   if (nrow(chrom) > 1) {
+#     for (i in 1:(nrow(chrom) - 1)) {
+#       for (j in (i + 1):nrow(chrom)) {
+#         if (
+#           chrom[i, ]$start <= chrom[j, ]$start
+#           && chrom[i, ]$end >= chrom[j, ]$start
+#         ) {
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+#               group2 = NA, start = chrom[i, ]$start, end = chrom[j, ]$start
+#             )
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+#               group2 = chrom[j, ]$group, start = chrom[j, ]$start,
+#               end = chrom[i, ]$end
+#             )
+#         } else if (
+#           chrom[i, ]$start >= chrom[j, ]$start
+#           && chrom[i, ]$end <= chrom[j, ]$end
+#         ) {
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
+#               group2 = NA, start = chrom[j, ]$start, end = chrom[i, ]$start
+#             )
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+#               group2 = chrom[j, ]$group, start = chrom[i, ]$start,
+#               end = chrom[i, ]$end
+#             )
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[j, ]$group,
+#               group2 = NA, start = chrom[i, ]$end, end = chrom[j, ]$end
+#             )
+#         } else if (
+#           chrom[i, ]$start <= chrom[j, ]$end
+#           && chrom[i, ]$end >= chrom[j, ]$end
+#         ) {
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[i, ]$group,
+#               group2 = chrom[j, ]$group, start = chrom[i, ]$start,
+#               end = chrom[j, ]$end
+#             )
+#           single_overlaps <- single_overlaps %>%
+#             add_row(
+#               chromo = chrom$chrom[1], group1 = chrom[i, ]$group, group2 = NA,
+#               start = chrom[j, ]$end, end = chrom[i, ]$end
+#             )
+#         }
         # else {
         #   single_overlaps <- single_overlaps %>%
         #     add_row(

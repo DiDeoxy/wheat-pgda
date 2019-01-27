@@ -64,17 +64,6 @@ plots <- by(
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
         ]
       ) +
-      # geom_segment(
-      #   aes(
-      #     x = start - 1, y = mean_D, xend = end + 1, yend = mean_D,
-      #     size = num_linked
-      #   )
-      # ) +
-      # scale_size_continuous(
-      #   "Number of Markers", trans = "sqrt",
-      #   limits = c(1, max(group_extreme_freqs$num_linked, na.rm = T)),
-      #   breaks = c(25, 50, 100, 200)
-      # ) +
       geom_segment(
         aes(
           x = start - 1, y = mean_D, xend = end + 1, yend = mean_D,
@@ -133,50 +122,20 @@ dev.off()
 
 # print our the markers involved in each linked region
 comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+genes <- rbind(pheno_genes, resi_genes) %>% as.tibble()
 base <- "Results/loci/D/closest_markers"
 ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-by(comp_gef, comp_gef$chrom, function (chrom) {
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  for (row in 1:nrow(genes)) {
+    if (genes[row, ]$chrom == chrom$chrom[1]) {
+      chrom <- chrom %>%
+        add_row(
+          chrom = genes[row, ]$chrom, start = genes[row, ]$mean_pos_mb, group = genes[row, ]$id
+        )
+    }
+  }
   write_csv(chrom[, 1:7] %>% arrange(start, group), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
 })
-
-################################################################################
-# genes <- rbind(pheno_genes, resi_genes)
-# base <- "Results/loci/D/closest_markers"
-# for (row in 1:nrow(comp_gef)) {
-#   file_name1 <- paste(
-#     cbind(
-#       comp_gef[row, c("chrom", "start", "end", "group", "num_linked")] %>%
-#       round_df(0),
-#       comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-#     ), collapse = '_'
-#   )
-#   # file_name2 <- paste(
-#   #   cbind(
-#   #     comp_gef[row, c("group", "chrom", "mean_pos_mb", "num_linked")] %>%
-#   #     round_df(0),
-#   #     comp_gef[row, c("freq_extreme", "mean_D")] %>% round_df(2)
-#   #   ), collapse = '_'
-#   # )
-#   linked <- tibble(
-#     extreme = strsplit(comp_gef[row, "extreme"] %>% as.character(), ' ')[[1]],
-#     pos_mb = strsplit(comp_gef[row, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
-#     Ds = strsplit(comp_gef[row, "Ds"] %>% as.character(), ' ')[[1]],
-#     ids = strsplit(comp_gef[row, "ids"] %>% as.character(), ' ')[[1]]
-#   )
-#   for (row2 in 1:nrow(genes)) {
-#     if (genes[row2, ]$chrom == comp_gef[row, ]$chrom) {
-#       linked <- linked %>%
-#         add_row(
-#           extreme = "NA", pos_mb = genes[row2, ]$mean_pos_mb, Ds = "NA",
-#           ids = genes[row2, ]$id
-#         )
-#     }
-#   }
-#   linked <- linked %>% arrange(pos_mb)
-#   ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-#   write_csv(linked, file.path(base, str_c(file_name1, ".csv")))
-#   # write_csv(linked, file.path(base, str_c(file_name2, ".csv")))
-# }
 
 ################################################################################
 sum(comp_gef$group == "chrs_chrw")
@@ -187,6 +146,7 @@ comp_gef[which(comp_gef$group == "chrs_chrw"), ] %>% print(n = Inf)
 # markers near Lr22A
 D2 <- which(wheat_data$snp$chrom == "2D")
 sum(wheat_data$snp$pos_mb[D2] >= 1.669121 & wheat_data$snp$pos_mb[D2] <= 31.04408)
+sum(wheat_data$snp$pos_mb[D2] >= 31.887715 & wheat_data$snp$pos_mb[D2] <= 36)
 
 # markers near Tamyb10-D1
 D3 <- which(wheat_data$snp$chrom == "3D")
@@ -196,39 +156,54 @@ wheat_data$snp$pos_mb[D3][which(wheat_data$snp$pos_mb[D3] >= 560 & wheat_data$sn
 A4 <- which(wheat_data$snp$chrom == "4A")
 sum(wheat_data$snp$pos_mb[A4] >= 625.862234 & wheat_data$snp$pos_mb[A4] <= 744.309803)]
 
+# markers near Lr34 4A
+B3 <- which(wheat_data$snp$chrom == "3B")
+sum(
+  wheat_data$snp$pos_mb[B3] >= 0
+  & wheat_data$snp$pos_mb[B3] <= 17
+)
 
+B6 <- which(wheat_data$snp$chrom == "6B")
+sum(
+  wheat_data$snp$pos_mb[B6] >= 701
+  & wheat_data$snp$pos_mb[B6] <= 731
+)
+
+# chrs vs CHRW
 library(adegenet)
 comp_genind <- read_rds("Data/Intermediate/Adegenet/chrs_chrw_genind.rds")
-markers <- c(least = "BS00071087_51", most = "wsnp_Ex_c41347_48190370")
+markers <- c("BS00108448_51", "RAC875_rep_c105135_247")
 for (marker in markers) {
   print(marker)
   tibble(
     pop = comp_genind@pop, allele = comp_genind@tab[, str_c(marker, ".A")]
   ) %>% table() %>% print()
 }
-comp_genind <- read_rds("Data/Intermediate/Adegenet/chrs_csws_genind.rds")
-markers <- c("Kukri_c10033_724")
-for (marker in markers) {
-  print(marker)
-  tibble(
-    pop = comp_genind@pop, allele = comp_genind@tab[, str_c(marker, ".A")]
-  ) %>% table() %>% print()
-}
-# sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
-# sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
-comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
-comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$num_linked > 20), ] %>% print(n = Inf)
-# comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
-sum(comp_gef$group == "chrs_csws")
-sum(comp_gef$group == "csws_chrw")
 
 
-gef_chrs_chrw <- comp_gef[which(comp_gef$group == "chrs_chrw"), ]
-total_extreme <- 0
-total_D <- 0
-for (i in 1:nrow(gef_chrs_chrw)) {
-  total_extreme <- total_extreme + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$freq_extreme
-  total_D <- total_D + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$mean_D
-}
-total_extreme/sum(gef_chrs_chrw$num_linked)
-total_D/sum(gef_chrs_chrw$num_linked)
+# comp_genind <- read_rds("Data/Intermediate/Adegenet/chrs_csws_genind.rds")
+# markers <- c("Kukri_c10033_724")
+# for (marker in markers) {
+#   print(marker)
+#   tibble(
+#     pop = comp_genind@pop, allele = comp_genind@tab[, str_c(marker, ".A")]
+#   ) %>% table() %>% print()
+# }
+# # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.5)
+# # sum(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75)
+# comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$mean_D > 0.75), ] %>% print(n = Inf)
+# comp_gef[which(comp_gef$group == "chrs_chrw" & comp_gef$num_linked > 20), ] %>% print(n = Inf)
+# # comp_gef[comp_gef$group == "chrs_chrw", ] %>% print(n = Inf)
+# sum(comp_gef$group == "chrs_csws")
+# sum(comp_gef$group == "csws_chrw")
+
+
+# gef_chrs_chrw <- comp_gef[which(comp_gef$group == "chrs_chrw"), ]
+# total_extreme <- 0
+# total_D <- 0
+# for (i in 1:nrow(gef_chrs_chrw)) {
+#   total_extreme <- total_extreme + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$freq_extreme
+#   total_D <- total_D + gef_chrs_chrw[i, ]$num_linked * gef_chrs_chrw[i, ]$mean_D
+# }
+# total_extreme/sum(gef_chrs_chrw$num_linked)
+# total_D/sum(gef_chrs_chrw$num_linked)

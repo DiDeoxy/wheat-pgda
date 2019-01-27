@@ -116,7 +116,7 @@ find_windows <- function (snp_data, extremes) {
   # num <- 4
   # the max distance in Mb from the considered marker that the upstream and
   # downstream markers of num can be
-  dist <- 6.1
+  dist <- 15
   # for each comparison
   for (group in names(extremes)) {
     # for each snp in the comparison
@@ -198,13 +198,18 @@ find_regions <- function (groups) {
         if (
           # when the window has two or fewer linked markers and there are many
           # other markers nearby, skip it
-          (length(linked) >= 2 && length(linked_extreme) <= 2)
+          # (length(linked) >= 2 && length(linked_extreme) <= 2)
           # (length(linked) > 1 && length(linked_extreme) == 1)
+          (
+            length(linked_extreme) <= 1 
+            && (length(linked_extreme) / length(linked)) < 0.1
+          )
+          ||
           # when there are more than 1 extreme marker in a region less than
           # 1.5 Mb with distal markers that are not extreme and more than
           # 75% of them are extreme skip it (looks like a bunch of markers
           # acting like a single marker)
-          || (
+          (
             length(linked_pruned) > 1
             && pos_pruned[length(pos_pruned)] - pos_pruned[1] <= 1.5
             && length(linked_pruned) < length(linked)
