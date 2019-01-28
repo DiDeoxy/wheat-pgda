@@ -22,7 +22,8 @@ groups <- c("chrs_csws", "chrs_chrw", "csws_chrw")
 wheat_data <- add_group_stat(wheat_data, groups)
 
 # find the extreme threshold for each Gene
-extremes <- calc_extremes(wheat_data, groups, prob = 0.95)
+extremes <- calc_extremes(wheat_data, groups, prob = 0.925)
+# extremes <- c(chrs_chrw = 0.75, chrs_csws = 0.75, csws_chrw = 0.75)
 
 # create a table of the regions with a high density of extreme markers
 group_extreme_freqs <- calc_group_extreme_freqs(
@@ -30,10 +31,10 @@ group_extreme_freqs <- calc_group_extreme_freqs(
 )
 
 # load the gene positions
-pheno_genes <- load_groups("pheno_genes.csv", base = 0.25) %>%
+pheno_genes <- load_groups("pheno_genes.csv", base = 0) %>%
   mutate(group = "pheno_gene") %>%
   dplyr::rename(mean_pos_mb = "pos_mb")
-resi_genes <- load_groups("resi_genes.csv", base = 0.25) %>%
+resi_genes <- load_groups("resi_genes.csv", base = 0) %>%
   mutate(group = "resi_gene") %>%
   dplyr::rename(mean_pos_mb = pos_mb)
 
@@ -57,7 +58,7 @@ plots <- by(
     chrom <- chrom_data$chrom[1]
     chrom_data %>%
       ggplot() +
-      ylim(0.25, 1) +
+      ylim(0, 1) +
       xlim(
         0, 
         max_genome_lengths[
@@ -138,6 +139,8 @@ blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
 })
 
 ################################################################################
+comp_gef %>% print(n = Inf)
+
 sum(comp_gef$group == "chrs_chrw")
 sum(comp_gef$group == "chrs_csws")
 sum(comp_gef$group == "csws_chrw")
@@ -148,13 +151,12 @@ D2 <- which(wheat_data$snp$chrom == "2D")
 sum(wheat_data$snp$pos_mb[D2] >= 1.669121 & wheat_data$snp$pos_mb[D2] <= 31.04408)
 sum(wheat_data$snp$pos_mb[D2] >= 31.887715 & wheat_data$snp$pos_mb[D2] <= 36)
 
-# markers near Tamyb10-D1
-D3 <- which(wheat_data$snp$chrom == "3D")
-wheat_data$snp$pos_mb[D3][which(wheat_data$snp$pos_mb[D3] >= 560 & wheat_data$snp$pos_mb[D3] <= 580)]
 
-# markers near Lr34 4A
-A4 <- which(wheat_data$snp$chrom == "4A")
-sum(wheat_data$snp$pos_mb[A4] >= 625.862234 & wheat_data$snp$pos_mb[A4] <= 744.309803)]
+A3 <- which(wheat_data$snp$chrom == "3A")
+wheat_data$snp[A3, ][
+  wheat_data$snp$pos_mb[A3] >= (100.881838 - 15)
+  & wheat_data$snp$pos_mb[A3] <= (100.881838 + 15),
+]
 
 # markers near Lr34 4A
 B3 <- which(wheat_data$snp$chrom == "3B")
@@ -162,12 +164,51 @@ sum(
   wheat_data$snp$pos_mb[B3] >= 0
   & wheat_data$snp$pos_mb[B3] <= 17
 )
+wheat_data$snp[B3, ][
+  wheat_data$snp$pos_mb[B3] >= (757.919031 - 6)
+  & wheat_data$snp$pos_mb[B3] <= (757.919031 + 6),
+]
+
+
+# markers near Tamyb10-D1
+D3 <- which(wheat_data$snp$chrom == "3D")
+wheat_data$snp[D3, ][
+  wheat_data$snp$pos_mb[D3] >= (570.80153 - 10)
+  & wheat_data$snp$pos_mb[D3] <= (570.80153 + 10), 
+]
+
+
+# markers near Lr34 4A
+A4 <- which(wheat_data$snp$chrom == "4A")
+sum(wheat_data$snp$pos_mb[A4] >= 625.862234 & wheat_data$snp$pos_mb[A4] <= 744.309803)]
+
+# markers near Lr34 4A
+D4 <- which(wheat_data$snp$chrom == "4D")
+sum(
+  wheat_data$snp$pos_mb[D4] >= 18.781996
+  & wheat_data$snp$pos_mb[D4] <= ((20.579698 - 18.781996) + 18.781996)
+)
+wheat_data$snp[D4, ][
+  wheat_data$snp$pos_mb[D4] >= (20.579698 - 6)
+  & wheat_data$snp$pos_mb[D4] <= (20.579698 + 6),
+]
 
 B6 <- which(wheat_data$snp$chrom == "6B")
 sum(
   wheat_data$snp$pos_mb[B6] >= 701
   & wheat_data$snp$pos_mb[B6] <= 731
 )
+
+# markers near Lr34 4A
+B7 <- which(wheat_data$snp$chrom == "7B")
+sum(
+  wheat_data$snp$pos_mb[B7] >= 0
+  & wheat_data$snp$pos_mb[B7] <= 17
+)
+wheat_data$snp[B7, ][
+  wheat_data$snp$pos_mb[B7] >= (9.70259 - (15.592659 - 9.70259))
+  & wheat_data$snp$pos_mb[B7] <= (15.592659),
+]
 
 # chrs vs CHRW
 library(adegenet)
@@ -179,6 +220,17 @@ for (marker in markers) {
     pop = comp_genind@pop, allele = comp_genind@tab[, str_c(marker, ".A")]
   ) %>% table() %>% print()
 }
+
+library(adegenet)
+comp_genind <- read_rds("Data/Intermediate/Adegenet/chrs_csws_genind.rds")
+markers <- c("BS00014671_51")
+for (marker in markers) {
+  print(marker)
+  tibble(
+    pop = comp_genind@pop, allele = comp_genind@tab[, str_c(marker, ".A")]
+  ) %>% table() %>% print()
+}
+
 
 
 # comp_genind <- read_rds("Data/Intermediate/Adegenet/chrs_csws_genind.rds")
