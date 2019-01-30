@@ -2,8 +2,9 @@ library(tidyverse)
 library(mmod)
 
 locus_by_locus_comps <- c(
-  "Lr10", "Lr21", "Lr22a", "Lr1", "Lr34", "chrs_csws", "chrs_chrw", "csws_chrw"
-)
+  "Lr10", "Lr21", "Lr22a", "Lr1", "Lr34", "chrs_csws", "chrs_chrw", "csws_chrw",
+  "chrs_chrw_csws"
+)[9]
 
 for (comp in locus_by_locus_comps) {
   print(comp)

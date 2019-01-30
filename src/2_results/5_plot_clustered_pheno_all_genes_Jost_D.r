@@ -17,31 +17,21 @@ max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 
 # names of groups to be plotted
 groups <- c("chrs_chrw", "chrs_csws", "csws_chrw")
+# groups <- c("chrs_chrw_csws")
 
 # find the jost's D values of each marker in each Gene and add to data set
 wheat_data <- add_group_stat(wheat_data, groups)
-
-# find the extreme threshold for each Gene
-prob <- 0.90
-extremes <- calc_extremes(wheat_data, groups, prob = prob)
-
-
-# create a table of the regions with a high density of extreme markers
-freq <- 0.05
-group_extreme_freqs <- calc_group_extreme_freqs(
-  wheat_data, extremes, freq
-)
+wheat_data$snp <- wheat_data$snp %>%
+  gather(group, D, groups)
 
 # load the gene positions
-pheno_genes <- load_groups("pheno_genes.csv", base = 0) %>%
-  mutate(group = "pheno_gene") %>%
-  dplyr::rename(mean_pos_mb = "pos_mb")
-resi_genes <- load_groups("resi_genes.csv", base = 0) %>%
-  mutate(group = "resi_gene") %>%
-  dplyr::rename(mean_pos_mb = pos_mb)
+pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
+  mutate(group = "pheno_gene")
+resi_genes <- load_groups("resi_genes.csv", base = 1) %>%
+  mutate(group = "resi_gene")
 
-# add the genes positons to the regions table
-group_extreme_freqs_genes <- group_extreme_freqs %>%
+# # add the genes positons to the regions table
+wheat_data$snp <- wheat_data$snp %>%
   rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, group, pos_mb) %>%
   as_tibble()
@@ -53,12 +43,11 @@ lables <- c(
   "Resistance Genes"
 )
 legend_title <- "Comparisons and Genes"
-group_extreme_freqs_genes$mean_pos_mb[is.na(which(group_extreme_freqs_genes$base))]
+
 plots <- by(
-  group_extreme_freqs_genes, group_extreme_freqs_genes$chrom,
-  function(chrom_data) {
-    chrom <- chrom_data$chrom[1]
-    chrom_data %>%
+  wheat_data$snp, wheat_data$snp$chrom, function(chrom_groups) {
+    chrom <- chrom_groups$chrom[1]
+    chrom_groups %>%
       ggplot() +
       ylim(0, 1) +
       xlim(
@@ -67,25 +56,19 @@ plots <- by(
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
         ]
       ) +
-      geom_segment(
-        aes(
-          x = start, y = mean_D, xend = end, yend = mean_D,
-          colour = group
-        ), size = 1
+      geom_point(
+        aes(pos_mb, D, colour = group), shape = 16, size = 1, alpha = 1/8
+      ) +
+      geom_smooth(
+        aes(pos_mb, D, colour = group), method = "loess", span = 0.06, size = 0.5
       ) +
       geom_point(
-        aes(start, mean_D, colour = group), shape = 20, size = 2
-      ) +
-      geom_point(
-        aes(end, mean_D, colour = group), shape = 20, size = 2
-      ) +
-      geom_point(
-        aes(mean_pos_mb, base, colour = group, shape = group), size = 1
+        aes(pos_mb, base, colour = group, shape = group), size = 1
       ) +
       geom_text_repel(
-        aes(mean_pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
-        vjust = 1, size = 3, segment.colour = "black",
-        nudge_y = 0.07,
+        aes(pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
+        vjust = -1, size = 2, fontface = "bold",
+        nudge_y = -0.07,
         nudge_x = ifelse(chrom == "1D", 80,
           ifelse(chrom %in% c("2D", "4A"), -60, 40)
         ),
@@ -93,13 +76,12 @@ plots <- by(
       ) +
       scale_colour_manual(
         legend_title, labels = lables, values = colours_groups_genes,
-        limits = levels(as.factor(group_extreme_freqs_genes$group))
+        limits = levels(as.factor(wheat_data$snp$group))
       ) +
       scale_shape_manual(
         legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
-        limits = levels(as.factor(group_extreme_freqs_genes$group))
-      ) +
-      labs(colour = "Comparison")
+        limits = levels(as.factor(wheat_data$snp$group))
+      )
   }
 )
 
@@ -116,7 +98,7 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png(str_c("Results/loci/D/comps_D_p_", prob * 100, "_f_", freq * 100, ".png"),
+png("Results/loci/D/comps_D_test.png",
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300
 )
@@ -125,43 +107,44 @@ dev.off()
 
 # ################################################################################
 # # printing out the data in various ways
-# genes <- rbind(pheno_genes, resi_genes) %>% as_tibble()
-# base <- "Results/loci/D/closest_markers"
+genes <- rbind(pheno_genes, resi_genes) %>% as_tibble()
+base <- "Results/loci/D/closest_markers"
 
-# wheat_data$snp <- wheat_data$snp %>%
-#   add_column(chrs_chrw_exceptional_Ds = (wheat_data$snp$chrs_chrw >= extremes["chrs_chrw"])) %>%
-#   add_column(chrs_csws_exceptional_Ds = (wheat_data$snp$chrs_csws >= extremes["chrs_csws"])) %>%
-#   add_column(csws_chrw_exceptional_Ds = (wheat_data$snp$csws_chrw >= extremes["csws_chrw"]))
-# wheat_data$snp <- wheat_data$snp[, c(1:4, 8:10, 5:7)]
-# # print out all markers on each chromosome
-# ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-# blah <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
-#   for (i in 1:nrow(genes)) {
-#     if (genes$chrom[i] == chrom$chrom[1]) {
-#       chrom <- chrom %>%
-#         add_row(
-#           id = genes$id[i], chrom = genes$chrom[i], pos_mb = genes$mean_pos_mb[i]
-#         )
-#     }
-#   }
-#   write_csv(chrom %>% arrange(pos_mb), file.path(base, str_c(chrom$chrom[1], "_all_markers_josts_D.csv")))
-# })
+wheat_data$snp <- wheat_data$snp %>%
+  add_column(chrs_chrw_exceptional_Ds = (wheat_data$snp$chrs_chrw >= extremes["chrs_chrw"])) %>%
+  add_column(chrs_csws_exceptional_Ds = (wheat_data$snp$chrs_csws >= extremes["chrs_csws"])) %>%
+  add_column(csws_chrw_exceptional_Ds = (wheat_data$snp$csws_chrw >= extremes["csws_chrw"]))
+wheat_data$snp <- wheat_data$snp[, c(1:4, 8:10, 5:7)]
+# print out all markers on each chromosome
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+blah <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
+  for (i in 1:nrow(genes)) {
+    if (genes$chrom[i] == chrom$chrom[1]) {
+      chrom <- chrom %>%
+        add_row(
+          id = genes$id[i], chrom = genes$chrom[i], pos_mb = genes$mean_pos_mb[i]
+        )
+    }
+  }
+  write_csv(chrom %>% arrange(pos_mb), file.path(base, str_c(chrom$chrom[1], "_all_markers_josts_D.csv")))
+})
 
-# comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
+###########
+comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
 
-# # print our the markers involved in each linked region
-# ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-# blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
-#   for (row in 1:nrow(genes)) {
-#     if (genes[row, ]$chrom == chrom$chrom[1]) {
-#       chrom <- chrom %>%
-#         add_row(
-#           chrom = genes[row, ]$chrom, start = genes[row, ]$mean_pos_mb, group = genes[row, ]$id
-#         )
-#     }
-#   }
-#   write_csv(chrom[, 1:7] %>% arrange(start, group), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
-# })
+# print our summaries of the regions identified in each comp with genes
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
+  for (row in 1:nrow(genes)) {
+    if (genes[row, ]$chrom == chrom$chrom[1]) {
+      chrom <- chrom %>%
+        add_row(
+          chrom = genes[row, ]$chrom, start = genes[row, ]$mean_pos_mb, group = genes[row, ]$id
+        )
+    }
+  }
+  write_csv(chrom[, 1:7] %>% arrange(start, group), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
+})
 
 # # print out for each chromosome the markers of each region with line gaps for
 # # when overlaps occur or change or a new region starts

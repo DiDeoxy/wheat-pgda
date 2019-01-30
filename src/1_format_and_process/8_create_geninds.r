@@ -144,10 +144,11 @@ pheno_indices[["CHRS"]] <- which(
 index_chrs_csws <- c(pheno_indices$CHRS, pheno_indices$CSWS)
 index_chrs_chrw <- c(pheno_indices$CHRS, pheno_indices$CHRW)
 index_csws_chrw <- c(pheno_indices$CSWS, pheno_indices$CHRW)
+index_chrs_chrw_csws <- c(pheno_indices$CHRS, pheno_indices$CHRW, pheno_indices$CSWS)
 
 grouping <- list(
-  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw),
-  list("chrs_csws", "chrs_chrw", "csws_chrw")
+  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws),
+  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws")
 )
 
 for (i in 1:length(grouping[[1]])) {
