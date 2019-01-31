@@ -59,7 +59,7 @@ plots <- by(
       geom_point(
         aes(pos_mb, D),
         colour = colours_chroms[colour_order[which(chroms_order == chrom)]],
-        shape = 16, size = 1, alpha = 1/4
+        shape = 16, size = 1, alpha = 2/5
       ) +
       geom_smooth(
         aes(pos_mb, D),
