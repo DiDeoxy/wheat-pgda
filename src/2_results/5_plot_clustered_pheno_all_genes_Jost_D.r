@@ -19,9 +19,9 @@ max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 groups <- c("chrs_chrw_csws")
 
 # find the jost's D values of each marker in each Gene and add to data set
-wheat_data$snp <- add_group_stat(wheat_data$snp, groups) %>% as.tibble()
-wheat_data$snp <- wheat_data$snp %>%
-  gather(group, D, groups)
+wheat_data$snp <- add_group_stat(wheat_data$snp, groups) %>%
+  gather(group, D, groups) %>%
+  as.tibble() 
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
@@ -73,9 +73,10 @@ plots <- by(
         aes(pos_mb, base, colour = type, label = id), angle = 90, hjust = 0,
         vjust = -1, size = 3, fontface = "bold",
         nudge_y = -0.07,
-        nudge_x = ifelse(chrom == "1D", 80,
-          ifelse(chrom %in% c("2D", "4A"), -60, 40)
-        ),
+        nudge_x =
+          ifelse(chrom %in% c("1A", "1D"), 80,
+            ifelse(chrom %in% c("2D", "4A"), -60, 40)
+          ),
         show.legend = FALSE
       ) +
       scale_colour_manual(
@@ -148,6 +149,7 @@ wheat_data$snp <- wheat_data$snp %>%
   add_group_stat("chrs_chrw_csws") %>%
   gather(group, D, "chrs_chrw_csws") %>%
   select(-c(group, pos)) %>%
+  mutate(top_D = D >= 3/5) %>%
   mutate(D = D %>% round(4)) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
   rbind.fill(pheno_genes, resi_genes) %>%
