@@ -16,19 +16,18 @@ wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 
 # names of groups to be plotted
-groups <- c("chrs_chrw", "chrs_csws", "csws_chrw")
-# groups <- c("chrs_chrw_csws")
+groups <- c("chrs_chrw_csws")
 
 # find the jost's D values of each marker in each Gene and add to data set
-wheat_data <- add_group_stat(wheat_data, groups)
+wheat_data$snp <- add_group_stat(wheat_data$snp, groups) %>% as.tibble()
 wheat_data$snp <- wheat_data$snp %>%
   gather(group, D, groups)
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
-  mutate(group = "pheno_gene")
+  mutate(type = "pheno_gene")
 resi_genes <- load_groups("resi_genes.csv", base = 1) %>%
-  mutate(group = "resi_gene")
+  mutate(type = "resi_gene")
 
 # # add the genes positons to the regions table
 wheat_data$snp <- wheat_data$snp %>%
@@ -38,11 +37,12 @@ wheat_data$snp <- wheat_data$snp %>%
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
-lables <- c(
-  "CHRS vs CHRW", "CHRS vs CSWS", "CSWS vs CHRW", "Phenotype Genes",
-  "Resistance Genes"
-)
-legend_title <- "Comparisons and Genes"
+lables <- c("Phenotype Genes", "Resistance Genes")
+
+legend_title <- "Genes"
+chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
+    t() %>% as.vector()
+colour_order <- rbind(1:7, 1:7, 1:7) %>% as.vector()
 
 plots <- by(
   wheat_data$snp, wheat_data$snp$chrom, function(chrom_groups) {
@@ -57,16 +57,20 @@ plots <- by(
         ]
       ) +
       geom_point(
-        aes(pos_mb, D, colour = group), shape = 16, size = 1, alpha = 1/8
+        aes(pos_mb, D),
+        colour = colours_chroms[colour_order[which(chroms_order == chrom)]],
+        shape = 16, size = 1, alpha = 1/4
       ) +
       geom_smooth(
-        aes(pos_mb, D, colour = group), method = "loess", span = 0.06, size = 0.5
+        aes(pos_mb, D),
+        colour = colour_set[22],
+        method = "loess", span = 0.06, size = 0.375,
       ) +
       geom_point(
-        aes(pos_mb, base, colour = group, shape = group), size = 1
+        aes(pos_mb, base, colour = type, shape = type), size = 1
       ) +
       geom_text_repel(
-        aes(pos_mb, base, colour = group, label = id), angle = 90, hjust = 0,
+        aes(pos_mb, base, colour = type, label = id), angle = 90, hjust = 0,
         vjust = -1, size = 2, fontface = "bold",
         nudge_y = -0.07,
         nudge_x = ifelse(chrom == "1D", 80,
@@ -75,12 +79,12 @@ plots <- by(
         show.legend = FALSE
       ) +
       scale_colour_manual(
-        legend_title, labels = lables, values = colours_groups_genes,
-        limits = levels(as.factor(wheat_data$snp$group))
+        legend_title, labels = lables, values = colours_groups_genes[4:5],
+        limits = levels(as.factor(wheat_data$snp$type))
       ) +
       scale_shape_manual(
-        legend_title, labels = lables, values = c(15, 16, 18, 17, 8),
-        limits = levels(as.factor(wheat_data$snp$group))
+        legend_title, labels = lables, values = c(15, 16, 18, 17, 8)[4:5],
+        limits = levels(as.factor(wheat_data$snp$type))
       )
   }
 )
@@ -90,10 +94,10 @@ plots_matrix <- ggmatrix(
   plots,
   nrow = 7, ncol = 3, xlab = "Position in Mb",
   ylab = str_c(
-    "Average Jost's D Values in Regions with Nearby Exceptional Markers"
+    "Normalized Jost's D Value"
   ),
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = "Number of Markers in a Region and their Average Jost's D Values",
+  title = "Normalized Jost's D Values with Loess Curve By Chromosome ",
   legend = c(1, 1)
 )
 
@@ -107,53 +111,55 @@ dev.off()
 
 # ################################################################################
 # # printing out the data in various ways
-genes <- rbind(pheno_genes, resi_genes) %>% as_tibble()
-base <- "Results/loci/D/closest_markers"
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
+
+index_chrs_chrw_csws <- which(
+  (wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
+  | (wheat_data$sample$annot$pheno == "HRW" & cluster == 1)
+  | (wheat_data$sample$annot$pheno == "SWS" & cluster == 2)
+)
+cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
+geno <- wheat_data$genotype[, index_chrs_chrw_csws]
+
+# major_allele_freq_pops <- apply(geno, 1, function (marker) {
+#   total_geno <- table(marker)
+#   major <- which.max(total_geno) %>% names()
+#   by(marker, cpheno, function (pop) {
+#     pop_geno <- table(pop)
+#     if (all(c("0", "2") %in% names(pop_geno))) {
+#       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+#     } else if (major %in% names(pop_geno)) {
+#       1
+#     } else {
+#       0
+#     }
+#   }) %>% rbind()
+# }) %>% t() %>% as.tibble()
+# colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+
+# load the gene positions
+pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
+  select(-"base")
+resi_genes <- load_groups("resi_genes.csv", base = 1) %>%
+  select(-"base")
 
 wheat_data$snp <- wheat_data$snp %>%
-  add_column(chrs_chrw_exceptional_Ds = (wheat_data$snp$chrs_chrw >= extremes["chrs_chrw"])) %>%
-  add_column(chrs_csws_exceptional_Ds = (wheat_data$snp$chrs_csws >= extremes["chrs_csws"])) %>%
-  add_column(csws_chrw_exceptional_Ds = (wheat_data$snp$csws_chrw >= extremes["csws_chrw"]))
-wheat_data$snp <- wheat_data$snp[, c(1:4, 8:10, 5:7)]
+  add_group_stat("chrs_chrw_csws") %>%
+  gather(group, D, "chrs_chrw_csws") %>%
+  select(-c(group, pos)) %>%
+  mutate(D = D %>% round(4)) %>%
+  cbind(major_allele_freq_pops %>% round(4)) %>%
+  rbind.fill(pheno_genes, resi_genes) %>%
+  arrange(chrom, pos_mb) %>%
+  as_tibble()
+
 # print out all markers on each chromosome
+base <- "Results/loci/D/by_chrom"
 ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
 blah <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
-  for (i in 1:nrow(genes)) {
-    if (genes$chrom[i] == chrom$chrom[1]) {
-      chrom <- chrom %>%
-        add_row(
-          id = genes$id[i], chrom = genes$chrom[i], pos_mb = genes$mean_pos_mb[i]
-        )
-    }
-  }
-  write_csv(chrom %>% arrange(pos_mb), file.path(base, str_c(chrom$chrom[1], "_all_markers_josts_D.csv")))
+  write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
 })
-
-###########
-comp_gef <- group_extreme_freqs[complete.cases(group_extreme_freqs), ]
-
-# print our summaries of the regions identified in each comp with genes
-ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-blah <- by(comp_gef, comp_gef$chrom, function (chrom) {
-  for (row in 1:nrow(genes)) {
-    if (genes[row, ]$chrom == chrom$chrom[1]) {
-      chrom <- chrom %>%
-        add_row(
-          chrom = genes[row, ]$chrom, start = genes[row, ]$mean_pos_mb, group = genes[row, ]$id
-        )
-    }
-  }
-  write_csv(chrom[, 1:7] %>% arrange(start, group), file.path(base, str_c(chrom$chrom[1], "_regions_summary.csv")))
-})
-
-# # print out for each chromosome the markers of each region with line gaps for
-# # when overlaps occur or change or a new region starts
-# print_ovlps_by_chrom(all_ovlps_markers(comp_gef))
-
-# # identify which other groups overlap each region of a specific group
-# comp_ovlps(comp_gef, "chrs_chrw") %>% unlist() %>% table()
-# comp_ovlps(comp_gef, "chrs_csws") %>% unlist() %>% table()
-# comp_ovlps(comp_gef, "csws_chrw") %>% unlist() %>% table()
 
 # ################################################################################
 # comp_gef %>% print(n = Inf)

@@ -37,18 +37,17 @@ calc_max_homeolog_lengths <- function(wheat_data) {
     )
 }
 
-add_group_stat <- function(wheat_data, groups) {
+add_group_stat <- function(snps, groups) {
   for (group in groups) {
-    wheat_data$snp <- wheat_data$snp %>% 
+    snps <- snps %>% 
       add_column(
         !!group := read_rds(
-          str_c("Data/Intermediate/mmod/", group,"_Jost_D.rds")
-        )[[1]]
+          str_c("Data/Intermediate/mmod/", group, "_Jost_D.rds")
+        )
       )
   }
-  wheat_data
+  snps
 }
-group <- "Lr34"
 
 calc_extremes <- function(wheat_data, groups, prob = 0.975) {
   temp <- vector()
