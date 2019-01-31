@@ -71,7 +71,7 @@ plots <- by(
       ) +
       geom_text_repel(
         aes(pos_mb, base, colour = type, label = id), angle = 90, hjust = 0,
-        vjust = -1, size = 2, fontface = "bold",
+        vjust = -1, size = 3, fontface = "bold",
         nudge_y = -0.07,
         nudge_x = ifelse(chrom == "1D", 80,
           ifelse(chrom %in% c("2D", "4A"), -60, 40)
