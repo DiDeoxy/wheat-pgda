@@ -11,12 +11,7 @@ source("src/R_functions/funcs_gds_parse_create.R")
 wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
-chrom_lengths <- by(wheat_data$snp$pos_mb, wheat_data$snp$chrom, max)
-max_genome_lengths <- c(
-  max(chrom_lengths[seq(1, 19, 3)]), # A genome
-  max(chrom_lengths[seq(2, 20, 3)]), # B genome
-  max(chrom_lengths[seq(3, 21, 3)])  # D genome
-)
+max_genome_lengths <- calc_max_genome_lengths(wheat_data)
 
 # create a list of the ld between markers on each chromosome add NA column 
 # and rows every 7.5 Mb so that gaps appear on image

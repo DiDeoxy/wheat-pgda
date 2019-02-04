@@ -131,24 +131,30 @@ cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
 
 # making indices in order to create subsets containing just the varieties of
 # the phenotype/cluster groups we are interested in
-pheno_indices <- list()
-pheno_indices[["CHRW"]] <- which(
-  wheat_data$sample$annot$pheno == "HRW" & cluster == 1
-)
-pheno_indices[["CSWS"]] <- which(
-  wheat_data$sample$annot$pheno == "SWS" & cluster == 2
-)
-pheno_indices[["CHRS"]] <- which(
+pheno_indices_chrs <- which(
   wheat_data$sample$annot$pheno == "HRS" & cluster == 5
 )
-index_chrs_csws <- c(pheno_indices$CHRS, pheno_indices$CSWS)
-index_chrs_chrw <- c(pheno_indices$CHRS, pheno_indices$CHRW)
-index_csws_chrw <- c(pheno_indices$CSWS, pheno_indices$CHRW)
-index_chrs_chrw_csws <- c(pheno_indices$CHRS, pheno_indices$CHRW, pheno_indices$CSWS)
+pheno_indices_chrw <- which(
+  wheat_data$sample$annot$pheno == "HRW" & cluster == 1
+)
+pheno_indices_csws <- which(
+  wheat_data$sample$annot$pheno == "SWS" & cluster == 2
+)
+
+index_chrs_csws <- c(pheno_indices_chrs, pheno_indices_csws)
+index_chrs_chrw <- c(pheno_indices_chrs, pheno_indices_chrw)
+index_csws_chrw <- c(pheno_indices_csws, pheno_indices_chrw)
+index_chrs_chrw_csws <- c(pheno_indices_chrs, pheno_indices_chrw, pheno_indices_csws)
+
+set.seed(100)
+sampled_pheno_indices_chrs <- pheno_indices_chrs[length(pheno_indices_chrs) %>% sample(31)]
+set.seed(100)
+sampled_pheno_indices_csws <- pheno_indices_csws[length(pheno_indices_csws) %>% sample(31)]
+index_sampled_chrs_chrw_csws <- c(sampled_pheno_indices_chrs, pheno_indices_chrw, sampled_pheno_indices_csws)
 
 grouping <- list(
-  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws),
-  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws")
+  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws, index_sampled_chrs_chrw_csws),
+  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws", "sampled_chrs_chrw_csws")
 )
 
 for (i in 1:length(grouping[[1]])) {

@@ -9,15 +9,15 @@ colour_set <- c(
 
 # defining the colour sets
 colours_era <- colour_set[c(1, 5, 3, 2, 4, 6, 22)]
-colours_bp <- colour_set[c(3, 1, 5, 7, 12, 2, 20, 22, 6, 4, 8, 9, 13)]
+colours_bp <- colour_set[c(3, 1, 5, 4, 12, 2, 20, 22, 6, 7, 8, 9, 13)]
 colours_mc <- colour_set[c(5, 4, 3, 2, 6, 11, 1, 7, 22)]
-colours_pheno <- colour_set[c(1, 6, 4, 16, 12, 7, 9, 22)]
-colours_dend <- colour_set[c(22, 1, 22, 7, 22, 6, 1, 3, 5)]
-colours_hdbscan <- colour_set[c(22, 6, 7, 3, 5, 1)]
+colours_pheno <- colour_set[c(1, 6, 7, 16, 12, 4, 9, 22)]
+colours_dend <- colour_set[c(22, 1, 22, 4, 22, 6, 1, 3, 5)]
+colours_hdbscan <- colour_set[c(22, 6, 4, 3, 5, 1)]
 # clusters 2 and 3 are swapped on the legend of the dendrogram for writeup
 # purposes
 colours_hdbscan_legend <- colour_set[c(22, 6, 7, 3, 5, 1)]
 colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
 colours_groups_genes <- colour_set[c(1, 2, 4, 15, 19)]
-points <- c(15, 16, 18, 17, 8)
-# pie(rep(1, 9), col = colours_hdbscan)
+colours_comps_genes <- colour_set[c(1, 6, 4, 20, 15, 19)]
+# pie(rep(1, 6), col = colours_comps_genes)
