@@ -132,12 +132,16 @@ wheat_data$snp <- wheat_data$snp %>%
   arrange(chrom, group, pos_mb) %>%
   rowwise() %>%
   mutate(comp_type = 
-    ifelse(chrw >= 0.5 && csws >= 0.5, "None",
-      ifelse(chrw >= 0.5 && csws <= 0.5, "CSWS vs CHRS & CHRW",
-        ifelse(chrw <= 0.5 && csws >= 0.5, "CHRW vs CHRS & CSWS", 
-          ifelse(chrw <= 0.5 && csws <= 0.5, "CHRS vs CHRW & CSWS", NA)
-        )
-      )
+    ifelse(chrs >= 0.5 && chrw >= 0.5 && csws >= 0.5, "None",
+      ifelse(chrs >= 0.5 && chrw >= 0.5 && csws < 0.5, "CSWS vs CHRS & CHRW",
+      ifelse(chrs < 0.5 && chrw < 0.5 && csws >= 0.5, "CSWS vs CHRS & CHRW",
+        ifelse(chrs < 0.5 && chrw >= 0.5 && csws < 0.5, "CHRW vs CHRS & CSWS",
+        ifelse(chrs >= 0.5 && chrw < 0.5 && csws >= 0.5, "CHRW vs CHRS & CSWS",
+          ifelse(chrs >= 0.5 && chrw < 0.5 && csws < 0.5, "CHRS vs CHRW & CSWS",
+          ifelse(chrs < 0.5 && chrw >= 0.5 && csws >= 0.5, "CHRS vs CHRW & CSWS", NA
+          ))
+        ))
+      ))
     )
   ) %>%
   mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
