@@ -53,8 +53,8 @@ wheat_data$snp <- wheat_data$snp %>%
   add_group_stat(group) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
-  rbind.fill(pheno_genes, resi_genes) %>%
-  arrange(chrom, group, pos_mb) %>%
+  rbind.fill(pheno_genes, resi_genes) %>% 
+  arrange(chrom, pos_mb) %>%
   rowwise() %>%
   mutate(comp_type = 
     ifelse(chrw >= 0.5 && csws >= 0.5, "None",
