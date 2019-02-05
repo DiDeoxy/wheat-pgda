@@ -25,21 +25,21 @@ index_chrs_chrw_csws <- which(
 cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
 geno <- wheat_data$genotype[, index_chrs_chrw_csws]
 
-major_allele_freq_pops <- apply(geno, 1, function (marker) {
-  total_geno <- table(marker)
-  major <- which.max(total_geno) %>% names()
-  by(marker, cpheno, function (pop) {
-    pop_geno <- table(pop)
-    if (all(c("0", "2") %in% names(pop_geno))) {
-      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
-    } else if (major %in% names(pop_geno)) {
-      1
-    } else {
-      0
-    }
-  }) %>% rbind()
-}) %>% t() %>% as_tibble()
-colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+# major_allele_freq_pops <- apply(geno, 1, function (marker) {
+#   total_geno <- table(marker)
+#   major <- which.max(total_geno) %>% names()
+#   by(marker, cpheno, function (pop) {
+#     pop_geno <- table(pop)
+#     if (all(c("0", "2") %in% names(pop_geno))) {
+#       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+#     } else if (major %in% names(pop_geno)) {
+#       1
+#     } else {
+#       0
+#     }
+#   }) %>% rbind()
+# }) %>% t() %>% as_tibble()
+# colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
@@ -71,10 +71,6 @@ wheat_data$snp <- wheat_data$snp %>%
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
 legend_title <- "Marker Types & Genes"
-chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
-    t() %>% as.vector()
-colour_order <- rbind(1:7, 1:7, 1:7) %>% as.vector()
-
 plots <- by(
   wheat_data$snp, wheat_data$snp$chrom, function(chrom_groups) {
     chrom <- chrom_groups$chrom[1]
@@ -89,7 +85,7 @@ plots <- by(
       ) +
       geom_point(
         aes(pos_mb, D, colour = type),
-        shape = 16, size = 1, alpha = 2/5
+        shape = 16, size = 1.25, alpha = 1/2
       ) +
       geom_smooth(
         aes(pos_mb, D),
