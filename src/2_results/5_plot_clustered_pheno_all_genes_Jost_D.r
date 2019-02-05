@@ -57,16 +57,21 @@ wheat_data$snp <- wheat_data$snp %>%
   arrange(chrom, pos_mb) %>%
   rowwise() %>%
   mutate(comp_type = 
-    ifelse(chrs >= 0.5 && chrw >= 0.5 && csws >= 0.5, "None",
-      ifelse(chrs >= 0.5 && chrw >= 0.5 && csws < 0.5, "CSWS vs CHRS & CHRW",
-      ifelse(chrs < 0.5 && chrw < 0.5 && csws >= 0.5, "CSWS vs CHRS & CHRW",
-        ifelse(chrs < 0.5 && chrw >= 0.5 && csws < 0.5, "CHRW vs CHRS & CSWS",
-        ifelse(chrs >= 0.5 && chrw < 0.5 && csws >= 0.5, "CHRW vs CHRS & CSWS",
-          ifelse(chrs >= 0.5 && chrw < 0.5 && csws < 0.5, "CHRS vs CHRW & CSWS",
-          ifelse(chrs < 0.5 && chrw >= 0.5 && csws >= 0.5, "CHRS vs CHRW & CSWS", NA
-          ))
-        ))
-      ))
+    ifelse(
+      (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
+      (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
+      "CSWS vs CHRS & CHRW",
+      ifelse(
+        (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
+        (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
+        "CHRW vs CHRS & CSWS",
+        ifelse(
+          (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
+          (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
+          "CHRS vs CHRW & CSWS",
+          "None"
+        )
+      )
     )
   ) %>%
   mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
@@ -134,3 +139,45 @@ plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
 
 ################################################################################
+# print out all markers on each chromosome
+base <- "Results/loci/D/by_chrom"
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, function (chrom) {
+  write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
+})
+
+
+
+  # mutate(comp_type = 
+  #   ifelse(
+  #     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
+  #     (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
+  #     "CSWS vs CHRS & CHRW",
+  #     ifelse(
+  #       (chrs > 0.4 && chrs < 0.6) &&
+  #       ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
+  #       "CHRW vs CSWS",
+  #       ifelse(
+  #         (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
+  #         (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
+  #         "CHRW vs CHRS & CSWS",
+  #         ifelse(
+  #           (chrw > 0.4 && chrw < 0.6) &&
+  #           ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
+  #           "CHRS vs CSWS",
+  #           ifelse(
+  #             (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
+  #             (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
+  #             "CHRS vs CHRW & CSWS",
+  #             ifelse(
+  #               (csws > 0.4 && csws < 0.6) &&
+  #               ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
+  #               "CHRS vs CHRW",
+  #               "None"
+  #             )
+  #           )
+  #         )
+  #       )
+  #     )
+  #   )
+  # ) %>%

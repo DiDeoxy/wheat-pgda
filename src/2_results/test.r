@@ -132,16 +132,36 @@ wheat_data$snp <- wheat_data$snp %>%
   arrange(chrom, group, pos_mb) %>%
   rowwise() %>%
   mutate(comp_type = 
-    ifelse(chrs >= 0.5 && chrw >= 0.5 && csws >= 0.5, "None",
-      ifelse(chrs >= 0.5 && chrw >= 0.5 && csws < 0.5, "CSWS vs CHRS & CHRW",
-      ifelse(chrs < 0.5 && chrw < 0.5 && csws >= 0.5, "CSWS vs CHRS & CHRW",
-        ifelse(chrs < 0.5 && chrw >= 0.5 && csws < 0.5, "CHRW vs CHRS & CSWS",
-        ifelse(chrs >= 0.5 && chrw < 0.5 && csws >= 0.5, "CHRW vs CHRS & CSWS",
-          ifelse(chrs >= 0.5 && chrw < 0.5 && csws < 0.5, "CHRS vs CHRW & CSWS",
-          ifelse(chrs < 0.5 && chrw >= 0.5 && csws >= 0.5, "CHRS vs CHRW & CSWS", NA
-          ))
-        ))
-      ))
+    ifelse(
+      (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
+      (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
+      "CSWS vs CHRS & CHRW",
+      ifelse(
+        (chrs > 0.4 && chrs < 0.6) &&
+        ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
+        "CHRW vs CSWS",
+        ifelse(
+          (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
+          (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
+          "CHRW vs CHRS & CSWS",
+          ifelse(
+            (chrw > 0.4 && chrw < 0.6) &&
+            ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
+            "CHRS vs CSWS",
+            ifelse(
+              (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
+              (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
+              "CHRS vs CHRW & CSWS",
+              ifelse(
+                (csws > 0.4 && csws < 0.6) &&
+                ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
+                "CHRS vs CHRW",
+                "None"
+              )
+            )
+          )
+        )
+      )
     )
   ) %>%
   mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
@@ -150,13 +170,13 @@ wheat_data$snp <- wheat_data$snp %>%
 legend_title <- "Marker Types & Genes"
 wheat_data$snp[
   which(
-    wheat_data$snp$chrom == "1A"
-    & wheat_data$snp$pos_mb > 0
-    & wheat_data$snp$pos_mb < 17.5
+    wheat_data$snp$chrom == "5A"
+    & wheat_data$snp$pos_mb > 567
+    & wheat_data$snp$pos_mb < 607
   ),
 ] %>%
   ggplot() +
-    geom_point(aes(x = pos_mb, y = D, colour = type), alpha = 0.5, size = 3) +
+    geom_point(aes(pos_mb, D, colour = type), size = 3) +
     geom_text_repel(
       aes(pos_mb, base, colour = type, label = id),
       vjust = 1, size = 3, fontface = "bold",
