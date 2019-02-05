@@ -84,21 +84,18 @@ plots <- by(
         ]
       ) +
       geom_point(
-        aes(pos_mb, D, colour = type),
-        shape = 16, size = 1.25, alpha = 1/2
+        aes(pos_mb, D, colour = type), shape = 16, size = 1
       ) +
       geom_smooth(
-        aes(pos_mb, D),
-        colour = colour_set[22],
-        method = "loess", span = 0.06, size = 0.375,
+        aes(pos_mb, D), colour = colour_set[22], method = "loess", span = 0.06,
+        size = 0.375, se = FALSE
       ) +
       geom_point(
         aes(pos_mb, base, colour = type), size = 1
       ) +
       geom_text_repel(
         aes(pos_mb, base, colour = type, label = id), angle = 90, hjust = 0,
-        vjust = -1, size = 3, fontface = "bold",
-        nudge_y = -0.07,
+        vjust = -1, size = 3, fontface = "bold", nudge_y = -0.07,
         nudge_x =
           ifelse(chrom %in% c("1A", "1D"), 80,
             ifelse(chrom %in% c("2D", "4A"), -60, 40)
@@ -131,3 +128,11 @@ png("Results/loci/D/comps_D_test.png",
 )
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
+
+################################################################################
+# print out all markers on each chromosome
+base <- "Results/loci/D/by_chrom"
+ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+blah <- by(wheat_data$snp %>% select(-base), wheat_data$snp$chrom, function (chrom) {
+  write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
+})
