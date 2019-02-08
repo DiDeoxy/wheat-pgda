@@ -133,57 +133,55 @@ wheat_data$snp <- wheat_data$snp %>%
   rowwise() %>%
   mutate(comp_type = 
     ifelse(
-      (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
-      (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
+      (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
+      (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
       "CSWS vs CHRS & CHRW",
       ifelse(
-        (chrs > 0.4 && chrs < 0.6) &&
-        ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
-        "CHRW vs CSWS",
+        (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
+        (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
+        "CHRW vs CHRS & CSWS",
         ifelse(
-          (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
-          (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
-          "CHRW vs CHRS & CSWS",
-          ifelse(
-            (chrw > 0.4 && chrw < 0.6) &&
-            ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
-            "CHRS vs CSWS",
-            ifelse(
-              (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
-              (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
-              "CHRS vs CHRW & CSWS",
-              ifelse(
-                (csws > 0.4 && csws < 0.6) &&
-                ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
-                "CHRS vs CHRW",
-                "None"
-              )
-            )
-          )
+          (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
+          (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
+          "CHRS vs CHRW & CSWS",
+          "None"
         )
       )
-    )
+    ),
+    type = pmin(gene_type, comp_type, na.rm = TRUE)
   ) %>%
-  mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
   select(-c(gene_type, comp_type))
 
 legend_title <- "Marker Types & Genes"
+png("Results/loci/D/comps_VRN-A1.png",
+  family = "Times New Roman", width = 100, height = 62, pointsize = 1,
+  units = "mm", res = 300
+)
 wheat_data$snp[
   which(
     wheat_data$snp$chrom == "5A"
-    & wheat_data$snp$pos_mb > 567
-    & wheat_data$snp$pos_mb < 607
+    & wheat_data$snp$pos_mb > 580.75
+    & wheat_data$snp$pos_mb < 594.6
   ),
 ] %>%
   ggplot() +
-    geom_point(aes(pos_mb, D, colour = type), size = 3) +
+    geom_point(aes(pos_mb, D, colour = type), size = 1) +
     geom_text_repel(
       aes(pos_mb, base, colour = type, label = id),
-      vjust = 1, size = 3, fontface = "bold",
+      vjust = 1, size = 2, fontface = "bold",
       nudge_y = -0.05,
       show.legend = FALSE
     ) + 
     scale_colour_manual(
       legend_title, values = colours_comps_genes,
       limits = levels(as.factor(wheat_data$snp$type))
-    )
+    ) +
+    labs(x = "Postion in Mb", y = "Jost's D") +
+    theme(
+      legend.position = "bottom",
+      # legend.text = element_text(size = 5),
+      # legend.title = element_text(size = 5),
+      text = element_text(size = 7.5),
+      ) +
+    guides(colour = guide_legend(nrow = 3, byrow = TRUE))
+dev.off()

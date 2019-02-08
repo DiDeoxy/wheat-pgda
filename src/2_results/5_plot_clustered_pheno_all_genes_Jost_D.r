@@ -25,21 +25,21 @@ index_chrs_chrw_csws <- which(
 cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
 geno <- wheat_data$genotype[, index_chrs_chrw_csws]
 
-# major_allele_freq_pops <- apply(geno, 1, function (marker) {
-#   total_geno <- table(marker)
-#   major <- which.max(total_geno) %>% names()
-#   by(marker, cpheno, function (pop) {
-#     pop_geno <- table(pop)
-#     if (all(c("0", "2") %in% names(pop_geno))) {
-#       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
-#     } else if (major %in% names(pop_geno)) {
-#       1
-#     } else {
-#       0
-#     }
-#   }) %>% rbind()
-# }) %>% t() %>% as_tibble()
-# colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+major_allele_freq_pops <- apply(geno, 1, function (marker) {
+  total_geno <- table(marker)
+  major <- which.max(total_geno) %>% names()
+  by(marker, cpheno, function (pop) {
+    pop_geno <- table(pop)
+    if (all(c("0", "2") %in% names(pop_geno))) {
+      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+    } else if (major %in% names(pop_geno)) {
+      1
+    } else {
+      0
+    }
+  }) %>% rbind()
+}) %>% t() %>% as_tibble()
+colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
@@ -72,9 +72,9 @@ wheat_data$snp <- wheat_data$snp %>%
           "None"
         )
       )
-    )
+    ),
+    type = pmin(gene_type, comp_type, na.rm = TRUE)
   ) %>%
-  mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
   select(-c(gene_type, comp_type))
 
 # create a list of plots, one for each chromosome with the correct markers and
@@ -146,8 +146,121 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
   write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
 })
 
+################################################################################
+# load the data from the gds object
+wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+
+wheat_data$snp <- wheat_data$snp %>%
+  add_group_stat(group) %>%
+  gather(group, D, group) %>%
+  cbind(major_allele_freq_pops %>% round(4)) %>%
+  rowwise() %>%
+  mutate(type = 
+    ifelse(
+      (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
+      (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
+      "CSWS vs CHRS & CHRW",
+      ifelse(
+        (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
+        (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
+        "CHRW vs CHRS & CSWS",
+        ifelse(
+          (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
+          (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
+          "CHRS vs CHRW & CSWS",
+          "None"
+        )
+      )
+    )
+  )
+
+chrom_D_sum <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
+  summary(chrom$D[which(chrom$D > quantile(wheat_data$snp$D, 0.25))], na.rm = TRUE)
+}) %>% do.call(rbind, .) %>% as_tibble()
+
+sum(wheat_data$snp$D > mean(wheat_data$snp$D)) / length(wheat_data$snp$D)
+mean(wheat_data$snp$D[which(wheat_data$snp$D > quantile(wheat_data$snp$D, 0.25))])
+summary(wheat_data$snp$D)
+sum(wheat_data$snp$D < quantile(wheat_data$snp$D, 0.25)) / nrow(wheat_data$snp)
+
+types <- c(
+  "CHRS vs CHRW & CSWS", "CHRW vs CHRS & CSWS", "CSWS vs CHRS & CHRW", "None"
+)
+
+for (type in types) {
+  (sum(wheat_data$snp$type == type) / length(wheat_data$snp$D)) %>% print()
+  median(wheat_data$snp$D[
+    which(wheat_data$snp$type == type)
+  ]) %>% print()
+}
 
 
+
+for (genome in c("A", "B", "D")) {
+  # mean(wheat_data$snp$D[
+  #   which(
+  #     wheat_data$snp$D > quantile(wheat_data$snp$D, 0.25)
+  #     & grepl(genome, wheat_data$snp$chrom)
+  #   )
+  # ]) %>% print()
+  median(wheat_data$snp$D[which(grepl(genome, wheat_data$snp$chrom))]) %>% print()
+}
+
+for (chrom_set in 1:7) {
+  median(wheat_data$snp$D[which(grepl(chrom_set, wheat_data$snp$chrom))]) %>% print()
+}
+
+jost_D_variation <- function(chrom, n) {
+  vars <- vector()
+  for (i in 1:(nrow(chrom) - n)) {
+    vars <- c(vars, sd(chrom$D[i:(i + n)]))
+  }
+  vars
+}
+
+
+wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/mr_pruned_phys_sample_subset.gds")
+lds <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
+  ld_mat <- snpgdsLDMat(
+    wheat_gds, method = "composite", snp.id = chrom$id, slide = -1
+  )$LD %>% abs()
+  lds <- list()
+  for (i in 1:nrow(ld_mat)) {
+    nearby <- which(chrom$pos_mb > (chrom$pos_mb[i] - 2) & chrom$pos_mb < (chrom$pos_mb[i] + 2))
+    if (length(nearby)) {
+      lds[[i]] <- cbind(
+        abs(chrom$pos_mb[i] - chrom$pos_mb[nearby]), ld_mat[i, nearby] 
+      )
+    }
+  }
+  lds %>% do.call(rbind, .)
+}) %>% do.call(rbind, .)
+snpgdsClose(wheat_gds)
+lds %>% cor(., use = "complete")
+
+var_mn_ds <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
+  stats <- tibble(var = vector(), mn = vector())
+  for (i in 1:nrow(chrom)) {
+    nearby <- which(chrom$pos_mb > (chrom$pos_mb[i] - 20) & chrom$pos_mb < (chrom$pos_mb[i] + 20))
+    stats <- stats %>% add_row(
+      var = sd(chrom$D[nearby]), mn = mean(chrom$D[nearby])
+    )
+  }
+  stats
+}) %>% do.call(rbind, .)
+mean(var_mn_ds$var, na.rm = TRUE) /
+mean(var_mn_ds$mn, na.rm = TRUE)
+
+with(wheat_data$snp, which(chrom == "5A" & pos_mb > 400 & pos_mb < 500)) %>% length()
+with(wheat_data$snp, which(chrom == "5A" & pos_mb > 400 & pos_mb < 500 & grepl("None", type))) %>% length()
+
+which(wheat_data$snp$chrom = "5A" & wheat)
+
+mean(var_ds, na.rm = TRUE) / mean(wheat_data$snp$D)
+
+mean(lds %>% unlist(), na.rm = TRUE)
+
+################################################################################
   # mutate(comp_type = 
   #   ifelse(
   #     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
