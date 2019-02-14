@@ -133,23 +133,57 @@ wheat_data$snp <- wheat_data$snp %>%
   rowwise() %>%
   mutate(comp_type = 
     ifelse(
-      (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
-      (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
+      (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
+      (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
       "CSWS vs CHRS & CHRW",
       ifelse(
-        (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
-        (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
-        "CHRW vs CHRS & CSWS",
+        (chrs > 0.4 && chrs < 0.6) &&
+        ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
+        "CHRW vs CSWS",
         ifelse(
-          (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
-          (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
-          "CHRS vs CHRW & CSWS",
-          "None"
+          (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
+          (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
+          "CHRW vs CHRS & CSWS",
+          ifelse(
+            (chrw > 0.4 && chrw < 0.6) &&
+            ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
+            "CHRS vs CSWS",
+            ifelse(
+              (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
+              (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
+              "CHRS vs CHRW & CSWS",
+              ifelse(
+                (csws > 0.4 && csws < 0.6) &&
+                ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
+                "CHRS vs CHRW",
+                "None"
+              )
+            )
+          )
         )
       )
     ),
     type = pmin(gene_type, comp_type, na.rm = TRUE)
   ) %>%
+  # mutate(comp_type = 
+  #   ifelse(
+  #     (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
+  #     (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
+  #     "CSWS vs CHRS & CHRW",
+  #     ifelse(
+  #       (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
+  #       (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
+  #       "CHRW vs CHRS & CSWS",
+  #       ifelse(
+  #         (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
+  #         (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
+  #         "CHRS vs CHRW & CSWS",
+  #         "None"
+  #       )
+  #     )
+  #   ),
+  #   type = pmin(gene_type, comp_type, na.rm = TRUE)
+  # ) %>%
   select(-c(gene_type, comp_type))
 
 legend_title <- "Marker Types & Genes"
@@ -160,10 +194,11 @@ png("Results/loci/D/comps_VRN-A1.png",
 wheat_data$snp[
   which(
     wheat_data$snp$chrom == "5A"
-    & wheat_data$snp$pos_mb > 580.75
+    & wheat_data$snp$pos_mb > 580.65
     & wheat_data$snp$pos_mb < 594.6
   ),
 ] %>%
+# arrange(pos_mb) %>% print(n = Inf)
   ggplot() +
     geom_point(aes(pos_mb, D, colour = type), size = 1) +
     geom_text_repel(

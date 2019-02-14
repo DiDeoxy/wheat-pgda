@@ -153,8 +153,8 @@ sampled_pheno_indices_csws <- pheno_indices_csws[length(pheno_indices_csws) %>% 
 index_sampled_chrs_chrw_csws <- c(sampled_pheno_indices_chrs, pheno_indices_chrw, sampled_pheno_indices_csws)
 
 grouping <- list(
-  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws, index_sampled_chrs_chrw_csws),
-  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws", "sampled_chrs_chrw_csws")
+  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws, index_chrs_chrw_csws),
+  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws", "chrs_chrw_csws")
 )
 
 for (i in 1:length(grouping[[1]])) {

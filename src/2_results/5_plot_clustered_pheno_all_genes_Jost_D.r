@@ -25,21 +25,21 @@ index_chrs_chrw_csws <- which(
 cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
 geno <- wheat_data$genotype[, index_chrs_chrw_csws]
 
-major_allele_freq_pops <- apply(geno, 1, function (marker) {
-  total_geno <- table(marker)
-  major <- which.max(total_geno) %>% names()
-  by(marker, cpheno, function (pop) {
-    pop_geno <- table(pop)
-    if (all(c("0", "2") %in% names(pop_geno))) {
-      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
-    } else if (major %in% names(pop_geno)) {
-      1
-    } else {
-      0
-    }
-  }) %>% rbind()
-}) %>% t() %>% as_tibble()
-colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+# major_allele_freq_pops <- apply(geno, 1, function (marker) {
+#   total_geno <- table(marker)
+#   major <- which.max(total_geno) %>% names()
+#   by(marker, cpheno, function (pop) {
+#     pop_geno <- table(pop)
+#     if (all(c("0", "2") %in% names(pop_geno))) {
+#       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+#     } else if (major %in% names(pop_geno)) {
+#       1
+#     } else {
+#       0
+#     }
+#   }) %>% rbind()
+# }) %>% t() %>% as_tibble()
+# colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
@@ -56,6 +56,40 @@ wheat_data$snp <- wheat_data$snp %>%
   rbind.fill(pheno_genes, resi_genes) %>% 
   arrange(chrom, pos_mb) %>%
   rowwise() %>%
+  # mutate(comp_type = 
+  #   ifelse(
+  #     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
+  #     (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
+  #     "CSWS vs CHRS & CHRW",
+  #     ifelse(
+  #       (chrs > 0.4 && chrs < 0.6) &&
+  #       ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
+  #       "CHRW vs CSWS",
+  #       ifelse(
+  #         (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
+  #         (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
+  #         "CHRW vs CHRS & CSWS",
+  #         ifelse(
+  #           (chrw > 0.4 && chrw < 0.6) &&
+  #           ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
+  #           "CHRS vs CSWS",
+  #           ifelse(
+  #             (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
+  #             (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
+  #             "CHRS vs CHRW & CSWS",
+  #             ifelse(
+  #               (csws > 0.4 && csws < 0.6) &&
+  #               ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
+  #               "CHRS vs CHRW",
+  #               "None"
+  #             )
+  #           )
+  #         )
+  #       )
+  #     )
+  #   ),
+  #   type = pmin(gene_type, comp_type, na.rm = TRUE)
+  # ) %>%
   mutate(comp_type = 
     ifelse(
       (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
@@ -97,7 +131,7 @@ plots <- by(
       ) +
       geom_smooth(
         aes(pos_mb, D), colour = colour_set[22], method = "loess", span = 0.06,
-        size = 0.375, se = FALSE
+        size = 0.475, se = FALSE
       ) +
       geom_point(
         aes(pos_mb, base, colour = type), size = 1
