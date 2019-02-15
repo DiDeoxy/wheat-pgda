@@ -92,16 +92,25 @@ wheat_data$snp <- wheat_data$snp %>%
   # ) %>%
   mutate(comp_type = 
     ifelse(
-      (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5) ||
-      (chrs < 0.5 && chrw < 0.5 && csws >= 0.5),
+      (
+        (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
+        || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
+      )
+      && D > 0.29,
       "CSWS vs CHRS & CHRW",
       ifelse(
-        (chrs < 0.5 && chrw >= 0.5 && csws < 0.5) ||
-        (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5),
+        (
+          (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
+          || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
+        )
+        && D > 0.29,
         "CHRW vs CHRS & CSWS",
         ifelse(
-          (chrs >= 0.5 && chrw < 0.5 && csws < 0.5) ||
-          (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5),
+          (
+            (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
+            || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
+          )
+          && D > 0.29,
           "CHRS vs CHRW & CSWS",
           "None"
         )
