@@ -193,9 +193,9 @@ png("Results/loci/D/comps_VRN-A1.png",
 )
 wheat_data$snp[
   which(
-    wheat_data$snp$chrom == "5A"
-    & wheat_data$snp$pos_mb > 580.65
-    & wheat_data$snp$pos_mb < 594.6
+    wheat_data$snp$chrom == "1A"
+    & wheat_data$snp$pos_mb > 8.2
+    & wheat_data$snp$pos_mb < 11.6
   ),
 ] %>%
 # arrange(pos_mb) %>% print(n = Inf)

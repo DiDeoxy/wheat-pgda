@@ -68,7 +68,7 @@ df2genind(
   write_rds(path = str_c("Data/Intermediate/Adegenet/strata_genind.rds"))
 
 ################################################################################
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 
 # making the genotype data palatable by genind
 wheat_data$genotypes <- wheat_data$genotypes %>%
@@ -119,7 +119,7 @@ for (gene in c("Lr10", "Lr21", "Lr22a", "Lr1", "Lr34")) {
 }
 
 ################################################################################
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 
 # making the genotype data palatable by genind
 wheat_data$genotypes <- wheat_data$genotypes %>%
@@ -153,13 +153,13 @@ sampled_pheno_indices_csws <- pheno_indices_csws[length(pheno_indices_csws) %>% 
 index_sampled_chrs_chrw_csws <- c(sampled_pheno_indices_chrs, pheno_indices_chrw, sampled_pheno_indices_csws)
 
 grouping <- list(
-  list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws, index_chrs_chrw_csws),
-  list("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws", "chrs_chrw_csws")
+  index = list(index_chrs_csws, index_chrs_chrw, index_csws_chrw, index_chrs_chrw_csws, index_sampled_chrs_chrw_csws),
+  name = c("chrs_csws", "chrs_chrw", "csws_chrw", "chrs_chrw_csws", "sampled_chrs_chrw_csws")
 )
 
 for (i in 1:length(grouping[[1]])) {
-  index <- grouping[[1]][[i]]
-  name <- grouping[[2]][[i]]
+  index <- grouping$index[[i]]
+  name <- grouping$name[i]
   print(name)
   pop <- as.character(wheat_data$sample$annot$pheno[index])
 

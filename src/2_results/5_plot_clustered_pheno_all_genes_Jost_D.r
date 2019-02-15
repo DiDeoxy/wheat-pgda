@@ -10,7 +10,7 @@ source("src/R_functions/colour_sets.R")
 source("src/R_functions/funcs_locus_by_locus.R")
 
 # load the data from the gds object
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 
 # find the max position of any marker on each genome for xlims
 max_genome_lengths <- calc_max_genome_lengths(wheat_data)
@@ -25,21 +25,21 @@ index_chrs_chrw_csws <- which(
 cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
 geno <- wheat_data$genotype[, index_chrs_chrw_csws]
 
-# major_allele_freq_pops <- apply(geno, 1, function (marker) {
-#   total_geno <- table(marker)
-#   major <- which.max(total_geno) %>% names()
-#   by(marker, cpheno, function (pop) {
-#     pop_geno <- table(pop)
-#     if (all(c("0", "2") %in% names(pop_geno))) {
-#       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
-#     } else if (major %in% names(pop_geno)) {
-#       1
-#     } else {
-#       0
-#     }
-#   }) %>% rbind()
-# }) %>% t() %>% as_tibble()
-# colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+major_allele_freq_pops <- apply(geno, 1, function (marker) {
+  total_geno <- table(marker)
+  major <- which.max(total_geno) %>% names()
+  by(marker, cpheno, function (pop) {
+    pop_geno <- table(pop)
+    if (all(c("0", "2") %in% names(pop_geno))) {
+      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+    } else if (major %in% names(pop_geno)) {
+      1
+    } else {
+      0
+    }
+  }) %>% rbind()
+}) %>% t() %>% as_tibble()
+colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 # load the gene positions
 pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
