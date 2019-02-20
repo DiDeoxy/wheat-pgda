@@ -10,8 +10,8 @@ source("src/R_functions/funcs_locus_by_locus.R")
 source("src/R_functions/colour_sets.R")
 
 # load the data from the gds object
-wheat_data_phys <- parse_gds("mr_pruned_phys_sample_subset")
-wheat_data_gen <- parse_gds("mr_pruned_gen_sample_subset")
+wheat_data_phys <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
+wheat_data_gen <- parse_gds("maf_and_mr_pruned_gen_sample_subset")
 
 snp_phys_order <- match(wheat_data_phys$snp$id, wheat_data_gen$snp$id)
 
@@ -19,7 +19,7 @@ snp_phys_order <- match(wheat_data_phys$snp$id, wheat_data_gen$snp$id)
 phys_gen_snp_pos <- tibble(
   chrom = wheat_data_phys$snp$chrom, phys = wheat_data_phys$snp$pos_mb,
   gen = wheat_data_gen$snp$pos[snp_phys_order] / 100,
-  eh = calc_eh(wheat_data_phys$genotypes), ld = ld
+  eh = calc_eh(wheat_data_phys$genotypes)
 )
 
 # # identify those snps within the extended haplotypes

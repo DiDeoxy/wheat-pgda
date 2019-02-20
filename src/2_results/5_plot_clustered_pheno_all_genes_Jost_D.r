@@ -196,7 +196,7 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
 
 ################################################################################
 # load the data from the gds object
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 
 wheat_data$snp <- wheat_data$snp %>%
   add_group_stat(group) %>%

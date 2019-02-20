@@ -7,7 +7,7 @@ library(pracma)
 
 source("src/R_functions/funcs_gds_parse_create.R")
 
-plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title) {
+plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title, y_lim) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(
     Genome = factor(
@@ -50,13 +50,13 @@ plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title) {
     geom_freqpoly(aes(gaps, colour = Genome), size = 0.3) +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
     xlim(min(gaps_log10$gaps), max(gaps_log10$gaps)) +
-    ylim(0, 500)
+    ylim(0, y_lim)
   plots[[2]] <- nbs_ld_genome %>%
     ggplot() +
     geom_freqpoly(aes(ld, colour = Genome), size = 0.3) +
     scale_color_manual(values = brewer.pal(4, "Dark2")) +
     xlim(0, 1.0001) +
-    ylim(0, 500)
+    ylim(0, y_lim)
 
   # turn plot list into ggmatrix
   plots_matrix <- ggmatrix(
@@ -166,7 +166,7 @@ calc_lng <- function(snp_data) {
   ret
 }
 
-calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
+calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2, y_lim) {
   wheat_data <- parse_gds(subset)
 
   # calc ld stats
@@ -177,7 +177,7 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2) {
   lng <- calc_lng(wheat_data$snp)
 
   # plot the ld
-  plot_gaps_nbs_ld(lng, genome_ld, subset, plot_title_2)
+  plot_gaps_nbs_ld(lng, genome_ld, subset, plot_title_2, y_lim)
 
   # find the min length of the top percentile of gaps
   top_percentile <- quantile(
