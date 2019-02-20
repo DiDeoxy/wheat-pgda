@@ -17,14 +17,15 @@ wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
 # applies multiple values of maf, bps, and ld, visual inspection of the
 # resulting PCA plots identified the best subset
 wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/mr_pruned_phys_sample_subset.gds")
-maf <- 0.05
 for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
   for (ld in seq(0.5, 0.8, 0.05)) {
     # ld pruned set of markes
     set.seed(1000)
     kept_id <- unlist(
-      snpgdsLDpruning(wheat_gds, autosome.only = FALSE,
-      maf = maf, slide.max.bp = max_dist, ld.threshold = ld)
+      snpgdsLDpruning(
+        wheat_gds, autosome.only = FALSE, slide.max.bp = max_dist,
+        ld.threshold = ld
+      )
     )
 
     # pca
