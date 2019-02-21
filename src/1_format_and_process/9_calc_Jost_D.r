@@ -1,6 +1,7 @@
 library(tidyverse)
 library(mmod)
 
+# calc maximal josts D from Alcala & Rosenberg, 2018 so we can normalize
 m = 2/3
 k = 3
 km <- k * m
