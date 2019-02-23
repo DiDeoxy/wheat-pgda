@@ -25,10 +25,10 @@ index_chrs_chrw_csws <- which(
 cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
 geno <- wheat_data$genotype[, index_chrs_chrw_csws]
 
-major_allele_freq_pops <- apply(geno, 1, function (marker) {
+major_allele_freq_pops <- apply(geno, 1, function(marker) {
   total_geno <- table(marker)
   major <- which.max(total_geno) %>% names()
-  by(marker, cpheno, function (pop) {
+  by(marker, cpheno, function(pop) {
     pop_geno <- table(pop)
     if (all(c("0", "2") %in% names(pop_geno))) {
       pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
@@ -53,31 +53,31 @@ wheat_data$snp <- wheat_data$snp %>%
   add_group_stat(group) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
-  rbind.fill(pheno_genes, resi_genes) %>% 
+  rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, pos_mb) %>%
   rowwise() %>%
-  mutate(comp_type = 
+  mutate(comp_type =
     ifelse(
       (
         (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
         || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
       )
       && D > 0.29,
-      "CSWS vs CHRS & CHRW",
+      "CSWSD",
       ifelse(
         (
           (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
           || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
         )
         && D > 0.29,
-        "CHRW vs CHRS & CSWS",
+        "CHRWD",
         ifelse(
           (
             (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
             || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
           )
           && D > 0.29,
-          "CHRS vs CHRW & CSWS",
+          "CHRSD",
           "None"
         )
       )
@@ -96,7 +96,7 @@ plots <- by(
       ggplot() +
       ylim(0, 1) +
       xlim(
-        0, 
+        0,
         max_genome_lengths[
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
         ]
@@ -146,8 +146,8 @@ dev.off()
 ################################################################################
 # print out all markers on each chromosome
 base <- "Results/loci/D/by_chrom"
-ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, function (chrom) {
+ifelse(!dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
+blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, function(chrom) {
   write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
 })
 
@@ -155,34 +155,60 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
 # load the data from the gds object
 wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 
+cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
+
+index_chrs_chrw_csws <- which(
+  (wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
+  | (wheat_data$sample$annot$pheno == "HRW" & cluster == 1)
+  | (wheat_data$sample$annot$pheno == "SWS" & cluster == 2)
+)
+cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
+geno <- wheat_data$genotype[, index_chrs_chrw_csws]
+
+major_allele_freq_pops <- apply(geno, 1, function(marker) {
+  total_geno <- table(marker)
+  major <- which.max(total_geno) %>% names()
+  by(marker, cpheno, function(pop) {
+    pop_geno <- table(pop)
+    if (all(c("0", "2") %in% names(pop_geno))) {
+      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
+    } else if (major %in% names(pop_geno)) {
+      1
+    } else {
+      0
+    }
+  }) %>% rbind()
+}) %>% t() %>% as_tibble()
+colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
+
 group <- "chrs_chrw_csws"
 wheat_data$snp <- wheat_data$snp %>%
   add_group_stat(group) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
   rowwise() %>%
-  mutate(type = 
+  mutate(type =
     ifelse(
       (
         (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
         || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
       )
       && D > 0.29,
-      "CSWS vs CHRS & CHRW",
+      "CSWSD",
       ifelse(
         (
           (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
           || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
         )
         && D > 0.29,
-        "CHRW vs CHRS & CSWS",
+        "CHRWD",
         ifelse(
           (
             (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
             || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
           )
           && D > 0.29,
-          "CHRS vs CHRW & CSWS",
+          "CHRSD",
           "None"
         )
       )
@@ -200,48 +226,73 @@ for (genome in c("A", "B", "D")) {
 }
 
 # chromsome group freqs
-for (group in 1:7) {
-  median(wheat_data$snp$D[which(grepl(group, wheat_data$snp$chrom))]) %>%
-  str_c("Chr ", group, " median = ", .) %>% print()
+for (chr_group in 1:7) {
+  median(wheat_data$snp$D[which(grepl(chr_group, wheat_data$snp$chrom))]) %>%
+  str_c("Chr ", chr_group, " median = ", .) %>% print()
 }
 
 # group freq and median values
-types <- c(
-  "CHRS vs CHRW & CSWS", "CHRW vs CHRS & CSWS", "CSWS vs CHRS & CHRW", "None"
-)
+types <- c("CHRSD", "CHRWD", "CSWSD", "None")
+
+for (type in types) {
+  median(wheat_data$snp$D[which(wheat_data$snp$type == type))]) %>%
+  str_c("Chr ", type, " median = ", .) %>% print()
+}
+
+# check out the trend in differences between nearby Jost's D values
+dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
+  ret <- tibble(dists = vector(), diffs = vector())
+  for (i in 1:nrow(chrom)) {
+    nearby <- which(
+      chrom$pos_mb < (chrom$pos_mb[i] + 0.0001) & chrom$pos_mb > chrom$pos_mb[i]
+    )
+    if (length(nearby)) {
+      ret <- ret %>% add_row(
+        dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
+        diffs = chrom$D[nearby] - chrom$D[i]
+      )
+    }
+  }
+  ret
+}) %>% do.call(rbind, .)
+dists_diffs$diffs <- dists_diffs$diffs %>% abs()
+sum(dists_diffs$diffs > 0.5) / nrow(dists_diffs)
+dists_diffs %>% ggplot(aes(dists, diffs)) +
+  geom_point()
+
 
 ################################################################################
-  # mutate(comp_type = 
-  #   ifelse(
-  #     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
-  #     (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
-  #     "CSWS vs CHRS & CHRW",
-  #     ifelse(
-  #       (chrs > 0.4 && chrs < 0.6) &&
-  #       ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
-  #       "CHRW vs CSWS",
-  #       ifelse(
-  #         (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
-  #         (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
-  #         "CHRW vs CHRS & CSWS",
-  #         ifelse(
-  #           (chrw > 0.4 && chrw < 0.6) &&
-  #           ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
-  #           "CHRS vs CSWS",
-  #           ifelse(
-  #             (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
-  #             (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
-  #             "CHRS vs CHRW & CSWS",
-  #             ifelse(
-  #               (csws > 0.4 && csws < 0.6) &&
-  #               ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
-  #               "CHRS vs CHRW",
-  #               "None"
-  #             )
-  #           )
-  #         )
-  #       )
-  #     )
-  #   ),
-  #   type = pmin(gene_type, comp_type, na.rm = TRUE)
-  # ) %>%
+# mutate(comp_type =
+#   ifelse(
+#     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
+#     (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
+#     "CSWS vs CHRS & CHRW",
+#     ifelse(
+#       (chrs > 0.4 && chrs < 0.6) &&
+#       ((chrw >= 0.6 && csws <= 0.4) || (chrw <= 0.4 && csws >= 0.6)),
+#       "CHRW vs CSWS",
+#       ifelse(
+#         (chrs <= 0.4 && chrw >= 0.6 && csws <= 0.4) ||
+#         (chrs >= 0.6 && chrw <= 0.4 && csws >= 0.6),
+#         "CHRW vs CHRS & CSWS",
+#         ifelse(
+#           (chrw > 0.4 && chrw < 0.6) &&
+#           ((chrs >= 0.6 && csws <= 0.4) || (chrs <= 0.4 && csws >= 0.6)),
+#           "CHRS vs CSWS",
+#           ifelse(
+#             (chrs >= 0.6 && chrw <= 0.4 && csws <= 0.4) ||
+#             (chrs <= 0.4 && chrw >= 0.6 && csws >= 0.6),
+#             "CHRS vs CHRW & CSWS",
+#             ifelse(
+#               (csws > 0.4 && csws < 0.6) &&
+#               ((chrs >= 0.6 && chrw <= 0.4) || (chrs <= 0.4 && chrw >= 0.6)),
+#               "CHRS vs CHRW",
+#               "None"
+#             )
+#           )
+#         )
+#       )
+#     )
+#   ),
+#   type = pmin(gene_type, comp_type, na.rm = TRUE)
+# ) %>%
