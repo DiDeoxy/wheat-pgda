@@ -1,8 +1,10 @@
 library(tidyverse)
 library(SNPRelate)
 
-parse_gds <- function(gds_name) {
-  gds <- snpgdsOpen(str_c("Data/Intermediate/GDS/", gds_name, ".gds"))
+base <- file.path("data", "R", "GDS")
+
+parse_gds <- function(gds_file) {
+  gds <- snpgdsOpen(gds_file)
 
   # make a tibble of the snp data
   snp <- tibble(
@@ -35,9 +37,9 @@ parse_gds <- function(gds_name) {
   )
 }
 
-snpgds_create_snp_subset <- function(wheat_data, subset, snp_index) {
+snpgds_create_snp_subset <- function(wheat_data, gds_file, snp_index) {
   snpgdsCreateGeno(
-    str_c("Data/Intermediate/GDS/", subset, ".gds"),
+    gds_file,
     genmat = wheat_data$genotypes[snp_index, ],
     sample.id = wheat_data$sample$id,
     snp.id = wheat_data$snp$id[snp_index],
@@ -48,7 +50,7 @@ snpgds_create_snp_subset <- function(wheat_data, subset, snp_index) {
   )
 }
 
-snpgds_create_sample_subset <- function(wheat_data, subset, sample_index) {
+snpgds_create_sample_subset <- function(wheat_data, gds_file, sample_index) {
   # eliminate the given samples from the annotations
   for (name in names(wheat_data$sample$annot)) {
     wheat_data$sample$annot[[name]] <- factor(
@@ -57,7 +59,7 @@ snpgds_create_sample_subset <- function(wheat_data, subset, sample_index) {
   }
   
   snpgdsCreateGeno(
-    str_c("Data/Intermediate/GDS/", subset, ".gds"),
+    gds_file,
     genmat = wheat_data$genotypes[, -sample_index],
     sample.id = wheat_data$sample$id[-sample_index],
     snp.id = wheat_data$snp$id,

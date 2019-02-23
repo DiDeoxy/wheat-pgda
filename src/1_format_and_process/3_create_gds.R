@@ -1,9 +1,12 @@
 library(tidyverse)
 library(SNPRelate)
 
+# set the base directory
+base <- file.path("data", "R")
+
 # load the phys map with the genotypes
 maps_genotypes <- read_rds(
-  "Data/Intermediate/Maps/maps_genotypes.rds"
+  file.path(base, "marker_maps", "maps_genotypes.rds")
 )
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
@@ -15,14 +18,15 @@ genotypes <- maps_genotypes %>%
 
 # import categorical information on wheat varieites (market class,
 # breeding program, year of release, phenotype, etc.)
-metadata <- read_csv("Data/Raw/Parsed/metadata_final.csv") %>%
-  arrange(`Real Name`)
+metadata <- read_csv(
+  file.path("data", "variety_info", "all_variety_info.csv") 
+) %>% arrange(`Real Name`)
 
-# print out ordered sample names for perl cliques
-write(metadata$`Real Name`,
-  file = "Data/Intermediate/ordered_names.txt",
-  sep = "\n"
-)
+# # print out ordered sample names for perl cliques
+# write(metadata$`Real Name`,
+#   file = file.path("data", "variety_info", "ordered_names.csv"),
+#   sep = "\n"
+# )
 
 # transform year into binned eras
 era <- as.numeric(as.character(metadata$Date))
@@ -44,8 +48,15 @@ samp_annot <- list(
   pheno = factor(metadata$Designation), mc = factor(metadata$Consensus)
 )
 
+# make the GDS directory if it doesnt yet exist
+ifelse(
+  ! dir.exists(file.path(base, "GDS")), dir.create(file.path(base, "GDS")),
+  FALSE
+)
+
 ## construct the SNPRelate GDS object fromt the input data with physical map
-snpgdsCreateGeno("Data/Intermediate/GDS/full_phys.gds",
+snpgdsCreateGeno(
+  file.path(base, "GDS", "full_phys.gds"),
   genmat = data.matrix(genotypes),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker,
@@ -57,7 +68,9 @@ snpgdsCreateGeno("Data/Intermediate/GDS/full_phys.gds",
 
 ## construct the SNPRelate GDS object form the input data with genetic map
 gen_order <- order(maps$chrom, maps$gen_pos)
-snpgdsCreateGeno("Data/Intermediate/GDS/full_gen.gds",
+
+snpgdsCreateGeno(
+  file.path(base, "GDS", "full_gen.gds"),
   genmat = data.matrix(genotypes[gen_order, ]),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker[gen_order],
