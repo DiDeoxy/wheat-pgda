@@ -1,14 +1,3 @@
-library(plyr)
-library(tidyverse)
-library(GGally)
-library(ggrepel)
-library(extrafont)
-
-# load custom functions
-source("src/R_functions/funcs_gds_parse_create.R")
-source("src/R_functions/colour_sets.R")
-source("src/R_functions/funcs_locus_by_locus.R")
-
 # load the data from the gds object
 wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
 

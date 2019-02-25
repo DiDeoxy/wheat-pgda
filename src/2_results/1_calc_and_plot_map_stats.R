@@ -1,5 +1,3 @@
-source("src/R_functions/funcs_calc_stats.R")
-
 # all markers
 calc_plot_map_stats(
   "maf_and_mr_pruned_phys_sample_subset",

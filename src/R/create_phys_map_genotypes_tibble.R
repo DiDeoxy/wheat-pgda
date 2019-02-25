@@ -1,17 +1,11 @@
-library(ape)
-library(tidyverse)
-
-# set the base directory
-base <- file.path("data", "R", "marker_maps")
-
 # load the filtered gen map
-poz_filtered <- read_rds(file.path(base, "pozniak_filtered_map.rds"))
+poz_filtered <- read_rds(file.path(maps, "pozniak_filtered_map.rds"))
 
 # create a vector of the chromosomes
 chrs <- paste0(
-  "chr", outer(
-    as.character(1:7), c("A", "B", "D"), paste, sep = ""
-  ) %>% t() %>% as.vector()
+  "chr",
+  outer(s.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
+    t() %>% as.vector()
 )
 
 # parse the GFF3 format file of the wheat 90K snp chip physical map positions
@@ -82,7 +76,7 @@ maps <- phys_map %>%
 
 # format the genotype data into the proper format for snpgds format
 genotypes <- read_csv(
-  file.path("data", "genotypes", "Jan_6_wheat_genotypes_curtis.csv")
+  file.path(genotypes, "Jan_6_wheat_genotypes_curtis.csv")
 ) %>%
   select(-X1, -X3, -X4, -X5, -Name) %>%
   .[-1:-2, ] %>%
@@ -134,7 +128,7 @@ maps_genotypes_deduplicated <- maps_genotypes %>%
   ungroup()
 nrow(maps_genotypes_deduplicated)
 
-
+# write out the maps with genotypes
 write_rds(maps_genotypes_deduplicated,
-  file.path(base, "maps_genotypes.rds")
+  file.path(markers, "maps_genotypes.rds")
 )

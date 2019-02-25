@@ -1,12 +1,3 @@
-library(tidyverse)
-library(ggplot2)
-library(GGally)
-library(extrafont)
-library(RColorBrewer)
-library(pracma)
-
-source("src/R_functions/funcs_gds_parse_create.R")
-
 plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title, y_lim) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(

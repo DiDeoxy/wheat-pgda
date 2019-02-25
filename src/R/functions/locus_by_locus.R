@@ -1,5 +1,3 @@
-library(tidyverse)
-
 calc_eh <- function (genotypes) {
   apply(genotypes, 1, function (snp) {
     2 * ((sum(snp == 0) / sum(snp == 0 | 2)) *
@@ -39,12 +37,7 @@ calc_max_homeolog_lengths <- function(wheat_data) {
 
 add_group_stat <- function(snps, groups) {
   for (group in groups) {
-    snps <- snps %>% 
-      add_column(
-        !!group := read_rds(
-          str_c("Data/Intermediate/mmod/", group, "_Jost_D.rds")
-        )
-      )
+    snps <- snps %>% add_column(!group := read_rds(josts_d))
   }
   snps
 }
@@ -59,8 +52,7 @@ calc_extremes <- function(wheat_data, groups, prob = 0.975) {
 
 load_groups <- function(csv, base = 0) {
   read_csv(
-    str_c("Data/Intermediate/Aligned_genes/selected_alignments/", csv),
-    col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
+    csv, col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
   ) %>%
     mutate(pos_mb = pos / 1e6) %>%
     select(id, chrom, pos_mb) %>%
@@ -230,129 +222,4 @@ round_df <- function(df, digits) {
   df[,nums] <- round(df[,nums], digits = digits) * 10^digits
 
   (df)
-}
-
-
-all_ovlps_markers <- function (comp_gef) {
-  ovlp_grps <- list()
-  all_overlaps <- by(comp_gef, comp_gef$chrom, function (chrom) {
-    # points <- c(chrom$start, chrom$end) %>% sort()
-    points <- c(chrom$start, chrom$end) %>% unique() %>% sort()
-    chrom_all_overlaps <- tibble()
-    for (i in 1:(length(points) - 1)) {
-      spannings <- chrom[which(chrom$start <= points[i] & chrom$end >= points[i + 1]), ]
-      if (! nrow(spannings)) {
-        spannings <- chrom[which(chrom$start == points[i] & chrom$end == points[i]), ]
-      }
-      ovlp_grps[[length(ovlp_grps) + 1]] <<- spannings$group
-      overlaps_by_group <- list()
-      if (nrow(spannings)) {
-        for (j in 1:nrow(spannings)) {
-          temp <- tibble(
-            chrom = chrom$chrom[1],
-            pos_mb = strsplit(spannings[j, "pos_mb"] %>% as.character(), ' ')[[1]] %>% as.numeric(),
-            group = spannings$group[j],
-            extreme = strsplit(spannings[j, "extreme"] %>% as.character(), ' ')[[1]],
-            Ds = strsplit(spannings[j, "Ds"] %>% as.character(), ' ')[[1]],
-            ids = strsplit(spannings[j, "ids"] %>% as.character(), ' ')[[1]]
-          )
-          temp <- temp[which(temp$pos_mb >= points[i] & temp$pos_mb <= points[i + 1]), ]
-          names(temp)[3:5] <- str_c(names(temp)[3:5], spannings$group[j], sep = "_")
-          overlaps_by_group[[spannings$group[j]]] <- temp
-        }
-      }
-      if (length(overlaps_by_group) > 1) {
-        chrom_all_overlaps <- bind_rows(chrom_all_overlaps, Reduce((function (x, y) { full_join(x, y) }), overlaps_by_group))
-      } else {
-        chrom_all_overlaps <- bind_rows(chrom_all_overlaps, overlaps_by_group)
-      }
-    }
-    chrom_all_overlaps
-  }) %>% Reduce(function (x, y) { bind_rows(x, y) }, .)
-  all_overlaps[, order(colnames(all_overlaps))][, c(1, 12, 5:7, 8:10, 2:4, 11)]
-}
-
-print_ovlps_by_chrom <- function(all_overlaps) {
-  # print our the markers involved in each linked region
-  genes <- rbind(pheno_genes, resi_genes) %>% as.tibble()
-  base <- "Results/loci/D/closest_markers"
-  ifelse(! dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
-  blah <- by(all_overlaps, all_overlaps$chrom, function (chrom_overlaps) {
-    for (row in 1:nrow(genes)) {
-      if (genes[row, ]$chrom == chrom_overlaps$chrom[1]) {
-        chrom_overlaps <- chrom_overlaps %>%
-          add_row(
-            chrom = genes[row, ]$chrom, pos_mb = genes[row, ]$mean_pos_mb, ids = genes[row, ]$id
-          )
-      }
-    }
-    chrom_overlaps <- chrom_overlaps %>% dplyr::arrange(pos_mb)
-    file_name <- paste0(chrom_overlaps$chrom[1], "_overlaps_genes_details.csv")
-    file_conn <- file(file.path(base, file_name))
-    writeLines(
-      c(
-        paste(names(chrom_overlaps), collapse = ","),
-        paste(chrom_overlaps[1, ], collapse = ",")
-      ), file_conn
-    )
-    close(file_conn)
-    file_conn <- file(file.path(base, file_name), open = "at")
-    for (row in 2:nrow(chrom_overlaps)) {
-      test1 <- chrom_overlaps[row - 1, 6:8]
-      test1[is.na(test1)] <- "None"
-      test2 <- chrom_overlaps[row , 6:8]
-      test2[is.na(test2)] <- "None"
-      if (
-        ! all(test1 == test2)
-      ) {
-        writeLines("", file_conn)
-        writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
-      } else if (
-        chrom_overlaps[row, ]$pos_mb - chrom_overlaps[row - 1, ]$pos_mb > 30
-      ) {
-        writeLines(rep("", 3), file_conn)
-        writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
-      } else {
-        writeLines(paste(chrom_overlaps[row, ], collapse = ","), file_conn)
-      }
-    }
-    close(file_conn)
-  })
-}
-
-comp_ovlps <- function (comp_gef, comp) {
-  by(comp_gef, comp_gef$chrom, function (chrom) {
-    all_ovlps <- list()
-    group_index <- which(chrom$group == comp)
-    if (nrow(chrom) > 1 && length(group_index) && length(group_index) < nrow(chrom)) {
-      group <- chrom[group_index, ]
-      not_group <- chrom[-group_index, ]
-      for (i in 1:nrow(group)) {
-        ovlps <- group$group[i]
-        for (j in 1:nrow(not_group)) {
-          if (
-            (
-              group$start[i] <= not_group$start[j] 
-              && (not_group$end[j] <= group$end[i] || not_group$start[j] <= group$end[i])
-            )
-            ||
-            (
-              not_group$start[j] <= group$start[i] 
-              && (group$end[i] <= not_group$end[j] || group$start[i] <= not_group$end[j])
-            )
-          ) {
-            ovlps <- c(ovlps, not_group$group[j])
-          }
-        }
-        all_ovlps[[i]] <- sort(ovlps) %>% paste(collapse = " ")
-      }
-    } else {
-      for (i in 1:nrow(chrom)) {
-        if (chrom$group[i] == comp) {
-          all_ovlps[[i]] <- chrom$group[i]
-        }
-      }
-    }
-    all_ovlps
-  })
 }

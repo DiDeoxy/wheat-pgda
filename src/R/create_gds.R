@@ -1,12 +1,6 @@
-library(tidyverse)
-library(SNPRelate)
-
-# set the base directory
-base <- file.path("data", "R")
-
 # load the phys map with the genotypes
 maps_genotypes <- read_rds(
-  file.path(base, "marker_maps", "maps_genotypes.rds")
+  file.path(maps, "maps_genotypes.rds")
 )
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
@@ -19,12 +13,13 @@ genotypes <- maps_genotypes %>%
 # import categorical information on wheat varieites (market class,
 # breeding program, year of release, phenotype, etc.)
 metadata <- read_csv(
-  file.path("data", "variety_info", "all_variety_info.csv") 
+  file.path(cultivars, "cultivar_metadata.csv") 
 ) %>% arrange(`Real Name`)
 
 # # print out ordered sample names for perl cliques
-# write(metadata$`Real Name`,
-#   file = file.path("data", "variety_info", "ordered_names.csv"),
+# write(
+#   metadata$`Real Name`,
+#   file = file.path(cultivars, "ordered_names.csv"),
 #   sep = "\n"
 # )
 
@@ -40,7 +35,7 @@ era <- cut(era,
 era <- addNA(era)
 levels(era)[7] <- "UNKNOWN"
 
-## construct the sample annotation information from the metadata
+# construct the sample annotation information from the metadata
 samp_annot <- list(
   bp = factor(metadata$`Breeding Program`), era = factor(era),
   origin = factor(metadata$Origin), texture = factor(metadata$Texture),
@@ -48,15 +43,9 @@ samp_annot <- list(
   pheno = factor(metadata$Designation), mc = factor(metadata$Consensus)
 )
 
-# make the GDS directory if it doesnt yet exist
-ifelse(
-  ! dir.exists(file.path(base, "GDS")), dir.create(file.path(base, "GDS")),
-  FALSE
-)
-
-## construct the SNPRelate GDS object fromt the input data with physical map
+# construct the SNPRelate GDS object fromt the input data with physical map
 snpgdsCreateGeno(
-  file.path(base, "GDS", "full_phys.gds"),
+  file.path(gds, "full_phys.gds"),
   genmat = data.matrix(genotypes),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker,
@@ -66,11 +55,11 @@ snpgdsCreateGeno(
   snpfirstdim = T
 )
 
-## construct the SNPRelate GDS object form the input data with genetic map
+# construct the SNPRelate GDS object form the input data with genetic map
 gen_order <- order(maps$chrom, maps$gen_pos)
 
 snpgdsCreateGeno(
-  file.path(base, "GDS", "full_gen.gds"),
+  file.path(gds, "full_gen.gds"),
   genmat = data.matrix(genotypes[gen_order, ]),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker[gen_order],

@@ -1,11 +1,5 @@
-library(tidyverse)
-
-# set the base directories
-base_in <- file.path("data", "marker_maps")
-base_out <- file.path("data", "R", "marker_maps")
-
 # load the pozniak genetic map
-poz_gen_map <- read_csv(file.path(base_in, "pozniak_gen_map.csv"),
+poz_gen_map <- read_csv(file.path(maps, "pozniak_gen_map.csv"),
   na = "#N/A",
   col_names = c("marker", "group", "pos"),
   col_types = list(
@@ -16,7 +10,7 @@ poz_gen_map <- read_csv(file.path(base_in, "pozniak_gen_map.csv"),
   arrange(group, pos)
 
 # load the wang genetic map
-wang_gen_map <- read_csv(file.path(base_in, "wang_gen_map.csv"),
+wang_gen_map <- read_csv(file.path(maps, "wang_gen_map.csv"),
   na = "#N/A",
   col_names = c("marker", "group", "pos"),
   col_types = list(
@@ -38,5 +32,5 @@ poz_filtered <- poz_semi %>%
 ifelse(
   ! dir.exists(file.path(base_out)), dir.create(file.path(base_out)), FALSE
 )
-write_rds(poz_filtered, file.path(base_out, "pozniak_filtered_map.rds"))
+write_rds(poz_filtered, file.path(maps, "pozniak_filtered_map.rds"))
 

@@ -1,0 +1,12 @@
+# create ld pruned set of markes
+wheat_gds <- snpgdsOpen(phys_gds)
+set.seed(1000)
+kept_id <- snpgdsLDpruning(
+  wheat_gds, autosome.only = FALSE, slide.max.bp = 1e7, ld.threshold = 0.7
+) %>% unlist()
+snpgdsClose(wheat_gds)
+
+wheat_data <- parse_gds(phy_gds)
+kept_index <- match(kept_id, wheat_data$snp$id)
+
+snpgds_create_snp_subset(wheat_data, ld_gds, kept_index)

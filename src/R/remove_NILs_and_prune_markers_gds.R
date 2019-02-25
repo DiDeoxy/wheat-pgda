@@ -1,17 +1,6 @@
-library(SNPRelate)
-library(tidyverse)
-
-functions <- file.path("src", "functions")
-base <- file.path("data", "R", "GDS")
-
-# load needed functions
-source(file.path(functions, "gds_parse_create.R"))
-
 # eliminate those individuals that show identity by state
 # (IBS, fractional identity) greater than 0.99
-wheat_gds <- snpgdsOpen(
-  file.path(base, "full_phys.gds")
-)
+wheat_gds <- snpgdsOpen(file.path(gds, "full_phys.gds"))
 IBS <- snpgdsIBS(wheat_gds, autosome.only = F)
 snpgdsClose(wheat_gds)
 
@@ -42,21 +31,21 @@ NILs <- c(
 sample_index <- match(NILs, wheat_data$sample$id)
 
 # mr pruned phys map
-wheat_data <- parse_gds(file.path(base, "full_phys.gds"))
+wheat_data <- parse_gds(file.path(gds, "full_phys.gds"))
 # create gds object without the NILs
 snpgds_create_sample_subset(
-  wheat_data, file.path(base, "full_phys_sample_subset.gds"), sample_index
+  wheat_data, file.path(gds, "full_phys_sample_subset.gds"), sample_index
 )
 
 # mr pruned gen map
-wheat_data <- parse_gds(file.path(base, "full_gen.gds"))
+wheat_data <- parse_gds(file.path(gds, "full_gen.gds"))
 snpgds_create_sample_subset(
-  wheat_data, file.path(base, "full_gen_sample_subset.gds"), sample_index
+  wheat_data, file.path(gds, "full_gen_sample_subset.gds"), sample_index
 )
 
 # identify snps with a maf below 0.05
 wheat_gds <- snpgdsOpen(
-  file.path(base, "full_phys_sample_subset.gds")
+  file.path(gds, "full_phys_sample_subset.gds")
 )
 kept_id <- snpgdsSelectSNP(
   wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
@@ -64,17 +53,11 @@ kept_id <- snpgdsSelectSNP(
 snpgdsClose(wheat_gds)
 
 # reomve these markers from the phys map
-wheat_data <- parse_gds(file.path(base, "full_phys_sample_subset.gds"))
+wheat_data <- parse_gds(file.path(gds, "full_phys_sample_subset.gds"))
 kept_index <- match(kept_id, wheat_data$snp$id)
-snpgds_create_snp_subset(
-  wheat_data, file.path(base, "maf_and_mr_pruned_phys_sample_subset.gds"),
-  kept_index
-)
+snpgds_create_snp_subset(wheat_data, file.path(phys_gds), kept_index)
 
 # remove these markers from the gen map
-wheat_data <- parse_gds(file.path(base, "full_gen_sample_subset.gds"))
+wheat_data <- parse_gds(file.path(gds, "full_gen_sample_subset.gds"))
 kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
-snpgds_create_snp_subset(
-  wheat_data, file.path(base, "maf_and_mr_pruned_gen_sample_subset.gds"),
-  kept_index
-)
+snpgds_create_snp_subset(wheat_data, file.path(gen_gds), kept_index)

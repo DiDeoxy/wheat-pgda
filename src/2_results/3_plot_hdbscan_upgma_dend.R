@@ -1,24 +1,11 @@
-library(tidyverse)
-library(SNPRelate)
-library(circlize)
-library(dendextend)
-library(extrafont)
-library(ape)
-
-source("src/R_functions/funcs_gds_parse_create.R")
-source("src/R_functions/funcs_draw_dend.R")
-source("src/R_functions/colour_sets.R")
-
 ## setting up the data
-wheat_data <- parse_gds("ld_pruned_phys_sample_subset")
+wheat_data <- parse_gds(ld_gds)
 
-clusters <- factor(
-  read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster)
+clusters <- factor(read_rds(hdbscan)$cluster)
 levels(clusters) <- c("Noise", "Cluster 1", "Cluster 2", "Cluster 3",
                       "Cluster 4", "Cluster 5")
 
-wheat_gds <- snpgdsOpen(
-  "Data/Intermediate/GDS/ld_pruned_phys_sample_subset.gds")
+wheat_gds <- snpgdsOpen(ld_gds)
 ## making the distance object
 ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
@@ -31,8 +18,7 @@ label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
 png(
-  "Results/dend/UPGMA_hdbscan_annot.png",
-  family = "Times New Roman", width = 210, height = 210, pointsize = 15,
+  dend, family = "Times New Roman", width = 210, height = 210, pointsize = 15,
   units = "mm", res = 500
 )
 circos.par(cell.padding = c(0, 0, 0, 0), gap.degree = 0.5,
@@ -107,3 +93,14 @@ title(
   cex.main = 0.7
 )
 dev.off()
+
+################################################################################
+# out put some table summarizing the groupings
+clusters <- read_rds(hdbscan)$cluster %>% replace(. == 0, "Noise") 
+
+table(data.frame(wheat_data$sample$annot$pheno, clusters)) %>%
+  as.data.frame.matrix() %>%
+  write.csv("Results/pheno_cluster.csv", quote = FALSE)
+table(data.frame(wheat_data$sample$annot$mc, clusters)) %>%
+  as.data.frame.matrix() %>%
+  write.csv("Results/mc_cluster.csv", quote = FALSE)

@@ -2,7 +2,6 @@ library(plyr)
 library(tidyverse)
 library(GGally)
 library(extrafont)
-library(pracma)
 
 # load custom functions
 source("src/R_functions/funcs_gds_parse_create.R")

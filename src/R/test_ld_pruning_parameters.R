@@ -1,24 +1,16 @@
-library(SNPRelate)
-library(tidyverse)
-library(circlize)
-library(dendextend)
-library(GGally)
-library(extrafont)
 
-source("src/R_functions/funcs_gds_parse_create.R")
-source("src/R_functions/funcs_draw_dend.R")
-source("src/R_functions/colour_sets.R")
-
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
+# load the data
+wheat_data <- parse_gds(file.path(phys_gds))
 
 # performs LD pruning to produce a set of SNPs that maximally represent the
 # diversity of the genome with as little redundant info as possible used for
 # estimation of relationships genome wide (i.e. clustering)
 # applies multiple values of maf, bps, and ld, visual inspection of the
 # resulting PCA plots identified the best subset
-wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/mr_pruned_phys_sample_subset.gds")
+wheat_gds <- snpgdsOpen(file.path(phys_gds))
 for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
   for (ld in seq(0.5, 0.8, 0.05)) {
+
     # ld pruned set of markes
     set.seed(1000)
     kept_id <- unlist(
@@ -28,6 +20,12 @@ for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
       )
     )
 
+    # a title for the output graphs
+    title <- str_c(
+      "max_dist_", max_dist / 1e6, "_LD_", ld * 100, "_num_snps_",
+      length(kept_id), ".png"
+    )
+
     # pca
     pca <- snpgdsPCA(wheat_gds, snp.id = kept_id, autosome.only = F)
 
@@ -35,19 +33,12 @@ for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
     ggpairs_pca <- pca$eigenvect[, 1:3] %>%
       as.tibble() %>%
       dplyr::rename(PC1 = V1, PC2 = V2, PC3 = V3) %>%
-      ggpairs(
-        title = str_c(
-          "max_dist_", max_dist / 1e6, "_LD_", ld * 10, "_num_snps_",
-          length(kept_id)
-      )
+      ggpairs(title = title)
     )
 
     # plot pairs
     png(
-      str_c(
-        "Results/pca/tests/pca_", "max_dist_", max_dist / 1e6,
-        "_LD_", ld * 100, "_num_snps_", length(kept_id), ".png"
-      ),
+      file.path(test_pruning_pca, title),
       family = "Times New Roman", width = 200, height = 200, pointsize = 12,
       units = "mm", res = 300
     )
@@ -65,10 +56,7 @@ for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
 
     # plot dend
     png(
-      str_c(
-        "Results/dend/tests/dend_", "max_dist_", max_dist / 1e6,
-        "_LD_", ld * 100, "_num_snps_", length(kept_id), ".png"
-      ),
+      file.path(test_pruning_dend, title),
       family = "Times New Roman", width = 200, height = 200, pointsize = 15,
       units = "mm", res = 300
     )
@@ -114,12 +102,7 @@ for (max_dist in c(5e6, 1e7, 1.5e7, 2e7)) {
       track.height = 0.3, bg.border = NA)
     circos.clear()
 
-    title(
-      main = str_c(
-        "dend_", "max_dist_", max_dist / 1e6, "_LD_", ld * 100, "_num_snps_",
-        length(kept_id)
-      ),
-      cex.main = 0.7)
+    title(main = title, ex.main = 0.7)
     dev.off()
   }
 }

@@ -1,8 +1,3 @@
-library(tidyverse)
-library(SNPRelate)
-
-base <- file.path("data", "R", "GDS")
-
 parse_gds <- function(gds_file) {
   gds <- snpgdsOpen(gds_file)
 

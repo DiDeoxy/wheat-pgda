@@ -1,16 +1,8 @@
-library(tidyverse)
-library(poppr)
-library(SNPRelate)
-library(ape)
-library(stringr)
-
 # genind object for amova
-strata_genind <- read_rds("Data/Intermediate/Adegenet/strata_genind.rds")
+strata_genind <- read_rds(file.path(geninds, "strata.rds"))
 
 # create an IBS distance object of the sample genotypes
-wheat_gds <- snpgdsOpen(
-  "Data/Intermediate/GDS/ld_pruned_phys_sample_subset.gds"
-)
+wheat_gds <- snpgdsOpen(ld_gds)
 sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
@@ -19,7 +11,7 @@ strata <- c(
   "pheno/bp_era", "clusters", "clusters/bp_era"
 )
 
-results <- tibble(
+amova_table <- tibble(
   Comparison = character(), `% Variation` = double(), `p-value` = double()
 )
 for (stratum in strata) {
@@ -32,7 +24,7 @@ for (stratum in strata) {
   amova_randtest <- NULL
   if (nrow(amova_result$statphi) == 1) {
     amova_randtest <- randtest(amova_result, nrepet = 999, alter = "greater")
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = stratum,
         `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
@@ -46,13 +38,13 @@ for (stratum in strata) {
         names = names
       )
     )
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][1], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
         `p-value` = amova_randtest$pvalue[3]
       )
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][2], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[2], 2),
@@ -66,19 +58,19 @@ for (stratum in strata) {
         names = names
       )
     )
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][1], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[1], 2),
         `p-value` = amova_randtest$pvalue[3]
       )
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][2], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[2], 2),
         `p-value` = amova_randtest$pvalue[2]
       )
-    results <- results %>%
+    amova_table <- amova_table %>%
       add_row(
         Comparison = str_c(stratum, " (", strsplit(stratum, "/")[[1]][3], ")"),
         `% Variation` = round(amova_result$componentsofcovariance$`%`[3], 2),
@@ -86,9 +78,11 @@ for (stratum in strata) {
       )
   }
 }
-results
+amova_table
 
-write_csv(results, "Results//amova_results.csv", col_names = TRUE)
+write_csv(
+  amova_table, file.path("results", "amova_table.csv"),col_names = TRUE
+)
 
 # # correlation stuff
 # mis_pheno <- which(strata_genind$strata$pheno == "UNKNOWN")
