@@ -1,4 +1,4 @@
-plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title, y_lim) {
+plot_gaps_nbs_ld <- function(lng, genome_ld, gds, plot_title, y_lim) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(
     Genome = factor(
@@ -61,7 +61,8 @@ plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title, y_lim) {
   )
 
   # plot the matrix
-  png(str_c("Results/gaps/gaps_nbs_", subset, ".png"),
+  png(
+    file.path("results", str_c("marker_gaps_", basename(gds), ".png")),
     family = "Times New Roman", width = 100, height = 62, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + 
@@ -71,9 +72,8 @@ plot_gaps_nbs_ld <- function(lng, genome_ld, subset, plot_title, y_lim) {
   dev.off()
 }
 
-calc_ld_stats <- function (subset, snp_data) {
-  wheat_internal <- snpgdsOpen(
-    str_c("Data/Intermediate/GDS/", subset, ".gds"))
+calc_ld_stats <- function (gds, snp_data) {
+  wheat_internal <- snpgdsOpen(gds)
   # Calcualte ld between all snps on each chromosome
   ld_stats <- by(snp_data, snp_data$chrom, function (chrom) {
     ld_mat <- snpgdsLDMat(wheat_internal, method = "composite",
@@ -157,18 +157,18 @@ calc_lng <- function(snp_data) {
   ret
 }
 
-calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2, y_lim) {
-  wheat_data <- parse_gds(subset)
+calc_plot_map_stats <- function (gds, plot_title_1, plot_title_2, y_lim) {
+  wheat_data <- parse_gds(gds)
 
   # calc ld stats
-  genome_ld <- calc_ld_stats(subset, wheat_data$snp)
+  genome_ld <- calc_ld_stats(gds, wheat_data$snp)
 
   # find the most distant snp on each chroms, the number of snps on each,
   # and the sizes of the gaps between snps
   lng <- calc_lng(wheat_data$snp)
 
   # plot the ld
-  plot_gaps_nbs_ld(lng, genome_ld, subset, plot_title_2, y_lim)
+  plot_gaps_nbs_ld(lng, genome_ld, gds, plot_title_2, y_lim)
 
   # find the min length of the top percentile of gaps
   top_percentile <- quantile(
@@ -248,5 +248,7 @@ calc_plot_map_stats <- function (subset, plot_title_1, plot_title_2, y_lim) {
       mean(c(genome_ld$A$nbs, genome_ld$B$nbs, genome_ld$D$nbs), na.rm = TRUE)
     )
   )
-  write_csv(map_stats, str_c("Results/gaps/map_stats_", subset, ".csv"))
+  write_csv(
+    map_stats, file.path("results", str_c("map_stats_", basename(gds), ".csv"))
+  )
 }

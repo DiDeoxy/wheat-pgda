@@ -29,8 +29,5 @@ poz_filtered <- poz_semi %>%
   arrange(marker, group, pos)
 
 # write the filtered genetic map out
-ifelse(
-  ! dir.exists(file.path(base_out)), dir.create(file.path(base_out)), FALSE
-)
 write_rds(poz_filtered, file.path(maps, "pozniak_filtered_map.rds"))
 

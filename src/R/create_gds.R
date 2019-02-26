@@ -1,7 +1,5 @@
 # load the phys map with the genotypes
-maps_genotypes <- read_rds(
-  file.path(maps, "maps_genotypes.rds")
-)
+maps_genotypes <- read_rds(file.path(maps, "maps_genotypes.rds"))
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
 # select the genotype info and order the columns alphabetically

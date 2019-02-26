@@ -1,16 +1,6 @@
-library(plyr)
-library(tidyverse)
-library(GGally)
-library(extrafont)
-
-# load custom functions
-source("src/R_functions/funcs_gds_parse_create.R")
-source("src/R_functions/funcs_locus_by_locus.R")
-source("src/R_functions/colour_sets.R")
-
 # load the data from the gds object
-wheat_data_phys <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
-wheat_data_gen <- parse_gds("maf_and_mr_pruned_gen_sample_subset")
+wheat_data_phys <- parse_gds(phys_gds)
+wheat_data_gen <- parse_gds(gen_gds)
 
 snp_phys_order <- match(wheat_data_phys$snp$id, wheat_data_gen$snp$id)
 
@@ -80,10 +70,6 @@ rep(6, 3), rep(7, 3))
 # create a function for making a gradient of colours
 colour_gradient <- colorRampPalette(c("Red", "Green", "Blue"))
 
-# find the max position of any marker on each genome for xlims
-max_genome_lengths_phys <- calc_max_genome_lengths(wheat_data_phys)
-max_genome_lengths_gen <- calc_max_homeolog_lengths(wheat_data_gen) / 100
-
 # create plots of phys position vs gen pos
 plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
   function (data_chrom) {
@@ -92,19 +78,19 @@ plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
       ggplot() +
       xlim(
         0,
-        max_genome_lengths_phys[
+        wheat_data_phys$max_lengths[
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
         ]
       ) +
       ylim(
         0,
-        max_genome_lengths_gen[
-          ifelse(grepl("1", chrom), 1, 
-            ifelse(grepl("2", chrom), 2,
-              ifelse(grepl("3", chrom), 3,
-                ifelse(grepl("4", chrom), 4,
-                  ifelse(grepl("5", chrom), 5,
-                    ifelse(grepl("6", chrom), 6, 7)
+        wheat_data_gen$max_lengths[
+          ifelse(grepl("1", chrom), "one", 
+            ifelse(grepl("2", chrom), "two",
+              ifelse(grepl("3", chrom), "three",
+                ifelse(grepl("4", chrom), "four",
+                  ifelse(grepl("5", chrom), "five",
+                    ifelse(grepl("6", chrom), "six", "seven")
                   )
                 )
               )
@@ -137,7 +123,8 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png("Results/loci/EH/all_phys_vs_gen_pos_eh.png",
+png(
+  file.path("results", "chrom_marker_phys_vs_gen_pos_and_eh.png"),
   family = "Times New Roman", width = 210, height = 267, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")

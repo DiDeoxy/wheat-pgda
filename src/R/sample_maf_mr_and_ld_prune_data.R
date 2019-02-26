@@ -27,11 +27,9 @@ NILs <- c(
   "SWS241", "SWS345", "SWS363", "SWS390", "SWS408", "SWS410"
 )
 
-# find the indices of the NILs
-sample_index <- match(NILs, wheat_data$sample$id)
-
 # mr pruned phys map
 wheat_data <- parse_gds(file.path(gds, "full_phys.gds"))
+sample_index <- match(NILs, wheat_data$sample$id)
 # create gds object without the NILs
 snpgds_create_sample_subset(
   wheat_data, file.path(gds, "full_phys_sample_subset.gds"), sample_index
@@ -39,6 +37,7 @@ snpgds_create_sample_subset(
 
 # mr pruned gen map
 wheat_data <- parse_gds(file.path(gds, "full_gen.gds"))
+sample_index <- match(NILs, wheat_data$sample$id)
 snpgds_create_sample_subset(
   wheat_data, file.path(gds, "full_gen_sample_subset.gds"), sample_index
 )
@@ -61,3 +60,16 @@ snpgds_create_snp_subset(wheat_data, file.path(phys_gds), kept_index)
 wheat_data <- parse_gds(file.path(gds, "full_gen_sample_subset.gds"))
 kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
 snpgds_create_snp_subset(wheat_data, file.path(gen_gds), kept_index)
+
+# create ld pruned set of markes
+wheat_gds <- snpgdsOpen(phys_gds)
+set.seed(1000)
+kept_id <- snpgdsLDpruning(
+  wheat_gds, autosome.only = FALSE, slide.max.bp = 1e7, ld.threshold = 0.7
+) %>% unlist()
+snpgdsClose(wheat_gds)
+
+wheat_data <- parse_gds(phys_gds)
+kept_index <- match(kept_id, wheat_data$snp$id)
+
+snpgds_create_snp_subset(wheat_data, ld_gds, kept_index)

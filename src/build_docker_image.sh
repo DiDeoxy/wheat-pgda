@@ -1,0 +1,1 @@
+sudo docker build --tag=r_docker2 r_docker2

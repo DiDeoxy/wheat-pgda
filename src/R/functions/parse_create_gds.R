@@ -3,11 +3,28 @@ parse_gds <- function(gds_file) {
 
   # make a tibble of the snp data
   snp <- tibble(
-    id = as.character(read.gdsn(index.gdsn(gds, "snp.id"))),
+    id = read.gdsn(index.gdsn(gds, "snp.id")) %>% as.character(),
     chrom = read.gdsn(index.gdsn(gds, "snp.chromosome")),
     pos = read.gdsn(index.gdsn(gds, "snp.position")),
     pos_mb = read.gdsn(index.gdsn(gds, "snp.position")) / 1e6
   )
+
+  max_lengths <- by(snp$pos_mb, snp$chrom, max) %>%
+      (
+        function (max_chrom_lengths) {
+          c(A = max(max_chrom_lengths[seq(1, 19, 3)]),
+            B = max(max_chrom_lengths[seq(2, 20, 3)]),
+            D = max(max_chrom_lengths[seq(3, 21, 3)]), 
+            one = max(max_chrom_lengths[c(1, 2, 3)]),
+            two = max(max_chrom_lengths[c(4, 5, 6)]),
+            three = max(max_chrom_lengths[c(7, 8, 9)]),
+            four = max(max_chrom_lengths[c(10, 11, 12)]),
+            five = max(max_chrom_lengths[c(13, 14, 15)]),
+            six = max(max_chrom_lengths[c(16, 17, 18)]),
+            seven = max(max_chrom_lengths[c(19, 20, 21)])
+          )
+        }
+      ) 
 
   # convert chroms values from integer to names
   chroms <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
@@ -26,7 +43,7 @@ parse_gds <- function(gds_file) {
 
   return(
     list(
-      snp = snp, genotypes = genotypes,
+      snp = snp, genotypes = genotypes, max_lengths = max_lengths,
       sample = list(id = sample_id, annot = sample_annot)
     )
   )

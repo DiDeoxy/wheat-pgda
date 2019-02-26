@@ -4,7 +4,7 @@ poz_filtered <- read_rds(file.path(maps, "pozniak_filtered_map.rds"))
 # create a vector of the chromosomes
 chrs <- paste0(
   "chr",
-  outer(s.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
+  outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
     t() %>% as.vector()
 )
 
@@ -13,7 +13,7 @@ alignments <- data.frame()
 for (chr in chrs) {
   chr_feats <- read.gff(
     file.path(
-      "data", "marker_maps", "90K_RefSeqv1_probe_alignments",
+      maps, "90K_RefSeqv1_probe_alignments",
       str_c("Infinium90K-", chr, ".gff3")
     )
   )
@@ -130,5 +130,5 @@ nrow(maps_genotypes_deduplicated)
 
 # write out the maps with genotypes
 write_rds(maps_genotypes_deduplicated,
-  file.path(markers, "maps_genotypes.rds")
+  file.path(maps, "maps_genotypes.rds")
 )

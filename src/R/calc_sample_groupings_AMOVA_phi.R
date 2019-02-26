@@ -81,7 +81,7 @@ for (stratum in strata) {
 amova_table
 
 write_csv(
-  amova_table, file.path("results", "amova_table.csv"),col_names = TRUE
+  amova_table, file.path("results", "amova_phi_table.csv"),col_names = TRUE
 )
 
 # # correlation stuff

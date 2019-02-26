@@ -1,21 +1,10 @@
 # library(plyr)
-library(tidyverse)
-library(RColorBrewer)
-library(extrafont)
-library(SNPRelate)
-
-# load custom functions
-source("src/R_functions/funcs_gds_parse_create.R")
-
 # load the data from the gds object
-wheat_data <- parse_gds("mr_pruned_phys_sample_subset")
-
-# find the max position of any marker on each genome for xlims
-max_genome_lengths <- calc_max_genome_lengths(wheat_data)
+wheat_data <- parse_gds(phys_gds)
 
 # create a list of the ld between markers on each chromosome add NA column 
 # and rows every 7.5 Mb so that gaps appear on image
-wheat_gds <- snpgdsOpen("Data/Intermediate/GDS/mr_pruned_phys_sample_subset.gds")
+wheat_gds <- snpgdsOpen(phys_gds)
 ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
   gap_pos <- vector()
   prev <- 0
@@ -55,12 +44,13 @@ cex <- 0.8
 labels <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
   t() %>% as.vector()
 colours <- colorRampPalette(rev(brewer.pal(5, "RdYlBu")))(100)
-png("Results/loci/LD/LD_heatmap_7_5.png",
-    family = "Times New Roman", width = 135, height = 267, pointsize = 12,
-    units = "mm", res = 300)
+png(
+  file.path("results", "chrom_ld_heatmaps.png"), family = "Times New Roman",
+  width = 135, height = 267, pointsize = 12, nits = "mm", res = 300
+)
 par(mfrow = c(7, 3), oma = c(7, 1, 3, 2), mar = c(0, 2, 0, 0))
 for (chr in 1:21) {
-  lim <- c(0, max_genome_lengths[ifelse(chr %% 3, chr %% 3, 3)])
+  lim <- c(0, wheat_data$max_lengths[ifelse(chr %% 3, chr %% 3, 3)])
   if (chr %in% c(19, 20, 21)) {
     image(ld_mat[[chr]]$pos_mb, ld_mat[[chr]]$pos_mb, ld_mat[[chr]]$mat,
           col = colours, yaxt = "n", xaxt = "s", xlim = lim, ylim = lim)
@@ -72,7 +62,7 @@ for (chr in 1:21) {
   }
 }
 title(xlab = "Marker Position in Mb", outer = T, cex.lab = 1.5, line = 2.5)
-title(main = paste("LD Heatmaps of Chromosmal Arms of All Varieties"),
+title(main = paste("Chromsomale LD Heatmaps"),
   outer = T, cex.main = 1.5, line = 1)
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)

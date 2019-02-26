@@ -1,10 +1,8 @@
 # load the data from the gds object
-wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds(phys_gds)
 
-# find the max position of any marker on each genome for xlims
-max_genome_lengths <- calc_max_genome_lengths(wheat_data)
-
-cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
+# get the clusters
+cluster <- read_rds(hdbscan)$cluster
 
 index_chrs_chrw_csws <- which(
   (wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
@@ -31,15 +29,17 @@ major_allele_freq_pops <- apply(geno, 1, function(marker) {
 colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 # load the gene positions
-pheno_genes <- load_groups("pheno_genes.csv", base = 1) %>%
-  mutate(gene_type = "Phenotype Genes")
-resi_genes <- load_groups("resi_genes.csv", base = 1) %>%
-  mutate(gene_type = "Resistance Genes")
+pheno_genes <- load_genes(
+  file.path(gene_alignments, "selected_pheno.csv"), base = 1
+) %>% mutate(gene_type = "Phenotype Genes")
+resi_genes <- load_genes(
+  file.path(gene_alignments, "selected_resi.csv"), base = 1
+) %>% mutate(gene_type = "Resistance Genes")
 
 group <- "chrs_chrw_csws"
 # add the genes positons to the regions table
 wheat_data$snp <- wheat_data$snp %>%
-  add_group_stat(group) %>%
+  add_column(group := read_rds(josts_d)) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
   rbind.fill(pheno_genes, resi_genes) %>%
@@ -86,7 +86,7 @@ plots <- by(
       ylim(0, 1) +
       xlim(
         0,
-        max_genome_lengths[
+        wheat_data$max_lengths[
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
         ]
       ) +
@@ -125,26 +125,32 @@ plots_matrix <- ggmatrix(
 )
 
 # plot the matrix
-png("Results/loci/D/comps_D_test.png",
-  family = "Times New Roman", width = 210, height = 267, pointsize = 5,
-  units = "mm", res = 300
+png(
+  file.path("results", "chrom_marker_josts_D.png"), family = "Times New Roman",
+  width = 210, height = 267, pointsize = 5, units = "mm", res = 300
 )
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
 
 ################################################################################
 # print out all markers on each chromosome
-base <- "Results/loci/D/by_chrom"
-ifelse(!dir.exists(file.path(base)), dir.create(file.path(base)), FALSE)
 blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, function(chrom) {
-  write_csv(chrom, file.path(base, str_c(chrom$chrom[1], "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv")))
+  write_csv(
+    chrom, file.path(
+      josts_d_by_chrom,
+      str_c(
+        chrom$chrom[1], 
+        "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv"
+      )
+    )
+  )
 })
 
 ################################################################################
 # load the data from the gds object
-wheat_data <- parse_gds("maf_and_mr_pruned_phys_sample_subset")
+wheat_data <- parse_gds(phys_gds)
 
-cluster <- read_rds("Data/Intermediate/hdbscan/wheat_hdbscan.rds")$cluster
+cluster <- read_rds(hdbscan)$cluster
 
 index_chrs_chrw_csws <- which(
   (wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
@@ -172,7 +178,7 @@ colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
 group <- "chrs_chrw_csws"
 wheat_data$snp <- wheat_data$snp %>%
-  add_group_stat(group) %>%
+  add_column(group := read_rds(josts_d)) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
   rowwise() %>%
@@ -224,8 +230,8 @@ for (chr_group in 1:7) {
 types <- c("CHRSD", "CHRWD", "CSWSD", "None")
 
 for (type in types) {
-  median(wheat_data$snp$D[which(wheat_data$snp$type == type))]) %>%
-  str_c("Chr ", type, " median = ", .) %>% print()
+  median(wheat_data$snp$D[which(wheat_data$snp$type == type)]) %>%
+    str_c("Chr ", type, " median = ", .) %>% print()
 }
 
 # check out the trend in differences between nearby Jost's D values
@@ -246,8 +252,8 @@ dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
 }) %>% do.call(rbind, .)
 dists_diffs$diffs <- dists_diffs$diffs %>% abs()
 sum(dists_diffs$diffs > 0.5) / nrow(dists_diffs)
-dists_diffs %>% ggplot(aes(dists, diffs)) +
-  geom_point()
+# dists_diffs %>% ggplot(aes(dists, diffs)) +
+#   geom_point()
 
 
 ################################################################################

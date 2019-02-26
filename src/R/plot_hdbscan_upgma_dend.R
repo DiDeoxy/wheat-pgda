@@ -18,8 +18,8 @@ label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
 png(
-  dend, family = "Times New Roman", width = 210, height = 210, pointsize = 15,
-  units = "mm", res = 500
+  file.path("results", "dend.png"), family = "Times New Roman", width = 210,
+  height = 210, pointsize = 15, units = "mm", res = 500
 )
 circos.par(cell.padding = c(0, 0, 0, 0), gap.degree = 0.5,
            track.margin = c(0.005, 0.005))
@@ -100,7 +100,7 @@ clusters <- read_rds(hdbscan)$cluster %>% replace(. == 0, "Noise")
 
 table(data.frame(wheat_data$sample$annot$pheno, clusters)) %>%
   as.data.frame.matrix() %>%
-  write.csv("Results/pheno_cluster.csv", quote = FALSE)
+  write.csv(file.path("results", "pheno_cluster_table.csv"), quote = FALSE)
 table(data.frame(wheat_data$sample$annot$mc, clusters)) %>%
   as.data.frame.matrix() %>%
-  write.csv("Results/mc_cluster.csv", quote = FALSE)
+  write.csv(file.path("results", "mc_cluster_table.csv"), quote = FALSE)
