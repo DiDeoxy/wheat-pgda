@@ -1,8 +1,23 @@
+# import needed functions
+import::from(magrittr, "%>%")
+import::from(
+  readr, "col_character", "col_double", "col_factor", "col_integer", "read_rds",
+  "rename", "type_convert"
+)
+import::from(stringr, "str_c")
+import::from(ape, "read.gff")
+import::from(
+  dplyr, "arrange", "do", "left_join", "group_by", "rename", "select", "tibble",
+  "ungroup"
+)
+# source file paths
+source(file.path("src", "file_paths.R"))
+
 # load the filtered gen map
 poz_filtered <- read_rds(file.path(maps, "pozniak_filtered_map.rds"))
 
 # create a vector of the chromosomes
-chrs <- paste0(
+chrs <- str_c(
   "chr",
   outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
     t() %>% as.vector()
@@ -80,7 +95,7 @@ genotypes <- read_csv(
 ) %>%
   select(-X1, -X3, -X4, -X5, -Name) %>%
   .[-1:-2, ] %>%
-  dplyr::rename(marker = X2) %>%
+  rename(marker = X2) %>%
   replace(. == "C1", 0) %>%
   replace(. == "c1", 0) %>%
   replace(. == "C2", 2) %>%
@@ -109,24 +124,28 @@ maps_genotypes <- maps %>%
   left_join(genotypes) %>%
   type_convert() %>%
   group_by(chrom, phys_pos)
-nrow(maps_genotypes)
+nrow(maps_genotypes) %>% print(c("Num markers: ", .))
 
 # find the groups of markers which have the same position in a chromosome
 duplicates <- maps_genotypes %>%
   group_by(chrom, phys_pos) %>%
   filter(n() >= 2)
-nrow(duplicates)
+nrow(duplicates) %>% print(c("Num markers with identical postions: ", .))
 
 # filter the duplicates to identify the number retained
 duplicates_filtered <- duplicates %>%
   do(unique_marker(.))
-nrow(duplicates_filtered)
+nrow(duplicates_filtered) %>%
+  print(
+    c("Num markers retained after pruning ones with identical position: ", .)
+  )
 
 # de-duplicate the full data set
 maps_genotypes_deduplicated <- maps_genotypes %>%
   do(unique_marker(.)) %>%
   ungroup()
-nrow(maps_genotypes_deduplicated)
+nrow(maps_genotypes_deduplicated) %>%
+  print(c("Num markers remaining after pruning: ", .))
 
 # write out the maps with genotypes
 write_rds(maps_genotypes_deduplicated,

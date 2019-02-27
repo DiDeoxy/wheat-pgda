@@ -1,7 +1,14 @@
+# load libs, file and file paths
+import::from(magrittr, "%>%")
+import::from(
+  readr, "col_character" "col_double", "col_factor", "read_csv", "write_rds"
+)
+import::from(dplyr, "anti_join", "arrange", "bind_rows", "semi_join")
+source(file.path("src", "file_paths.R"))
+
 # load the pozniak genetic map
 poz_gen_map <- read_csv(file.path(maps, "pozniak_gen_map.csv"),
-  na = "#N/A",
-  col_names = c("marker", "group", "pos"),
+  na = "#N/A", col_names = c("marker", "group", "pos"),
   col_types = list(
     col_character(), col_factor(NULL), col_double()
   )
@@ -11,8 +18,7 @@ poz_gen_map <- read_csv(file.path(maps, "pozniak_gen_map.csv"),
 
 # load the wang genetic map
 wang_gen_map <- read_csv(file.path(maps, "wang_gen_map.csv"),
-  na = "#N/A",
-  col_names = c("marker", "group", "pos"),
+  na = "#N/A", col_names = c("marker", "group", "pos"),
   col_types = list(
       col_character(), col_factor(NULL), col_double()
   )

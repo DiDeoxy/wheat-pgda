@@ -1,3 +1,6 @@
+# load functions
+source(map_stats)
+
 # all markers
 calc_plot_map_stats(
   phys_gds,

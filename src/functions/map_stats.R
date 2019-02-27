@@ -1,3 +1,9 @@
+library(ggplot2)
+library(GGally)
+library(extrafont)
+library(RColorBrewer)
+library(pracma)
+
 plot_gaps_nbs_ld <- function(lng, genome_ld, gds, plot_title, y_lim) {
   # histograms and boxplots depicting the distribution of gaps on each genome
   gaps_log10 <- tibble(
@@ -62,7 +68,9 @@ plot_gaps_nbs_ld <- function(lng, genome_ld, gds, plot_title, y_lim) {
 
   # plot the matrix
   png(
-    file.path("results", str_c("marker_gaps_", basename(gds), ".png")),
+    file.path(
+      map_stats_and_plots, str_c("map_gap_plots_", basename(gds), ".png")
+    ),
     family = "Times New Roman", width = 100, height = 62, pointsize = 10,
     units = "mm", res = 300)
   print(plots_matrix + 
@@ -249,6 +257,8 @@ calc_plot_map_stats <- function (gds, plot_title_1, plot_title_2, y_lim) {
     )
   )
   write_csv(
-    map_stats, file.path("results", str_c("map_stats_", basename(gds), ".csv"))
+    map_stats, file.path(
+      map_stats_and_plots, str_c("map_stats_", basename(gds), ".csv")
+    )
   )
 }

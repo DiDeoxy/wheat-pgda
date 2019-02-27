@@ -1,3 +1,9 @@
+source(file.path("src", "file_paths.R"))
+suppressPackageStartupMessages(library(tidyverse))
+source(parse_create_gds)
+library(scrime)
+library(dbscan)
+
 # load the ld pruned wheat data
 wheat_data <- parse_gds(ld_gds)
 

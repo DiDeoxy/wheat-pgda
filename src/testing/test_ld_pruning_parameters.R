@@ -1,3 +1,20 @@
+# load needed packages and functions
+source(file.path("src", "file_paths.R"))
+suppressPackageStartupMessages(library(tidyverse))
+library(SNPRelate)
+library(circlize)
+source(draw_dend)
+library(dendextend)
+library(extrafont)
+
+# create needed file paths and directories
+test_pruning <- file.path("results", "test_pruning")
+ifelse(! dir.exists(test_pruning), dir.create(test_pruning), FALSE)
+test_pruning_pca <- file.path(test_pruning, "pca")
+ifelse(! dir.exists(test_pruning_pca), dir.create(test_pruning_pca), FALSE)
+test_pruning_dend  <- file.path(test_pruning, "dend")
+ifelse(! dir.exists(test_pruning_dend), dir.create(test_pruning_dend), FALSE)
+
 # load the data
 wheat_data <- parse_gds(file.path(phys_gds))
 

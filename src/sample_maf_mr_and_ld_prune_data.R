@@ -1,3 +1,9 @@
+source(file.path("src", "file_paths.R"))
+suppressPackageStartupMessages(library(tidyverse))
+library(SNPRelate)
+library(igraph)
+source(parse_create_gds)
+
 # eliminate those individuals that show identity by state
 # (IBS, fractional identity) greater than 0.99
 wheat_gds <- snpgdsOpen(file.path(gds, "full_phys.gds"))
@@ -5,6 +11,7 @@ IBS <- snpgdsIBS(wheat_gds, autosome.only = F)
 snpgdsClose(wheat_gds)
 
 pairs <- which(IBS$ibs >= 0.99, arr.ind = T)
+pairs <- cbind(IBS$sample.id[pairs[, 1]], IBS$sample.id[pairs[, 2]])
 
 indices <- vector()
 for (i in 1:dim(pairs)[1]) {
@@ -13,13 +20,22 @@ for (i in 1:dim(pairs)[1]) {
   }
 }
 pairs <- pairs[-indices, ]
-pairs
 
-# i take the pairs and use a perl function to find the connected graphs
-# i.e. those sets of pairs that form a connected triangle, square or more
+# print out a table of the maximal cliques constructed from the pairs
+graph_from_edgelist(pairs) %>%
+  max_cliques() %>%
+  lapply(names) %>%
+  lapply(`length<-`, max(lengths(.))) %>%
+  do.call(rbind, .) %>%
+  cbind(str_c("Clique ", 1:nrow(.)), .) %>%
+  as_tibble() %>%
+  write.table(
+    file.path("results", "clique_table.csv"), sep = ",",
+    row.names = FALSE, quote = FALSE,
+    col.names = c("Clique", str_c("Cultivar ", 1:(ncol(.) - 1)))
+  )
 
-# eliminate individuals so that only one from each pair, triangle, or square
-# remains
+# used clique_table.csv to identify cultivars to prune from each clique
 NILs <- c(
   "PT434", "BW811", "AC Minto 1", "Avocet 1", "BW275 1", "BW395",
   "PT616", "BW427 1", "BW492", "BW948", "Carberry 1", "CDC Stanley 1",

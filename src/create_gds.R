@@ -1,3 +1,8 @@
+# load the needed libraries and file paths
+suppressPackageStartupMessages(library(tidyverse))
+library(SNPRelate)
+source(file.path("src", "file_paths.R"))
+
 # load the phys map with the genotypes
 maps_genotypes <- read_rds(file.path(maps, "maps_genotypes.rds"))
 # select the map info

@@ -1,3 +1,8 @@
+# load file paths and libraries
+source(file.path("src", "file_paths.R"))
+suppressPackageStartupMessages(library(tidyverse))
+library(SNPRelate)
+
 parse_gds <- function(gds_file) {
   gds <- snpgdsOpen(gds_file)
 
