@@ -1,5 +1,22 @@
+# load file paths, colours, and functions
+source(file.path("src", "file_paths.R"))
+source(file.path("src", "colour_sets.R"))
+import::from(dplyr, "arrange", "mutate", "rowwise", "select")
+import::from(GGally, "ggmatrix")
+import::from(
+  ggplot2, "aes", "ggplot", "geom_point", "geom_smooth", "guide_legend",
+  "scale_colour_manual", "theme", "xlim", "ylim"
+)
+import::from(magrittr, "%>%")
+import::from(pgda, "load_genes", "snpgds_parse")
+import::from(plyr, "rbind.fill")
+import::from(readr, "read_rds", "write_csv")
+import::from(stringr, "str_c")
+import::from(tibble, "add_column", "add_row", "as_tibble", "tibble")
+import::from(tidyr, "gather")
+
 # load the data from the gds object
-wheat_data <- parse_gds(phys_gds)
+wheat_data <- snpgds_parse(phys_gds)
 
 # get the clusters
 cluster <- read_rds(hdbscan)$cluster
@@ -28,22 +45,12 @@ major_allele_freq_pops <- apply(geno, 1, function(marker) {
 }) %>% t() %>% as_tibble()
 colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
 
-# load the gene positions
-pheno_genes <- load_genes(
-  file.path(gene_alignments, "selected_pheno.csv"), base = 1
-) %>% mutate(gene_type = "Phenotype Genes")
-resi_genes <- load_genes(
-  file.path(gene_alignments, "selected_resi.csv"), base = 1
-) %>% mutate(gene_type = "Resistance Genes")
-
 group <- "chrs_chrw_csws"
 # add the genes positons to the regions table
 wheat_data$snp <- wheat_data$snp %>%
   add_column(group := read_rds(josts_d)) %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
-  rbind.fill(pheno_genes, resi_genes) %>%
-  arrange(chrom, pos_mb) %>%
   rowwise() %>%
   mutate(comp_type =
     ifelse(
@@ -71,8 +78,65 @@ wheat_data$snp <- wheat_data$snp %>%
         )
       )
     ),
-    type = pmin(gene_type, comp_type, na.rm = TRUE)
-  ) %>%
+  )
+
+# overall freqs
+summary(wheat_data$snp$D)
+sum(wheat_data$snp$D > mean(wheat_data$snp$D)) / length(wheat_data$snp$D)
+
+# genome freqs
+for (genome in c("A", "B", "D")) {
+  median(wheat_data$snp$D[which(grepl(genome, wheat_data$snp$chrom))]) %>%
+    round(4) %>% str_c(genome, " median = ", .) %>% print()
+}
+
+# chromsome group freqs
+for (chr_group in 1:7) {
+  median(wheat_data$snp$D[which(grepl(chr_group, wheat_data$snp$chrom))]) %>%
+    round(4) %>% str_c("Chr ", chr_group, " median = ", .) %>% print()
+}
+
+# group freq and median values
+types <- c("CHRSD", "CHRWD", "CSWSD", "None")
+
+for (type in types) {
+  median(wheat_data$snp$D[which(wheat_data$snp$comp_type == type)]) %>%
+    round(4) %>% str_c("Chr ", type, " median = ", .) %>% print()
+}
+
+# check out the trend in differences between nearby Jost's D values
+dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
+  ret <- tibble(dists = vector(), diffs = vector())
+  for (i in 1:nrow(chrom)) {
+    nearby <- which(
+      chrom$pos_mb < (chrom$pos_mb[i] + 0.0001) & chrom$pos_mb > chrom$pos_mb[i]
+    )
+    if (length(nearby)) {
+      ret <- ret %>% add_row(
+        dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
+        diffs = chrom$D[nearby] - chrom$D[i]
+      )
+    }
+  }
+  ret
+}) %>% do.call(rbind, .)
+dists_diffs$diffs <- dists_diffs$diffs %>% abs()
+sum(dists_diffs$diffs > 0.5) / nrow(dists_diffs)
+# dists_diffs %>% ggplot(aes(dists, diffs)) +
+#   geom_point()
+
+# load the gene positions
+pheno_genes <- load_genes(
+  file.path(gene_alignments, "selected_pheno.csv"), base = 1
+) %>% mutate(gene_type = "Phenotype Genes")
+resi_genes <- load_genes(
+  file.path(gene_alignments, "selected_resi.csv"), base = 1
+) %>% mutate(gene_type = "Resistance Genes")
+
+wheat_data$snp <- wheat_data$snp %>%
+  rbind.fill(pheno_genes, resi_genes) %>%
+  arrange(chrom, pos_mb) %>%
+  mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
   select(-c(gene_type, comp_type))
 
 # create a list of plots, one for each chromosome with the correct markers and
@@ -88,7 +152,7 @@ plots <- by(
         0,
         wheat_data$max_lengths[
           ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
-        ]
+        ] / 1e6
       ) +
       geom_point(
         aes(pos_mb, D, colour = type), shape = 16, size = 1
@@ -145,116 +209,6 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
     )
   )
 })
-
-################################################################################
-# load the data from the gds object
-wheat_data <- parse_gds(phys_gds)
-
-cluster <- read_rds(hdbscan)$cluster
-
-index_chrs_chrw_csws <- which(
-  (wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
-  | (wheat_data$sample$annot$pheno == "HRW" & cluster == 1)
-  | (wheat_data$sample$annot$pheno == "SWS" & cluster == 2)
-)
-cpheno <- wheat_data$sample$annot$pheno[index_chrs_chrw_csws] %>% factor()
-geno <- wheat_data$genotype[, index_chrs_chrw_csws]
-
-major_allele_freq_pops <- apply(geno, 1, function(marker) {
-  total_geno <- table(marker)
-  major <- which.max(total_geno) %>% names()
-  by(marker, cpheno, function(pop) {
-    pop_geno <- table(pop)
-    if (all(c("0", "2") %in% names(pop_geno))) {
-      pop_geno[[major]] / sum(pop_geno[["0"]], pop_geno[["2"]])
-    } else if (major %in% names(pop_geno)) {
-      1
-    } else {
-      0
-    }
-  }) %>% rbind()
-}) %>% t() %>% as_tibble()
-colnames(major_allele_freq_pops) <- c("chrs", "chrw", "csws")
-
-group <- "chrs_chrw_csws"
-wheat_data$snp <- wheat_data$snp %>%
-  add_column(group := read_rds(josts_d)) %>%
-  gather(group, D, group) %>%
-  cbind(major_allele_freq_pops %>% round(4)) %>%
-  rowwise() %>%
-  mutate(type =
-    ifelse(
-      (
-        (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
-        || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
-      )
-      && D > 0.29,
-      "CSWSD",
-      ifelse(
-        (
-          (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
-          || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
-        )
-        && D > 0.29,
-        "CHRWD",
-        ifelse(
-          (
-            (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
-            || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
-          )
-          && D > 0.29,
-          "CHRSD",
-          "None"
-        )
-      )
-    )
-  )
-
-# overall freqs
-summary(wheat_data$snp$D)
-sum(wheat_data$snp$D > mean(wheat_data$snp$D)) / length(wheat_data$snp$D)
-
-# genome freqs
-for (genome in c("A", "B", "D")) {
-  median(wheat_data$snp$D[which(grepl(genome, wheat_data$snp$chrom))]) %>%
-  str_c(genome, " median = ", .) %>% print()
-}
-
-# chromsome group freqs
-for (chr_group in 1:7) {
-  median(wheat_data$snp$D[which(grepl(chr_group, wheat_data$snp$chrom))]) %>%
-  str_c("Chr ", chr_group, " median = ", .) %>% print()
-}
-
-# group freq and median values
-types <- c("CHRSD", "CHRWD", "CSWSD", "None")
-
-for (type in types) {
-  median(wheat_data$snp$D[which(wheat_data$snp$type == type)]) %>%
-    str_c("Chr ", type, " median = ", .) %>% print()
-}
-
-# check out the trend in differences between nearby Jost's D values
-dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
-  ret <- tibble(dists = vector(), diffs = vector())
-  for (i in 1:nrow(chrom)) {
-    nearby <- which(
-      chrom$pos_mb < (chrom$pos_mb[i] + 0.0001) & chrom$pos_mb > chrom$pos_mb[i]
-    )
-    if (length(nearby)) {
-      ret <- ret %>% add_row(
-        dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
-        diffs = chrom$D[nearby] - chrom$D[i]
-      )
-    }
-  }
-  ret
-}) %>% do.call(rbind, .)
-dists_diffs$diffs <- dists_diffs$diffs %>% abs()
-sum(dists_diffs$diffs > 0.5) / nrow(dists_diffs)
-# dists_diffs %>% ggplot(aes(dists, diffs)) +
-#   geom_point()
-
 
 ################################################################################
 # mutate(comp_type =

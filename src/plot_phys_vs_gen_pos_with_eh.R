@@ -1,6 +1,17 @@
+source(file.path("src", "file_paths.R"))
+import::from(pgda, "calc_eh", "snpgds_parse")
+import::from(GGally, "ggmatrix")
+import::from(
+  ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_gradientn", 
+  "scale_size_continuous", "theme", "unit", "xlim", "ylim"
+)
+import::from(magrittr, "%>%")
+import::from(stringr, "str_c")
+import::from(tibble, "tibble")
+
 # load the data from the gds object
-wheat_data_phys <- parse_gds(phys_gds)
-wheat_data_gen <- parse_gds(gen_gds)
+wheat_data_phys <- snpgds_parse(phys_gds)
+wheat_data_gen <- snpgds_parse(gen_gds)
 
 snp_phys_order <- match(wheat_data_phys$snp$id, wheat_data_gen$snp$id)
 
@@ -78,13 +89,13 @@ plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
       ggplot() +
       xlim(
         0,
-        wheat_data_phys$max_lengths[
-          ifelse(grepl("A", chrom), 1, ifelse(grepl("B", chrom), 2, 3))
-        ]
+        wheat_data_phys$max_lengths[[
+          ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
+        ]] / 1e6
       ) +
       ylim(
         0,
-        wheat_data_gen$max_lengths[
+        wheat_data_gen$max_lengths[[
           ifelse(grepl("1", chrom), "one", 
             ifelse(grepl("2", chrom), "two",
               ifelse(grepl("3", chrom), "three",
@@ -96,7 +107,7 @@ plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
               )
             )
           )
-        ]
+        ]] / 100
       ) +
       geom_point(aes(phys, gen, colour = eh), size = 0.5) +
       labs(

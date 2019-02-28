@@ -1,6 +1,15 @@
+source(file.path("src", "file_paths.R"))
+source(file.path("src", "colour_sets.R"))
+import::from(dplyr, "full_join", "arrange", "select")
+import::from(pgda, "snpgds_parse")
+import::from(magrittr, "%>%")
+import::from(RColorBrewer, "brewer.pal")
+import::from(SNPRelate, "snpgdsClose", "snpgdsLDMat", "snpgdsOpen")
+import::from(tibble, "as_tibble", "tibble")
+
 # library(plyr)
 # load the data from the gds object
-wheat_data <- parse_gds(phys_gds)
+wheat_data <- snpgds_parse(phys_gds)
 
 # create a list of the ld between markers on each chromosome add NA column 
 # and rows every 7.5 Mb so that gaps appear on image
@@ -25,13 +34,13 @@ ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
     )$LD %>%
     abs() %>%
     cbind(pos_mb = chrom$pos_mb) %>% 
-    as.tibble() %>%
+    as_tibble() %>%
     full_join(tibble(pos_mb = gap_pos)) %>%
     arrange(pos_mb) %>%
     select(-pos_mb)
   both_gaps_mat <- t(col_gaps_mat) %>%
     cbind(pos_mb = chrom$pos_mb) %>%
-    as.tibble() %>%
+    as_tibble() %>%
     full_join(tibble(pos_mb = gap_pos)) %>%
     arrange(pos_mb)
   list(pos_mb = both_gaps_mat$pos_mb,
@@ -46,7 +55,7 @@ labels <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
 colours <- colorRampPalette(rev(brewer.pal(5, "RdYlBu")))(100)
 png(
   file.path("results", "chrom_ld_heatmaps.png"), family = "Times New Roman",
-  width = 135, height = 267, pointsize = 12, nits = "mm", res = 300
+  width = 135, height = 267, pointsize = 12, units = "mm", res = 300
 )
 par(mfrow = c(7, 3), oma = c(7, 1, 3, 2), mar = c(0, 2, 0, 0))
 for (chr in 1:21) {

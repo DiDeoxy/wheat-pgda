@@ -1,20 +1,20 @@
-# import needed functions
-import::from(magrittr, "%>%")
-import::from(
-  readr, "col_character", "col_double", "col_factor", "col_integer", "read_rds",
-  "rename", "type_convert"
-)
-import::from(stringr, "str_c")
+# import file paths and functions
+source(file.path("src", "file_paths.R"))
 import::from(ape, "read.gff")
 import::from(
-  dplyr, "arrange", "do", "left_join", "group_by", "rename", "select", "tibble",
-  "ungroup"
+  dplyr, "arrange", "do", "filter", "group_by", "left_join", "n", "rename",
+  "select", "ungroup"
 )
-# source file paths
-source(file.path("src", "file_paths.R"))
+import::from(magrittr, "%>%")
+import::from(
+  readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv",
+  "read_rds", "type_convert", "write_rds"
+)
+import::from(stringr, "str_c")
+import::from(tibble, "as_tibble", "tibble")
 
 # load the filtered gen map
-poz_filtered <- read_rds(file.path(maps, "pozniak_filtered_map.rds"))
+poz_filtered <- read_rds(file.path(inter_markers, "pozniak_filtered_map.rds"))
 
 # create a vector of the chromosomes
 chrs <- str_c(
@@ -28,8 +28,7 @@ alignments <- data.frame()
 for (chr in chrs) {
   chr_feats <- read.gff(
     file.path(
-      maps, "90K_RefSeqv1_probe_alignments",
-      str_c("Infinium90K-", chr, ".gff3")
+      markers, "90K_RefSeqv1_probe_alignments", str_c("Infinium90K-", chr, ".gff3")
     )
   )
   parsed_pos <- apply(chr_feats, 1, function (feat) {
@@ -47,7 +46,7 @@ for (chr in chrs) {
 
 ## format the alignemts into a tibble with named columns
 alignments <- alignments %>%
-  as_tibble %>%
+  as_tibble() %>%
   type_convert(
     col_type = list(
       col_character(), col_character(), col_character(), col_integer(),
@@ -91,7 +90,7 @@ maps <- phys_map %>%
 
 # format the genotype data into the proper format for snpgds format
 genotypes <- read_csv(
-  file.path(genotypes, "Jan_6_wheat_genotypes_curtis.csv")
+  file.path(markers, "Jan_6_wheat_genotypes_curtis.csv")
 ) %>%
   select(-X1, -X3, -X4, -X5, -Name) %>%
   .[-1:-2, ] %>%
@@ -124,30 +123,35 @@ maps_genotypes <- maps %>%
   left_join(genotypes) %>%
   type_convert() %>%
   group_by(chrom, phys_pos)
-nrow(maps_genotypes) %>% print(c("Num markers: ", .))
+nrow(maps_genotypes) %>%
+  str_c("Num markers: ", .) %>%
+  print()
 
 # find the groups of markers which have the same position in a chromosome
 duplicates <- maps_genotypes %>%
   group_by(chrom, phys_pos) %>%
   filter(n() >= 2)
-nrow(duplicates) %>% print(c("Num markers with identical postions: ", .))
+nrow(duplicates) %>%
+  str_c("Num markers with identical postions: ", .) %>%
+  print()
 
 # filter the duplicates to identify the number retained
 duplicates_filtered <- duplicates %>%
   do(unique_marker(.))
 nrow(duplicates_filtered) %>%
-  print(
-    c("Num markers retained after pruning ones with identical position: ", .)
-  )
+  str_c(
+    "Of markers with identical postions num retained after pruning: ", .
+  ) %>% print()
 
 # de-duplicate the full data set
 maps_genotypes_deduplicated <- maps_genotypes %>%
   do(unique_marker(.)) %>%
   ungroup()
 nrow(maps_genotypes_deduplicated) %>%
-  print(c("Num markers remaining after pruning: ", .))
+  str_c("Num markers remaining after pruning: ", .) %>% print()
 
 # write out the maps with genotypes
-write_rds(maps_genotypes_deduplicated,
-  file.path(maps, "maps_genotypes.rds")
+write_rds(
+  maps_genotypes_deduplicated, 
+  file.path(inter_markers, "maps_genotypes.rds")
 )

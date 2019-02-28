@@ -1,3 +1,18 @@
+#' Craws rectangles for circliz graph
+#'
+#' Function for drawing rectangles in each track of a cirlcize graph
+#'
+#' @importFrom circlize circos.rect circos.track
+#'
+#' @param pop_code a factor of the classifications of the individuals
+#' @param colour_subset the colours used for the factor levels
+#' @param the order of the factors in the row
+#' @param border the colour for the border of the rectangles
+#'
+#' @return None
+#'
+#' @export
+
 draw_rects <- function(pop_code, colour_subset, label_order, border) {
   leng <- length(label_order)
   rects <- function(x, y) {

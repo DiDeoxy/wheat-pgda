@@ -1,18 +1,20 @@
-# load functions
-source(map_stats)
+# load file paths and functions
+source(file.path("src", "file_paths.R"))
+import::from(pgda, "calc_plot_map_stats")
+# source(map_stats) # calc_plot_map_stats
 
 # all markers
 calc_plot_map_stats(
   phys_gds,
-  "Log 10 Gap Distances, Full Set",
-  "LD Between Neighbouring Markers, Full Set",
-  1500
+  "MAF and MR Pruned Marker Set",
+  1500,
+  basename(gds)
 )
 
 # ld pruned markers
 calc_plot_map_stats(
   ld_gds,
-  "Log 10 Gap Distances, Pruned Set",
-  "LD Between Neighbouring Markers, Pruned Set",
-  500
+  "MAF, MR, and LD Pruned Marker Set",
+  500,
+  basename(gds)
 )

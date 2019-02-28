@@ -1,6 +1,6 @@
 source(file.path("src", "file_paths.R"))
-library(adegenet)
-library(mmod)
+import::from(mmod, "D_Jost")
+import::from(readr, "read_rds", "write_rds")
 
 # calc maximal josts D from Alcala & Rosenberg, 2018 so we can normalize
 m = 2/3

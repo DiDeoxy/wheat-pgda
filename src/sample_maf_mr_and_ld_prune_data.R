@@ -1,8 +1,14 @@
+# import file paths and functions
 source(file.path("src", "file_paths.R"))
-suppressPackageStartupMessages(library(tidyverse))
-library(SNPRelate)
-library(igraph)
-source(parse_create_gds)
+import::from(dplyr, "as_tibble")
+import::from(igraph, "graph_from_edgelist", "max_cliques")
+import::from(magrittr, "%>%")
+import::from(pgda, "snpgds_parse", "snpgds_sample_subset", "snpgds_snp_subset")
+import::from(
+  SNPRelate, "snpgdsClose", "snpgdsIBS", "snpgdsLDpruning", "snpgdsOpen",
+  "snpgdsSelectSNP"
+)
+import::from(stringr, "str_c")
 
 # eliminate those individuals that show identity by state
 # (IBS, fractional identity) greater than 0.99
@@ -44,17 +50,17 @@ NILs <- c(
 )
 
 # mr pruned phys map
-wheat_data <- parse_gds(file.path(gds, "full_phys.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "full_phys.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
 # create gds object without the NILs
-snpgds_create_sample_subset(
+snpgds_sample_subset(
   wheat_data, file.path(gds, "full_phys_sample_subset.gds"), sample_index
 )
 
 # mr pruned gen map
-wheat_data <- parse_gds(file.path(gds, "full_gen.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "full_gen.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
-snpgds_create_sample_subset(
+snpgds_sample_subset(
   wheat_data, file.path(gds, "full_gen_sample_subset.gds"), sample_index
 )
 
@@ -68,14 +74,14 @@ kept_id <- snpgdsSelectSNP(
 snpgdsClose(wheat_gds)
 
 # reomve these markers from the phys map
-wheat_data <- parse_gds(file.path(gds, "full_phys_sample_subset.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "full_phys_sample_subset.gds"))
 kept_index <- match(kept_id, wheat_data$snp$id)
-snpgds_create_snp_subset(wheat_data, file.path(phys_gds), kept_index)
+snpgds_snp_subset(wheat_data, file.path(phys_gds), kept_index)
 
 # remove these markers from the gen map
-wheat_data <- parse_gds(file.path(gds, "full_gen_sample_subset.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "full_gen_sample_subset.gds"))
 kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
-snpgds_create_snp_subset(wheat_data, file.path(gen_gds), kept_index)
+snpgds_snp_subset(wheat_data, file.path(gen_gds), kept_index)
 
 # create ld pruned set of markes
 wheat_gds <- snpgdsOpen(phys_gds)
@@ -85,7 +91,7 @@ kept_id <- snpgdsLDpruning(
 ) %>% unlist()
 snpgdsClose(wheat_gds)
 
-wheat_data <- parse_gds(phys_gds)
+wheat_data <- snpgds_parse(phys_gds)
 kept_index <- match(kept_id, wheat_data$snp$id)
 
-snpgds_create_snp_subset(wheat_data, ld_gds, kept_index)
+snpgds_snp_subset(wheat_data, ld_gds, kept_index)

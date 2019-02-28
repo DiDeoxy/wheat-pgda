@@ -1,13 +1,13 @@
-# load libs, file and file paths
+# load import needed functions and file paths
+source(file.path("src", "file_paths.R"))
+import::from(dplyr, "anti_join", "arrange", "bind_rows", "semi_join")
 import::from(magrittr, "%>%")
 import::from(
-  readr, "col_character" "col_double", "col_factor", "read_csv", "write_rds"
+  readr, "col_character", "col_double", "col_factor", "read_csv", "write_rds"
 )
-import::from(dplyr, "anti_join", "arrange", "bind_rows", "semi_join")
-source(file.path("src", "file_paths.R"))
 
 # load the pozniak genetic map
-poz_gen_map <- read_csv(file.path(maps, "pozniak_gen_map.csv"),
+poz_gen_map <- read_csv(file.path(markers, "pozniak_gen_map.csv"),
   na = "#N/A", col_names = c("marker", "group", "pos"),
   col_types = list(
     col_character(), col_factor(NULL), col_double()
@@ -17,7 +17,7 @@ poz_gen_map <- read_csv(file.path(maps, "pozniak_gen_map.csv"),
   arrange(group, pos)
 
 # load the wang genetic map
-wang_gen_map <- read_csv(file.path(maps, "wang_gen_map.csv"),
+wang_gen_map <- read_csv(file.path(markers, "wang_gen_map.csv"),
   na = "#N/A", col_names = c("marker", "group", "pos"),
   col_types = list(
       col_character(), col_factor(NULL), col_double()
@@ -35,5 +35,5 @@ poz_filtered <- poz_semi %>%
   arrange(marker, group, pos)
 
 # write the filtered genetic map out
-write_rds(poz_filtered, file.path(maps, "pozniak_filtered_map.rds"))
+write_rds(poz_filtered, file.path(inter_markers, "pozniak_filtered_map.rds"))
 

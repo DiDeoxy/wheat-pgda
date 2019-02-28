@@ -1,9 +1,24 @@
+# load file paths and functions
+source(file.path("src", "file_paths.R"))
+source(file.path("src", "colour_sets.R"))
+import::from(
+  circlize, "circos.initialize", "circos.clear", "circos.dendrogram", 
+  "circos.par", "circos.text", "circos.track"
+)
+import::from(dendextend, "color_branches", "set")
+import::from(magrittr, "%>%")
+import::from(pgda, "draw_rects", "snpgds_parse")
+import::from(readr, "read_rds")
+import::from(SNPRelate, "snpgdsClose", "snpgdsIBS", "snpgdsOpen")
+import::from(stringr, "str_c")
+
 ## setting up the data
-wheat_data <- parse_gds(ld_gds)
+wheat_data <- snpgds_parse(ld_gds)
 
 clusters <- factor(read_rds(hdbscan)$cluster)
-levels(clusters) <- c("Noise", "Cluster 1", "Cluster 2", "Cluster 3",
-                      "Cluster 4", "Cluster 5")
+levels(clusters) <- c(
+  "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
+)
 
 wheat_gds <- snpgdsOpen(ld_gds)
 ## making the distance object
@@ -21,10 +36,12 @@ png(
   file.path("results", "dend.png"), family = "Times New Roman", width = 210,
   height = 210, pointsize = 15, units = "mm", res = 500
 )
-circos.par(cell.padding = c(0, 0, 0, 0), gap.degree = 0.5,
-           track.margin = c(0.005, 0.005))
+circos.par(
+  cell.padding = c(0, 0, 0, 0), gap.degree = 0.5, track.margin = c(0.005, 0.005)
+)
 circos.initialize("foo", xlim = c(0, length(label_order)), sector.width = 1)
-circos.track(ylim = c(0, 1), track.height = 0.15, bg.border = NA,
+circos.track(
+  ylim = c(0, 1), track.height = 0.15, bg.border = NA,
   panel.fun = function(x, y) {
     circos.text(
       1:length(label_order), rep(0, length(label_order)),

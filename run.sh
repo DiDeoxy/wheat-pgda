@@ -1,5 +1,5 @@
 # install needed packages
-# Rscript src/R/install.R
+Rscript src/install.R
 
 ################################################################################
 # format and process data
@@ -7,8 +7,8 @@
 # 1
 # take the two genetic maps we have and compare them to identify markers
 # assigned to the same linkage groups
-echo "generate_filtered_maps"
-Rscript src/generate_filtered_maps.R
+echo "create_filtered_map"
+Rscript src/create_filtered_map.R
 
 # 2
 # create a tibble using the consensus markers from step 1 with the physical
@@ -52,3 +52,30 @@ Rscript src/calc_josts_d.R
 # pruned map
 echo "calc_and_plot_map_stats"
 Rscript src/calc_and_plot_map_stats.R
+
+# 2
+# plot a UPGMA dendrogram with hdbscan and metadata in rows of rectangels
+# arranged around it
+echo "plot_hdbscan_upgma_dend"
+Rscript src/plot_hdbscan_upgma_dend.R
+
+# 3
+# calculate AMOVA phi values for various hierarchical AMOVAs
+echo "calc_sample_groupings_AMOVA_phi"
+Rscript src/calc_sample_groupings_AMOVA_phi.R
+
+#4
+# plot the josts D values of markers between the varieties of the major
+# phenptypes of the three largest clusters
+echo "plot_clustered_phenos_markers_josts_ds_with_genes"
+Rscript src/plot_clustered_phenos_markers_josts_ds_with_genes.R
+
+# 5
+# plot marker physical postions against genetic postion coloured by eh value
+echo "plot_phys_vs_gen_pos_with_eh"
+Rscript src/plot_phys_vs_gen_pos_with_eh.R
+
+# 6
+# plot ld heatmaps of each chromosome
+echo "plot_LD_heatmaps"
+Rscript src/plot_LD_heatmaps.R

@@ -1,10 +1,12 @@
-# load the needed libraries and file paths
-suppressPackageStartupMessages(library(tidyverse))
-library(SNPRelate)
+# load the needed functions and file paths
 source(file.path("src", "file_paths.R"))
+import::from(dplyr, "arrange", "current_vars", "select", "ungroup")
+import::from(magrittr, "%>%")
+import::from(readr, "read_csv", "read_rds")
+import::from(SNPRelate, "snpgdsCreateGeno")
 
 # load the phys map with the genotypes
-maps_genotypes <- read_rds(file.path(maps, "maps_genotypes.rds"))
+maps_genotypes <- read_rds(file.path(inter_markers, "maps_genotypes.rds"))
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
 # select the genotype info and order the columns alphabetically

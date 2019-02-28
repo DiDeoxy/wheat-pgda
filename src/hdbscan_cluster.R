@@ -1,11 +1,13 @@
+# import file paths and functions
 source(file.path("src", "file_paths.R"))
-suppressPackageStartupMessages(library(tidyverse))
-source(parse_create_gds)
-library(scrime)
-library(dbscan)
+import::from(dbscan, "hdbscan")
+import::from(magrittr, "%>%")
+import::from(pgda, "snpgds_parse")
+import::from(readr, "write_rds")
+import::from(scrime, "knncatimpute")
 
 # load the ld pruned wheat data
-wheat_data <- parse_gds(ld_gds)
+wheat_data <- snpgds_parse(ld_gds)
 
 # impute the missing data
 wheat_imputed <- wheat_data$genotypes %>%

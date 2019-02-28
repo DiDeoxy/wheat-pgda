@@ -1,12 +1,14 @@
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(SNPRelate))
-suppressPackageStartupMessages(library(adegenet))
-suppressPackageStartupMessages(library(plyr))
 source(file.path("src", "file_paths.R"))
-source(parse_create_gds)
+import::from(adegenet, "df2genind")
+import::from(magrittr, "%>%")
+import::from(pgda, "snpgds_parse")
+import::from(plyr, "revalue")
+import::from(readr, "read_rds", "write_rds")
+import::from(stringr, "str_c")
+import::from(tibble, "tibble")
 
 # create geninds for calclulating Josts D values
-wheat_data <- parse_gds(phys_gds)
+wheat_data <- snpgds_parse(phys_gds)
 
 # making the genotype data palatable by genind
 wheat_data$genotypes <- wheat_data$genotypes %>%
@@ -58,7 +60,7 @@ for (i in 1:length(grouping)) {
 
 ################################################################################
 # Make a geneind with all strata to perform AMOVA analyses on them
-wheat_data <- parse_gds(ld_gds)
+wheat_data <- snpgds_parse(ld_gds)
 
 cluster <- read_rds(hdbscan)$cluster
 
