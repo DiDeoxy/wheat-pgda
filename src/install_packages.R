@@ -7,4 +7,4 @@ install.packages(
 )
 BiocManager::install('SNPRelate');
 library(extrafont); font_import(); loadfonts()
-devtools::install("src/pgda")
+devtools::install(file.path("src", "pgda"))

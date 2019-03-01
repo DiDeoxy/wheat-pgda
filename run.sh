@@ -1,5 +1,6 @@
 # install needed packages
-Rscript src/install.R
+echo "install_packages"
+Rscript src/install_packages.R
 
 ################################################################################
 # format and process data
