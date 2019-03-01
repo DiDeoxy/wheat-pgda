@@ -1,15 +1,17 @@
-# raw data
-raw_data <- file.path("data", "raw")
-cultivars <- file.path(raw_data, "cultivars")
-markers <- file.path(raw_data, "markers")
-
-################################################################################
 # functions
 functions <- file.path("src", "functions")
 snpgds_parse_subset <- file.path(functions, "snpgds_parse_subset.R")
 draw_dend <- file.path(functions, "draw_dend.R")
 map_stats <- file.path(functions, "map_stats.R")
 locus_by_locus <- file.path(functions, "locus_by_locus.R")
+
+################################################################################
+
+# raw data
+raw_data <- file.path("data", "raw")
+cultivars <- file.path(raw_data, "cultivars")
+markers <- file.path(raw_data, "markers")
+gene_alignments <- file.path(raw_data, "gene_alignments")
 
 ################################################################################
 # intermediate data
@@ -31,8 +33,6 @@ ifelse(! dir.exists(geninds), dir.create(geninds), FALSE)
 
 hdbscan <- file.path(intermediate, "wheat_hdbscan.rds")
 josts_d <- file.path(intermediate, "josts_d.rds")
-
-gene_alignments <- file.path(intermediate, "gene_alignments")
 
 ################################################################################
 # results

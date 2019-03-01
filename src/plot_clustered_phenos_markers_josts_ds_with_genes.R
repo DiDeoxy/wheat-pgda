@@ -52,33 +52,22 @@ wheat_data$snp <- wheat_data$snp %>%
   gather(group, D, group) %>%
   cbind(major_allele_freq_pops %>% round(4)) %>%
   rowwise() %>%
-  mutate(comp_type =
+  mutate(class =
     ifelse(
-      (
-        (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
-        || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
-      )
-      && D > 0.29,
-      "CSWSD",
-      ifelse(
-        (
-          (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
-          || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
-        )
-        && D > 0.29,
-        "CHRWD",
-        ifelse(
-          (
-            (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
-            || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
+      D > 0.32,
+      c("CHRSD", "CHRWD", "CSWSD")[
+        which.max(
+          c(
+            sum(abs(chrs - chrw), abs(chrs - csws)),
+            sum(abs(chrw - chrs), abs(chrw - csws)), 
+            sum(abs(csws - chrs), abs(csws - chrw))
           )
-          && D > 0.29,
-          "CHRSD",
-          "None"
         )
-      )
-    ),
+      ],
+      "None"
+    )
   )
+    
 
 # overall freqs
 summary(wheat_data$snp$D)
@@ -97,22 +86,30 @@ for (chr_group in 1:7) {
 }
 
 # group freq and median values
-types <- c("CHRSD", "CHRWD", "CSWSD", "None")
+classes <- c("CHRSD", "CHRWD", "CSWSD", "None")
 
-for (type in types) {
-  median(wheat_data$snp$D[which(wheat_data$snp$comp_type == type)]) %>%
-    round(4) %>% str_c("Chr ", type, " median = ", .) %>% print()
+for (class in classes) {
+  (sum(wheat_data$snp$class == class) / length(wheat_data$snp$class) * 100) %>%
+    round(2) %>% str_c("Class ", class, " percent = ", .) %>% print()
+  median(wheat_data$snp$D[which(wheat_data$snp$class == class)]) %>%
+    round(2) %>% str_c("Class ", class, " median = ", .) %>% print()
 }
 
 # check out the trend in differences between nearby Jost's D values
-dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
-  ret <- tibble(dists = vector(), diffs = vector())
-  for (i in 1:nrow(chrom)) {
+iidd <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
+    ret <- tibble(
+      id_a = character(), id_b = character(),
+      dists = numeric(), diffs = numeric()
+    )
+    for (i in 1:nrow(chrom)) {
     nearby <- which(
-      chrom$pos_mb < (chrom$pos_mb[i] + 0.0001) & chrom$pos_mb > chrom$pos_mb[i]
+      chrom$pos_mb < (chrom$pos_mb[i] + 0.001) & chrom$pos_mb > chrom$pos_mb[i]
     )
     if (length(nearby)) {
       ret <- ret %>% add_row(
+        id_a = chrom$id[i],
+        # a = rep(chrom$id[i], length(nearby)),
+        id_b = chrom$id[nearby],
         dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
         diffs = chrom$D[nearby] - chrom$D[i]
       )
@@ -120,8 +117,14 @@ dists_diffs <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
   }
   ret
 }) %>% do.call(rbind, .)
-dists_diffs$diffs <- dists_diffs$diffs %>% abs()
-sum(dists_diffs$diffs > 0.5) / nrow(dists_diffs)
+iidd$diffs <- iidd$diffs %>% abs()
+nrow(iidd)
+num_markers <- unique(c(iidd$id_a, iidd$id_b)) %>% length()
+xtrm_diff <- iidd[which(iidd$diffs > 0.5), ]
+num_xtrm_markers <- unique(c(xtrm_diff$id_a, xtrm_diff$id_b)) %>% length()
+num_xtrm_markers / num_markers
+dif_freq <- sum(iidd$diffs > 0.5) / nrow(iidd)
+dif_freq * nrow(iidd)
 # dists_diffs %>% ggplot(aes(dists, diffs)) +
 #   geom_point()
 
@@ -136,8 +139,8 @@ resi_genes <- load_genes(
 wheat_data$snp <- wheat_data$snp %>%
   rbind.fill(pheno_genes, resi_genes) %>%
   arrange(chrom, pos_mb) %>%
-  mutate(type = pmin(gene_type, comp_type, na.rm = TRUE)) %>%
-  select(-c(gene_type, comp_type))
+  mutate(type = pmin(gene_type, class, na.rm = TRUE)) %>%
+  select(-c(gene_type, class))
 
 # create a list of plots, one for each chromosome with the correct markers and
 # genes on each coloured by comparison or gene type
@@ -211,7 +214,34 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
 })
 
 ################################################################################
-# mutate(comp_type =
+# mutate(class =
+#   ifelse(
+#     (
+#       (chrs >= 0.5 && chrw >= 0.5 && csws < 0.5)
+#       || (chrs < 0.5 && chrw < 0.5 && csws >= 0.5)
+#     )
+#     && D > 0.29,
+#     "CSWSD",
+#     ifelse(
+#       (
+#         (chrs < 0.5 && chrw >= 0.5 && csws < 0.5)
+#         || (chrs >= 0.5 && chrw < 0.5 && csws >= 0.5)
+#       )
+#       && D > 0.29,
+#       "CHRWD",
+#       ifelse(
+#         (
+#           (chrs >= 0.5 && chrw < 0.5 && csws < 0.5)
+#           || (chrs < 0.5 && chrw >= 0.5 && csws >= 0.5)
+#         )
+#         && D > 0.29,
+#         "CHRSD",
+#         "None"
+#       )
+#     )
+#   ),
+# )
+# mutate(class =
 #   ifelse(
 #     (chrs >= 0.6 && chrw >= 0.6 && csws <= 0.4) ||
 #     (chrs <= 0.4 && chrw <= 0.4 && csws >= 0.6),
@@ -243,5 +273,5 @@ blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, fun
 #       )
 #     )
 #   ),
-#   type = pmin(gene_type, comp_type, na.rm = TRUE)
+#   type = pmin(gene_type, class, na.rm = TRUE)
 # ) %>%
