@@ -1,4 +1,4 @@
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(ade4, "as.krandtest", "quasieuclid", "randtest")
 import::from(dplyr, "add_row")
 import::from(magrittr, "%>%")

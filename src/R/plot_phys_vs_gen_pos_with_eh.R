@@ -1,4 +1,4 @@
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(pgda, "calc_eh", "snpgds_parse")
 import::from(GGally, "ggmatrix")
 import::from(

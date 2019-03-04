@@ -1,5 +1,5 @@
 # load the needed functions and file paths
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(dplyr, "arrange", "current_vars", "select", "ungroup")
 import::from(magrittr, "%>%")
 import::from(readr, "read_csv", "read_rds")

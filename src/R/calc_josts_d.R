@@ -1,4 +1,4 @@
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(mmod, "D_Jost")
 import::from(readr, "read_rds", "write_rds")
 

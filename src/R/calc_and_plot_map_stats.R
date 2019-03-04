@@ -1,5 +1,5 @@
 # load file paths and functions
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(pgda, "calc_plot_map_stats")
 # source(map_stats) # calc_plot_map_stats
 

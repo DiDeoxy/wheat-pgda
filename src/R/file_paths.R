@@ -2,7 +2,6 @@
 raw_data <- file.path("data", "raw")
 cultivars <- file.path(raw_data, "cultivars")
 markers <- file.path(raw_data, "markers")
-gene_alignments <- file.path(raw_data, "gene_alignments")
 
 ################################################################################
 # intermediate data
@@ -24,6 +23,8 @@ ifelse(! dir.exists(geninds), dir.create(geninds), FALSE)
 
 hdbscan <- file.path(intermediate, "wheat_hdbscan.rds")
 josts_d <- file.path(intermediate, "josts_d.rds")
+
+blast <- file.path(intermediate, "blast")
 
 ################################################################################
 # results

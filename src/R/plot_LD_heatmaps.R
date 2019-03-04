@@ -1,5 +1,5 @@
-source(file.path("src", "file_paths.R"))
-source(file.path("src", "colour_sets.R"))
+source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
 import::from(dplyr, "full_join", "arrange", "select")
 import::from(pgda, "snpgds_parse")
 import::from(magrittr, "%>%")

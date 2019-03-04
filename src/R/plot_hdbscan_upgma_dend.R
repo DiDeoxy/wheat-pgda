@@ -1,6 +1,6 @@
 # load file paths and functions
-source(file.path("src", "file_paths.R"))
-source(file.path("src", "colour_sets.R"))
+source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
 import::from(
   circlize, "circos.initialize", "circos.clear", "circos.dendrogram", 
   "circos.par", "circos.text", "circos.track"

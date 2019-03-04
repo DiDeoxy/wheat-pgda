@@ -15,6 +15,7 @@ def parse_blast(blast_file):
         names=['query', 'subject', 'bitscore', 'pident', 'evalue']
     )
     blast['query'] = blast['query'].str[:-2]
+    blast['bitscore'] = blast['bitscore'].astype('int32')
     blast = blast.set_index(
         ['query', 'subject', 'bitscore']
     ).sort_index(ascending=False)
@@ -25,12 +26,14 @@ def combine(blast_data, fasta_data):
     """Parse the fasta file"""
     loci = list()
     for subject in blast_data['subject']:
-        locus = fasta_data[subject].description.split()[2].split(":")[2:5]
-        loci.append([locus[0], int((int(locus[1]) + int(locus[2])) / 2)])
-    return blast_data.reset_index().merge(
+        locus = fasta_data[subject].description.split()
+        loci.append([locus[1], int((int(locus[2]) + int(locus[3])) / 2)])
+    combined = blast_data.reset_index().merge(
         pd.DataFrame(loci, columns=['chr', 'pos']), left_index=True,
         right_index=True
     )[['query', 'subject', 'chr', 'pos', 'bitscore', 'pident', 'evalue']]
+    combined['subject'] = combined['subject'].str[:-2]
+    return combined
 
 
 def top_blast(alignments):
@@ -45,10 +48,8 @@ def top_blast(alignments):
     top_aligns = list()
     for query, group in top_by_q_s.groupby(level=['query']):
         if isinstance(group, pd.DataFrame):
-            top_aligns.append(group.iloc[0:4, ])
-    top_aligns = pd.concat(top_aligns)
-    top_aligns['subject'] = top_aligns['subject'][:-2]
-    return
+            top_aligns.append(group.iloc[0:5, ])
+    return pd.concat(top_aligns)
 
 
 def main():

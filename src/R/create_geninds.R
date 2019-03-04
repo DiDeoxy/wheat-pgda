@@ -1,4 +1,4 @@
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(adegenet, "df2genind")
 import::from(magrittr, "%>%")
 import::from(pgda, "snpgds_parse")

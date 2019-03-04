@@ -1,5 +1,5 @@
 # import file paths and functions
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(ape, "read.gff")
 import::from(
   dplyr, "arrange", "do", "filter", "group_by", "left_join", "n", "rename",

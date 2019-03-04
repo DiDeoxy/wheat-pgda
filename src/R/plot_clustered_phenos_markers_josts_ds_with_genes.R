@@ -1,6 +1,6 @@
 # load file paths, colours, and functions
-source(file.path("src", "file_paths.R"))
-source(file.path("src", "colour_sets.R"))
+source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
 import::from(dplyr, "arrange", "mutate", "rowwise", "select")
 import::from(GGally, "ggmatrix")
 import::from(
@@ -130,10 +130,10 @@ dif_freq * nrow(iidd)
 
 # load the gene positions
 pheno_genes <- load_genes(
-  file.path(gene_alignments, "selected_pheno.csv"), base = 1
+  file.path(blast, "selected_pheno.csv"), base = 1
 ) %>% mutate(gene_type = "Phenotype Genes")
 resi_genes <- load_genes(
-  file.path(gene_alignments, "selected_resi.csv"), base = 1
+  file.path(blast, "selected_resi.csv"), base = 1
 ) %>% mutate(gene_type = "Resistance Genes")
 
 wheat_data$snp <- wheat_data$snp %>%

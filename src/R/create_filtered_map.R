@@ -1,5 +1,5 @@
 # load import needed functions and file paths
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(dplyr, "anti_join", "arrange", "bind_rows", "semi_join")
 import::from(magrittr, "%>%")
 import::from(

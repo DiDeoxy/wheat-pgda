@@ -1,5 +1,5 @@
 # import file paths and functions
-source(file.path("src", "file_paths.R"))
+source(file.path("src", "R", "file_paths.R"))
 import::from(dplyr, "as_tibble")
 import::from(igraph, "graph_from_edgelist", "max_cliques")
 import::from(magrittr, "%>%")

@@ -1,13 +1,87 @@
-# # install needed software and R packages
+################################################################################
+# create gene sequences form gff and refse v1, create blast db, align genes,
+# extract top alignments, convert ncbi identifiers to gene names
+
+# # 0
+# # install needed software
 # echo "install_blast"
-# bash src/blast/install.sh
+# wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.8.1+-2.x86_64.rpm
+# sudo dnf install ncbi-blast-2.8.1+-2.x86_64.rpm
+# rm ncbi-blast-2.8.1+-2.x86_64.rpm
 # echo "setup_python_venv"
-# bash src/python/install.sh
-# echo "install_R_packages"
-# Rscript src/R/install_packages.R
+#
+# python3 -m venv src/python/ALIGN
+# source src/python/ALIGN/bin/activate
+# python -m pip install --upgrade pip
+# python -m pip install biopython pandas pyfaidx
+# python -m pip install git+https://github.com/daler/gffutils.git
+# deactivate
+
+# # 1
+# # build gtf db and extract gene sequences
+# echo "extract_gene_sequences"
+# mkdir -p data/raw/blast_db
+# python src/python/extract_gene_sequences.py \
+#     refseq/Triticum_aestivum.IWGSC.42.gtf \
+#     refseq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta
+
+# # 2
+# # make blast database from cds
+# echo "make_blast_db"
+# makeblastdb -in data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     -dbtype nucl \
+#     -parse_seqids
+
+# # 3
+# # align resi genes
+# echo "align_resi_genes"
+# mkdir -p data/intermediate/blast
+# blastn \
+#     -num_threads 4 \
+#     -query data/raw/gene_seqs/resi/all.fasta \
+#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     -outfmt "6 qseqid sseqid bitscore pident evalue" \
+#     > data/intermediate/blast/resi.txt
+
+# # 4
+# # align rpheno genes
+# echo "align_pheno_genes"
+# blastn \
+#     -num_threads 4 \
+#     -query data/raw/gene_seqs/pheno/all.fasta \
+#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     -outfmt "6 qseqid sseqid bitscore pident evalue" \
+#     > data/intermediate/blast/pheno.txt
+
+# # 5
+# # get top pheno alignments
+# echo "get_top_resi_alignments"
+# python src/python/get_top_alignments.py \
+#     results/blast/resi.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_resi.csv
+
+# # 6
+# # get top resi alignments
+# echo "get_top_pheno_alignments"
+# python src/python/get_top_alignments.py \
+#     results/blast/pheno.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_pheno.csv
+
+# # 7
+# # convert genbank ids of aligned gene sequences to gene names
+# echo "convert_genbank_ids"
+# bash src/bash/convert_genbank_ids_to_gene_names.sh
 
 # ################################################################################
-# # format and process data
+# # format and process data R
+
+# # 0
+# # install needed R packages
+# echo "install_R_packages"
+# Rscript src/R/install_packages.R
 
 # # 1
 # # take the two genetic maps we have and compare them to identify markers
@@ -49,20 +123,6 @@
 # echo "calc_josts_d"
 # Rscript src/R/calc_josts_d.R
 
-# # 8
-# # make blast database from cds
-# echo "make_blast_db"
-# bash src/blast/make_blast_db.sh
-
-# # 9
-# # align genes
-# echo "align_genes"
-# bash src/blast/align_genes.sh
-
-# get top alignments
-echo "get_top_alignments"
-bash src/python/run_get_top_alignments.sh
-
 # ################################################################################
 # # create and output results
 
@@ -83,11 +143,11 @@ bash src/python/run_get_top_alignments.sh
 # echo "calc_sample_groupings_AMOVA_phi"
 # Rscript src/R/calc_sample_groupings_AMOVA_phi.R
 
-# #4
-# # plot the josts D values of markers between the varieties of the major
-# # phenptypes of the three largest clusters
-# echo "plot_clustered_phenos_markers_josts_ds_with_genes"
-# Rscript src/R/plot_clustered_phenos_markers_josts_ds_with_genes.R
+#4
+# plot the josts D values of markers between the varieties of the major
+# phenptypes of the three largest clusters
+echo "plot_clustered_phenos_markers_josts_ds_with_genes"
+Rscript src/R/plot_clustered_phenos_markers_josts_ds_with_genes.R
 
 # # 5
 # # plot marker physical postions against genetic postion coloured by eh value

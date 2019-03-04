@@ -20,7 +20,8 @@ load_genes <- function(csv, base = 0) {
   import::from(readr, "read_csv")
 
   read_csv(
-    csv, col_names = c("id", "chrom", "pos", "sleng", "salign", "%id")
+    csv,
+    col_names = c("id", "gene", "chrom", "pos", "bitscore", "%id", "evalue")
   ) %>%
     mutate(pos_mb = pos / 1e6) %>%
     select(id, chrom, pos_mb) %>%
