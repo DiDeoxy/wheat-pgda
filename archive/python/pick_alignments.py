@@ -1,47 +1,50 @@
 """
-Max H, Jun 8, 2017
+Max H, Oct 15, 2017
 This script formats the blast output
 """
 
 from sys import argv
 import pandas as pd
 
-def parse_blast(file):
-    """this function parses the blast output"""
-    with open(file) as alignments:
-        blast = list()
-        for alignment in alignments:
-            (name, chromo_part, query_length, align_length,
-             pident, evalue, bitscore, sstart, send) = alignment.split()
-            if chromo_part == "chrUn":
-                continue
-            else:
-                (chromo, part) = chromo_part.split("_")
-                chromo = chromo[-2:]
-            name = name[:-2]
-            blast.append(",".join([name, chromo, part, query_length, align_length,
-                                   pident, evalue, bitscore, sstart, send]))
-    return pd.DataFrame(blast, index_col=0, names=[
-        'name', 'chr', 'part', 'query_length',
-        'align_length', 'pident', 'evalue',
+
+def read(blast_alignment):
+    """Read the blast data and sort."""
+    blast = pd.read_csv(blast_alignment, sep='\t', names=[
+        'name', 'chr', 'query_length', 'align_length', 'pident', 'evalue',
         'bitscore', 'sstart', 'send'])
+    blast = blast.set_index(['name', 'bitscore']).sort_index(ascending=False)
+    return blast
 
-def seek(blast):
-    """this function compares the blast output with the gen map"""
 
-    print(blast.index)
+def top_blast(alignments):
+    """Find the best alignments."""
+    best_position = list()
+    for name, group in alignments.groupby(level=0):
+        if isinstance(group, pd.DataFrame):
+            count = 0
+            for row in group.itertuples():
+                best_position.append(
+                    ",".join(
+                        [name[:-2], str(row[1]), str(int((row[6] + row[7])/2)),
+                         str(row[2]), str(row[3]), str(row[4])]
+                    )
+                )
+                if count == 4:
+                    break
+                count = count + 1
+    return best_position
+
 
 def main():
-    """This runs the program"""
+    """Initialize the logic of the program."""
     blast_file, out_file = argv[1], argv[2]
 
-    blast = parse_blast(blast_file)
+    best_position = top_blast(read(blast_file))
 
-    seek(blast)
+    with open(out_file, 'w') as best:
+        for position in best_position:
+            best.write("%s\n" % position)
 
-    with open(out_file, 'w') as formatted:
-        for alignment in blast:
-            formatted.write("%s\n" % alignment)
 
 if __name__ == "__main__":
     main()

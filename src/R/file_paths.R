@@ -1,12 +1,3 @@
-# functions
-functions <- file.path("src", "functions")
-snpgds_parse_subset <- file.path(functions, "snpgds_parse_subset.R")
-draw_dend <- file.path(functions, "draw_dend.R")
-map_stats <- file.path(functions, "map_stats.R")
-locus_by_locus <- file.path(functions, "locus_by_locus.R")
-
-################################################################################
-
 # raw data
 raw_data <- file.path("data", "raw")
 cultivars <- file.path(raw_data, "cultivars")
