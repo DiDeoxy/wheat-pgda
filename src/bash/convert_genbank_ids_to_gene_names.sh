@@ -2,7 +2,6 @@
 # resi
 sed -i -e 's/KT962210/ACT/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/KU562862/DGK/g' data/intermediate/blast/top_resi.csv
-sed -i -e 's/KX907434/FHB1/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/KC244204/GLI1/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/AF483596/Hfr1/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/JX501669/HfrDrd/g' data/intermediate/blast/top_resi.csv
@@ -18,6 +17,8 @@ sed -i -e 's/KF031303/SR33/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/LN883757/SR45/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/EU568801/UDP-GT/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/KU562861/WRKY70/g' data/intermediate/blast/top_resi.csv
+# special resi
+sed -i -e 's/FN564434/FHB1/g' data/intermediate/blast/top_FHB1.csv
 #pheno
 sed -i -e 's/JF736016/GLU-HMW/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/AJ937920/GLU-LMW/g' data/intermediate/blast/top_pheno.csv

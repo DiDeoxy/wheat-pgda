@@ -193,8 +193,9 @@ plots_matrix <- ggmatrix(
 
 # plot the matrix
 png(
-  file.path("results", "chrom_marker_josts_D.png"), family = "Times New Roman",
-  width = 210, height = 267, pointsize = 5, units = "mm", res = 300
+  file.path("results", "clustered_phenos_markers_josts_ds_with_genes.png"),
+  family = "Times New Roman", width = 210, height = 267, pointsize = 5,
+  units = "mm", res = 300
 )
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
 dev.off()
