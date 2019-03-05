@@ -16,6 +16,9 @@ def read(blast_alignment):
     blast['bitscore'] = blast['bitscore'].astype('int32')
     blast['pos'] = ((blast['sstart'] + blast['send'])/2).astype('int32')
     blast = blast.drop(['sstart', 'send'], 1)
+    blast['gene'] = 'None'
+    blast = blast[['name', 'gene', 'chr',
+                   'pos', 'bitscore', 'evalue', 'pident']]
     return blast.sort_values('bitscore', ascending=False)
 
 
