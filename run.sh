@@ -1,6 +1,6 @@
 # # 1
 # # find the locations of genes in the reference
-# # need to select the top alignments by hand
+# # ***need to select the top alignments by hand***
 # echo "run_blast"
 # bash src/bash/run_blast.sh
 

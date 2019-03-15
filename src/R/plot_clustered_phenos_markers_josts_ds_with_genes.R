@@ -95,36 +95,36 @@ for (class in classes) {
     round(2) %>% str_c("Class ", class, " median = ", .) %>% print()
 }
 
-# check out the trend in differences between nearby Jost's D values
-iidd <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
-    ret <- tibble(
-      id_a = character(), id_b = character(),
-      dists = numeric(), diffs = numeric()
-    )
-    for (i in 1:nrow(chrom)) {
-    nearby <- which(
-      chrom$pos_mb < (chrom$pos_mb[i] + 0.001) & chrom$pos_mb > chrom$pos_mb[i]
-    )
-    if (length(nearby)) {
-      ret <- ret %>% add_row(
-        id_a = chrom$id[i],
-        # a = rep(chrom$id[i], length(nearby)),
-        id_b = chrom$id[nearby],
-        dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
-        diffs = chrom$D[nearby] - chrom$D[i]
-      )
-    }
-  }
-  ret
-}) %>% do.call(rbind, .)
-iidd$diffs <- iidd$diffs %>% abs()
-nrow(iidd)
-num_markers <- unique(c(iidd$id_a, iidd$id_b)) %>% length()
-xtrm_diff <- iidd[which(iidd$diffs > 0.5), ]
-num_xtrm_markers <- unique(c(xtrm_diff$id_a, xtrm_diff$id_b)) %>% length()
-num_xtrm_markers / num_markers
-dif_freq <- sum(iidd$diffs > 0.5) / nrow(iidd)
-dif_freq * nrow(iidd)
+# # check out the trend in differences between nearby Jost's D values
+# iidd <- by(wheat_data$snp, wheat_data$snp$chrom, function(chrom) {
+#     ret <- tibble(
+#       id_a = character(), id_b = character(),
+#       dists = numeric(), diffs = numeric()
+#     )
+#     for (i in 1:nrow(chrom)) {
+#     nearby <- which(
+#       chrom$pos_mb < (chrom$pos_mb[i] + 0.001) & chrom$pos_mb > chrom$pos_mb[i]
+#     )
+#     if (length(nearby)) {
+#       ret <- ret %>% add_row(
+#         id_a = chrom$id[i],
+#         # a = rep(chrom$id[i], length(nearby)),
+#         id_b = chrom$id[nearby],
+#         dists = chrom$pos_mb[nearby] - chrom$pos_mb[i],
+#         diffs = chrom$D[nearby] - chrom$D[i]
+#       )
+#     }
+#   }
+#   ret
+# }) %>% do.call(rbind, .)
+# iidd$diffs <- iidd$diffs %>% abs()
+# nrow(iidd)
+# num_markers <- unique(c(iidd$id_a, iidd$id_b)) %>% length()
+# xtrm_diff <- iidd[which(iidd$diffs > 0.5), ]
+# num_xtrm_markers <- unique(c(xtrm_diff$id_a, xtrm_diff$id_b)) %>% length()
+# num_xtrm_markers / num_markers
+# dif_freq <- sum(iidd$diffs > 0.5) / nrow(iidd)
+# dif_freq * nrow(iidd)
 # dists_diffs %>% ggplot(aes(dists, diffs)) +
 #   geom_point()
 
@@ -202,17 +202,57 @@ dev.off()
 
 ################################################################################
 # print out all markers on each chromosome
-blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom, function(chrom) {
-  write_csv(
-    chrom, file.path(
-      josts_d_by_chrom,
-      str_c(
-        chrom$chrom[1], 
-        "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv"
+blah <- by(wheat_data$snp %>% select(-c(base, group)), wheat_data$snp$chrom,
+  function(chrom) {
+    write_csv(
+      chrom, 
+      file.path(josts_d_by_chrom,
+        str_c(
+          chrom$chrom[1], 
+          "_all_markers_Ds_and_major_allele_freqs_by_pop_with_genes.csv"
+        )
       )
     )
-  )
-})
+  }
+)
+
+################################################################################
+import::from(ggrepel, "geom_text_repel")
+import::from(ggplot2, "element_text", "guides", "labs")
+legend_title <- "Marker Types & Genes"
+# png("Results/loci/D/comps_VRN-A1.png",
+#   family = "Times New Roman", width = 100, height = 62, pointsize = 1,
+#   units = "mm", res = 300
+# )
+wheat_data$snp[
+  which(
+    wheat_data$snp$chrom == "2A"
+    & wheat_data$snp$pos_mb > 703
+    & wheat_data$snp$pos_mb < 719
+  ),
+] %>%
+# arrange(pos_mb) %>% print(n = Inf)
+  ggplot() +
+    geom_point(aes(pos_mb, D, colour = type), size = 1, alpha = 0.5) +
+    geom_text_repel(
+      aes(pos_mb, base, colour = type, label = id),
+      vjust = 1, size = 2, fontface = "bold",
+      nudge_y = -0.05,
+      show.legend = FALSE
+    ) + 
+    scale_colour_manual(
+      legend_title, values = colours_comps_genes,
+      limits = levels(as.factor(wheat_data$snp$type))
+    ) +
+    labs(x = "Postion in Mb", y = "Jost's D") +
+    theme(
+      legend.position = "bottom",
+      # legend.text = element_text(size = 5),
+      # legend.title = element_text(size = 5),
+      text = element_text(size = 7.5),
+      ) +
+    guides(colour = guide_legend(nrow = 3, byrow = TRUE))
+# dev.off()
 
 ################################################################################
 # mutate(class =

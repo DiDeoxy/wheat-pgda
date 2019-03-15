@@ -10,46 +10,48 @@ modified from pick_alignments.py
 
 def parse_blast(blast_file):
     """Read the blast data and sort."""
-    blast = pd.read_csv(
+    alignments = pd.read_csv(
         blast_file, sep='\t',
-        names=['query', 'subject', 'bitscore', 'pident', 'evalue']
+        names=['query', 'gene', 'bitscore', 'pident', 'evalue',
+               'query_length', 'align_length']
     )
-    blast['query'] = blast['query'].str[:-2]
-    blast['bitscore'] = blast['bitscore'].astype('int32')
-    blast = blast.set_index(
-        ['query', 'subject', 'bitscore']
-    ).sort_index(ascending=False)
-    return blast
-
-
-def combine(blast_data, fasta_data):
-    """Parse the fasta file"""
-    loci = list()
-    for subject in blast_data['subject']:
-        locus = fasta_data[subject].description.split()
-        loci.append([locus[1], int((int(locus[2]) + int(locus[3])) / 2)])
-    combined = blast_data.reset_index().merge(
-        pd.DataFrame(loci, columns=['chr', 'pos']), left_index=True,
-        right_index=True
-    )[['query', 'subject', 'chr', 'pos', 'bitscore', 'pident', 'evalue']]
-    combined['subject'] = combined['subject'].str[:-2]
-    return combined
+    alignments['query'] = alignments['query'].str[:-2]
+    alignments['bitscore'] = alignments['bitscore'].astype('int32')
+    return alignments.set_index(
+        ['query', 'bitscore']
+    ).sort_index(ascending=False).reset_index('bitscore')
 
 
 def top_blast(alignments):
     """Find the best alignments."""
-    top_by_q_s = list()
-    for q_s, group in alignments.groupby(level=['query', 'subject']):
-        if isinstance(group, pd.DataFrame):
-            top_by_q_s.append(group.iloc[0:1, ])
-    top_by_q_s = pd.concat(top_by_q_s).reset_index(
-        level='subject').sort_index(ascending=False)
-
     top_aligns = list()
-    for query, group in top_by_q_s.groupby(level=['query']):
-        if isinstance(group, pd.DataFrame):
-            top_aligns.append(group.iloc[0:5, ])
-    return pd.concat(top_aligns)
+    for query, group in alignments.groupby('query'):
+        top_aligns.append(
+            group.loc[
+                (group['pident'] >= 90) &
+                (group['bitscore'] >= group['bitscore'].iloc[0] * 0.5)
+
+            ]
+        )
+    top_aligns = pd.concat(top_aligns).reset_index().set_index(
+        ['gene', 'bitscore']).sort_index(ascending=False)
+    top_aligns_by_gene = list()
+    for gene, group in top_aligns.groupby('gene'):
+        top_aligns_by_gene.append(group.iloc[0:1])
+    return pd.concat(top_aligns_by_gene).reset_index()
+
+
+def combine(alignments, genes):
+    """Parse the fasta file"""
+    loci = list()
+    for gene in alignments['gene']:
+        locus = genes[gene].description.split()
+        loci.append([locus[1], int((int(locus[2]) + int(locus[3])) / 2)])
+    return alignments.reset_index().merge(
+        pd.DataFrame(loci, columns=['chr', 'pos']), left_index=True,
+        right_index=True
+    )[['query', 'gene', 'chr', 'pos', 'bitscore', 'pident', 'evalue',
+       'query_length', 'align_length']]
 
 
 def main():

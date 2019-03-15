@@ -187,15 +187,15 @@ wheat_data$snp <- wheat_data$snp %>%
   select(-c(gene_type, comp_type))
 
 legend_title <- "Marker Types & Genes"
-png("Results/loci/D/comps_VRN-A1.png",
-  family = "Times New Roman", width = 100, height = 62, pointsize = 1,
-  units = "mm", res = 300
-)
+# png("Results/loci/D/comps_VRN-A1.png",
+#   family = "Times New Roman", width = 100, height = 62, pointsize = 1,
+#   units = "mm", res = 300
+# )
 wheat_data$snp[
   which(
-    wheat_data$snp$chrom == "2D"
-    & wheat_data$snp$pos_mb > 15
-    & wheat_data$snp$pos_mb < 36
+    wheat_data$snp$chrom == "2A"
+    & wheat_data$snp$pos_mb > 703
+    & wheat_data$snp$pos_mb < 719
   ),
 ] %>%
 # arrange(pos_mb) %>% print(n = Inf)
@@ -219,4 +219,4 @@ wheat_data$snp[
       text = element_text(size = 7.5),
       ) +
     guides(colour = guide_legend(nrow = 3, byrow = TRUE))
-dev.off()
+# dev.off()

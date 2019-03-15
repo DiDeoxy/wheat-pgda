@@ -1,5 +1,10 @@
 # # create and output results
 
+# # 0
+# # install needed R packages
+# echo "install_R_packages"
+# Rscript src/R/install_packages.R
+
 # # 1
 # # calculate and plot statistics of the maf and mr pruned phys map and the ld
 # # pruned map

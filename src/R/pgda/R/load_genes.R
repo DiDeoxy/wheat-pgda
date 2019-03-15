@@ -15,13 +15,12 @@
 #' @export
 
 load_genes <- function(csv, base = 0) {
-  import::from(dplyr, "mutate", "select")
-  import::from(magrittr, "%>%")
-  import::from(readr, "read_csv")
-
   read_csv(
     csv,
-    col_names = c("id", "gene", "chrom", "pos", "bitscore", "%id", "evalue")
+    col_names = c(
+      "id", "gene", "chrom", "pos", "bitscore", "%id", "evalue", "query_length",
+      "align_length"
+    )
   ) %>%
     mutate(pos_mb = pos / 1e6) %>%
     select(id, chrom, pos_mb) %>%
