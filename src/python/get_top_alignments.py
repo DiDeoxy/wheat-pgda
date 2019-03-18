@@ -28,9 +28,8 @@ def top_blast(alignments):
     for query, group in alignments.groupby('query'):
         top_aligns.append(
             group.loc[
-                (group['pident'] >= 90) &
+                (group['pident'] >= 90) & (group['bitscore'] >= 950) &
                 (group['bitscore'] >= group['bitscore'].iloc[0] * 0.5)
-
             ]
         )
     top_aligns = pd.concat(top_aligns).reset_index().set_index(
