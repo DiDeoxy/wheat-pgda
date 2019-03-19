@@ -58,38 +58,43 @@
 # cat data/raw/gene_seqs/resi/*.fasta > data/raw/gene_seqs/resi/all.fasta
 
 
-# # 5a
-# # align resi genes
-# echo "align_resi_genes"
-# mkdir -p data/intermediate/blast
-# blastn \
-#     -num_threads 4 \
-#     -query data/raw/gene_seqs/resi/all.fasta \
-#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
-#     > data/intermediate/blast/resi.txt
+# 5a
+# align resi genes
+echo "align_resi_genes"
+mkdir -p data/intermediate/blast
+blastn \
+    -num_threads 4 \
+    -query data/raw/gene_seqs/resi/all.fasta \
+    -db data/raw/blast_db/ref_seq_v1_genes.fasta \
+    -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
+    > data/intermediate/blast/resi.txt
 
-# # 6a
-# # get top resi alignments
-# echo "get_top_resi_alignments"
-# python src/python/get_top_alignments.py \
-#     data/intermediate/blast/resi.txt \
-#     data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     data/intermediate/blast/top_resi.csv
+# 6a
+# get top resi alignments
+echo "get_top_resi_alignments"
+python src/python/get_top_alignments.py \
+    data/intermediate/blast/resi.txt \
+    data/raw/blast_db/ref_seq_v1_genes.fasta \
+    data/intermediate/blast/top_resi.csv
 
-# 4b
-# concate pheno
-echo "concat_GLU"
-rm data/raw/gene_seqs/pheno/GLU/GLU.fasta
-cat data/raw/gene_seqs/pheno/GLU/*.fasta > data/raw/gene_seqs/pheno/GLU/GLU.fasta
-echo "filter_GLU"
-python src/python/filter_fasta.py \
-    data/raw/gene_seqs/pheno/GLU/GLU.fasta \
-    data/raw/gene_seqs/pheno/GLU_filtered.fasta \
-    "GLU|mw|weight"
-echo "concat_pheno"
-rm data/raw/gene_seqs/pheno/all.fasta
-cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
+# # 4b
+# # concate pheno
+# echo "concat_GLU"
+# rm data/raw/gene_seqs/pheno/GLU/GLU.fasta
+# cat data/raw/gene_seqs/pheno/GLU/*.fasta > data/raw/gene_seqs/pheno/GLU/GLU.fasta
+# echo "filter_GLU"
+# python src/python/filter_fasta.py \
+#     data/raw/gene_seqs/pheno/GLU/GLU.fasta \
+#     data/raw/gene_seqs/pheno/GLU_filtered.fasta \
+#     "GLU|mw|weight"
+# echo "filter_Pins"
+# python src/python/filter_fasta.py \
+#     data/raw/gene_seqs/pheno/Pins/pins.fasta \
+#     data/raw/gene_seqs/pheno/Pins_filtered.fasta \
+#     "pin"
+# echo "concat_pheno"
+# rm data/raw/gene_seqs/pheno/all.fasta
+# cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
 
 # 5b
 # align pheno genes
