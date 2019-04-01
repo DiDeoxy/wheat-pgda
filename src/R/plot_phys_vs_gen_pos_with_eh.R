@@ -128,7 +128,7 @@ plots_matrix <- ggmatrix(
   plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   title = str_c(
-    "Comparison of Order by Position between Location and Genetic Maps"
+    "Comparison of Order by Position between Location\n and Genetic Maps"
   ),
   legend = c(1, 1)
 )
@@ -136,7 +136,7 @@ plots_matrix <- ggmatrix(
 # plot the matrix
 png(
   file.path("results", "chrom_marker_phys_vs_gen_pos_and_eh.png"),
-  family = "Times New Roman", width = 210, height = 267, pointsize = 5,
+  family = "Times New Roman", width = 120, height = 267, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()

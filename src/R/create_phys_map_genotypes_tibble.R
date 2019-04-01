@@ -100,6 +100,23 @@ genotypes <- read_csv(
   replace(. == "C2", 2) %>%
   replace(. == "NC", 3)
 
+# combine the phys map with the genotypes 
+maps_genotypes <- maps %>%
+  left_join(genotypes) %>%
+  type_convert() %>%
+  group_by(chrom, phys_pos)
+nrow(maps_genotypes) %>%
+  str_c("Num markers: ", .) %>%
+  print()
+
+# find the groups of markers which have the same position in a chromosome
+duplicates <- maps_genotypes %>%
+  group_by(chrom, phys_pos) %>%
+  filter(n() >= 2)
+nrow(duplicates) %>%
+  str_c("Num markers with identical postions: ", .) %>%
+  print()
+
 # remove at least one marker mapping to the same position in phys map
 unique_marker <- function(markers) {
   if (nrow(markers) == 1) {
@@ -117,23 +134,6 @@ unique_marker <- function(markers) {
     return(tibble())
   }
 }
-
-# combine the phys map with the genotypes 
-maps_genotypes <- maps %>%
-  left_join(genotypes) %>%
-  type_convert() %>%
-  group_by(chrom, phys_pos)
-nrow(maps_genotypes) %>%
-  str_c("Num markers: ", .) %>%
-  print()
-
-# find the groups of markers which have the same position in a chromosome
-duplicates <- maps_genotypes %>%
-  group_by(chrom, phys_pos) %>%
-  filter(n() >= 2)
-nrow(duplicates) %>%
-  str_c("Num markers with identical postions: ", .) %>%
-  print()
 
 # filter the duplicates to identify the number retained
 duplicates_filtered <- duplicates %>%

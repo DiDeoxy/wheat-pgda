@@ -104,7 +104,7 @@ legend(
 
 title(
   main = str_c(
-    "UPGMA Dendrogram of 364 Varieties\nwith HDBSCAN Clusters and ",
+    "UPGMA Dendrogram of 365 Varieties\nwith HDBSCAN Clusters and ",
     "Categorical Data In Surrounding Rows"
   ),
   cex.main = 0.7

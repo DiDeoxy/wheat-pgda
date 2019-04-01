@@ -45,8 +45,8 @@ graph_from_edgelist(pairs) %>%
 NILs <- c(
   "PT434", "BW811", "AC Minto 1", "Avocet 1", "BW275 1", "BW395",
   "PT616", "BW427 1", "BW492", "BW948", "Carberry 1", "CDC Stanley 1",
-  "PT754", "SWS349", "Somerset 1", "Stettler 1", "AC Reed 1", "SWS87",
-  "SWS241", "SWS345", "SWS363", "SWS390", "SWS408", "SWS410"
+  "PT754", "SWS349", "Somerset 1", "Stettler 1", "SWS241", "SWS345",
+  "AC Reed 1", "SWS87", "SWS390", "SWS408", "SWS410"
 )
 
 # mr pruned phys map
@@ -65,9 +65,7 @@ snpgds_sample_subset(
 )
 
 # identify snps with a maf below 0.05
-wheat_gds <- snpgdsOpen(
-  file.path(gds, "full_phys_sample_subset.gds")
-)
+wheat_gds <- snpgdsOpen(file.path(gds, "full_phys_sample_subset.gds"))
 kept_id <- snpgdsSelectSNP(
   wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
 )

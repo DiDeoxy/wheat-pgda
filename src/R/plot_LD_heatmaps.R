@@ -59,7 +59,7 @@ png(
 )
 par(mfrow = c(7, 3), oma = c(7, 1, 3, 2), mar = c(0, 2, 0, 0))
 for (chr in 1:21) {
-  lim <- c(0, wheat_data$max_lengths[ifelse(chr %% 3, chr %% 3, 3)])
+  lim <- c(0, wheat_data$max_lengths[ifelse(chr %% 3, chr %% 3, 3)]) / 1e6
   if (chr %in% c(19, 20, 21)) {
     image(ld_mat[[chr]]$pos_mb, ld_mat[[chr]]$pos_mb, ld_mat[[chr]]$mat,
           col = colours, yaxt = "n", xaxt = "s", xlim = lim, ylim = lim)

@@ -5,7 +5,7 @@ sed -i -e 's/AY325736/PM3-B,AY325736/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/KF572030/PM8,KF572030/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/MH077963/PM17,MH077963/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/FJ876280/LR21,FJ876280/g' data/intermediate/blast/top_resi.csv
-sed -i -e 's/AY270159/RGA2,AY270159/g' data/intermediate/blast/top_resi.csv #~LR10
+# sed -i -e 's/AY270159/RGA2,AY270159/g' data/intermediate/blast/top_resi.csv # LR10 related, wrong chromosome
 sed -i -e 's/KF031303/SR33,KF031303/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/LN883757/SR45,LN883757/g' data/intermediate/blast/top_resi.csv
 sed -i -e 's/HM133634/UGT-S3,HM133634/g' data/intermediate/blast/top_resi.csv
@@ -46,6 +46,8 @@ sed -i -e 's/FJ549935/GLU-A3-2-1,FJ549935/g' data/intermediate/blast/top_pheno.c
 sed -i -e 's/JX877817/GLU-A3-391,JX877817/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/M22208/GLU-A1-Ax2*,M22208/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/HQ613179/GLU-A1-x,HQ613179/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082500/MOT-A1,KR082500/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082528/EFL-A3,KR082528/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/JX877811/GLU-B3-578Bb,JX877811/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/EU369722/GLU-B3-2-2,EU369722/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/JX878024/GLU-B3-593,JX878024/g' data/intermediate/blast/top_pheno.csv
@@ -54,6 +56,9 @@ sed -i -e 's/FJ755306/GLU-B3-1,FJ755306/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/X13927/GLU-B1-b,X13927/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/AB263219/GLU-B1-i,AB263219/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/JF736014/GLU-B1-y8,JF736014/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082508/MOT1,KR082508/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082543/FTsH-B4,KR082543/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082521/EFL-B3,KR082521/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/DQ357054/GLU-D3-21,DQ357054/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/DQ357057/GLU-D3-31,DQ357057/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/AB062873/GLU-D3-8-IV,AB062873/g' data/intermediate/blast/top_pheno.csv
@@ -65,6 +70,8 @@ sed -i -e 's/EU189096/GLU-D3,EU189096/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/X12928/GLU-D1-1d,X12928/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/JX173939/GLU-D1-1,JX173939/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/BK006459/GLU-D1-12,BK006459/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR082537/FTsH-D4,KR082537/g' data/intermediate/blast/top_pheno.csv
+# sed -i -e 's/KR055808/EFL-D3,KR055808/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/DQ885753/PPD-A1,DQ885753/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/DQ885766/PPD-D1,DQ885766/g' data/intermediate/blast/top_pheno.csv
 sed -i -e 's/AY515506/PPO,AY515506/g' data/intermediate/blast/top_pheno.csv
