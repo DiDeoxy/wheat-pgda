@@ -25,7 +25,7 @@ wheat_gds <- snpgdsOpen(ld_gds)
 ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
-upgma_dend <- hclust(dist(mhnb_dist)) %>%
+upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
   color_branches(k = 9, col = colours_dend) %>%
   set("branches_lwd", 1.5)
