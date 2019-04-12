@@ -21,13 +21,6 @@ metadata <- read_csv(
   file.path(cultivars, "cultivar_metadata.csv") 
 ) %>% arrange(`Real Name`)
 
-# # print out ordered sample names for perl cliques
-# write(
-#   metadata$`Real Name`,
-#   file = file.path(cultivars, "ordered_names.csv"),
-#   sep = "\n"
-# )
-
 # transform year into binned eras
 era <- as.numeric(as.character(metadata$Date))
 era <- cut(era,

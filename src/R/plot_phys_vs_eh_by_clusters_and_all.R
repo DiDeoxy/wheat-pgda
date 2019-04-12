@@ -4,8 +4,8 @@ import::from(dplyr, "select")
 import::from(pgda, "calc_eh", "snpgds_parse")
 import::from(GGally, "ggmatrix")
 import::from(
-  ggplot2, "aes", "ggplot", "geom_smooth", "labs",  "scale_colour_gradientn", 
-  "scale_colour_manual", "theme", "unit", "xlim", "ylim"
+  ggplot2, "aes", "ggplot", "geom_smooth", "labs", "scale_colour_manual",
+  "theme", "unit", "xlim", "ylim"
 )
 import::from(magrittr, "%>%")
 import::from(readr, "read_rds")
@@ -41,7 +41,10 @@ for (cluster in levels(clusters)) {
 phys_gen_snp_pos <- phys_gen_snp_pos %>%
     add_column(All = calc_eh(wheat_data_phys$genotypes)) %>%
     select(-Noise) %>%
-    gather(group, eh, `Cluster 1 (HRW)`, `Cluster 2 (SWS)`, `Cluster 3 (CWES)`, `Cluster 4 (CPSR/W)`, `Cluster 5 (HRS)`, All)
+    gather(
+      group, eh, `Cluster 1 (HRW)`, `Cluster 2 (SWS)`, `Cluster 3 (CWES)`,
+      `Cluster 4 (CPSR/W)`, `Cluster 5 (HRS)`, All
+    )
 
 # allows application of same colour to each set of chromosomes
 chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
@@ -65,18 +68,17 @@ plots <- by(phys_gen_snp_pos, phys_gen_snp_pos$chrom,
       ) +
       ylim(0, 0.5) +
       geom_smooth(aes(phys, eh, colour = group), size = 0.5, se = F) +
-      scale_colour_manual(values=colours_hdbscan_legend) +
-      labs(
-        colour = "Cluster"
-      )
+      scale_colour_manual(values = colours_hdbscan_legend) +
+      labs(colour = "Cluster")
   }
 )
 
 plots_matrix <- ggmatrix(
-  plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
+  plots, nrow = 7, ncol = 3, xlab = "Position in Mb",
+  ylab = "Expected Heterozygosity",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   title = str_c(
-    "Comparions of physical position vs Expected Heterozygosity\nby cluster and All"
+    "Comparions of physical position vs Expected\nHeterozygosity by cluster and All"
   ),
   legend = c(1, 1)
 )

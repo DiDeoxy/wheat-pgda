@@ -1,9 +1,9 @@
 install.packages(
   c(
     'adegenet', 'ade', 'ape', 'BiocManager', 'circlize', 'dbscan', 'dendextend',
-    'devtools', 'extrafont', 'GGally', 'ggrepel', 'igraph', 'import', 'mmod',
-    'plyr', 'poppr', 'pracma', 'RColorBrewer', 'roxygen2', 'scrime',
-    'tidyverse', 'vcd'
+    'devtools', 'emdbook', 'extrafont', 'GeneticSubsetter', 'GGally', 'ggrepel',
+    'igraph', 'import', 'mmod', 'plyr', 'poppr', 'pracma', 'RColorBrewer',
+    'roxygen2', 'scrime', 'tidyverse', 'vcd'
   )
 )
 BiocManager::install('SNPRelate');
