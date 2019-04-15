@@ -17,6 +17,7 @@ colours_hdbscan <- colour_set[c(22, 2, 4, 3, 5, 1)]
 # clusters 2 and 3 are swapped on the legend of the dendrogram for writeup
 # purposes
 colours_hdbscan_legend <- colour_set[c(22, 2, 4, 3, 5, 1)]
+colours_hdbscan_pic_legend <- colour_set[c(2, 4, 3, 5, 1, 22)]
 colours_chroms <- colour_set[c(1, 5, 3, 2, 4, 6, 8)]
 colours_groups_genes <- colour_set[c(1, 2, 4, 15, 19)]
 colours_comps_genes <- colour_set[c(1, 2, 4, 20, 15, 19)]

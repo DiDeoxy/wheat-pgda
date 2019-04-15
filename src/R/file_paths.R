@@ -29,9 +29,14 @@ blast <- file.path(intermediate, "blast")
 ################################################################################
 # results
 ifelse(! dir.exists("results"), dir.create("results"), FALSE)
+
 map_stats_and_plots <- file.path("results", "map_stats_and_plots")
 ifelse(
   ! dir.exists(map_stats_and_plots), dir.create(map_stats_and_plots), FALSE
 )
+
 josts_d_by_chrom <- file.path("results", "josts_d_by_chrom")
 ifelse(! dir.exists(josts_d_by_chrom), dir.create(josts_d_by_chrom), FALSE)
+
+PIC <- file.path("results", "PIC")
+ifelse(! dir.exists(PIC), dir.create(PIC), FALSE)

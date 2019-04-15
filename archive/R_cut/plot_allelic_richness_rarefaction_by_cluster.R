@@ -8,6 +8,7 @@ import::from(
   "ggsave", "ggtitle","guide_legend", "guides", "labs", "scale_colour_manual",
   "theme", "xlab", "ylab"
 )
+import::from(hierfstat, "allelic.richness")
 import::from(magrittr, "%>%")
 import::from(parallel, "detectCores", "mclapply")
 import::from(pgda, "calc_eh", "snpgds_parse")
@@ -17,11 +18,21 @@ import::from(tibble, "add_column", "add_row", "as_tibble", "tibble")
 
 wheat_data <- snpgds_parse(phys_gds)
 
-wheat_formatted <- wheat_data$genotypes %>%
-    replace(. == 0, -1) %>%
-    replace(. == 2, 1) %>%
-    replace(. == 3, 0) %>%
-    as_tibble()
+wheat_ar <- wheat_data$genotypes %>%
+  replace(. == 0, 1) %>%
+  replace(. == 3, NA) %>%
+  t() %>%
+  as.data.frame()
+
+# wheat_test <- wheat_data$genotypes %>%
+#   replace(. == 0, 1) %>%
+#   replace(. == 3, NA) %>%
+#   t() %>%
+#   as.data.frame() %>%
+#   add_column(clusters %>% as.character(), .before = 1)
+# test <- allelic.richness(wheat_test)
+# test$Ar %>% head()
+# test$Ar %>% colMeans() %>% str()
 
 clusters <- factor(read_rds(hdbscan)$cluster)
 levels(clusters) <- c(
@@ -40,34 +51,31 @@ categorization_names <- c(
   "growth_habit", "colour", "texture"
 )
 categorization_colours <- list(
-  colours_hdbscan_pic_legend, colours_bp, colours_era, colours_mc, colours_pheno,
-  colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)], colour_set[c(1, 4, 22)]
+  colours_hdbscan_legend, colours_bp, colours_era, colours_mc, colours_pheno,
+  colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)]
 )
 
-lapply(seq_along(categorizations), function (i) {
+lapply(1, function (i) {
+  subset_sizes <- lseq(2, 60, 15) %>% floor() %>% unique()
   categorization <- categorizations[[i]]
-  print(categorization_names[i])
+  category_sizes <- categorization %>% table()
   categories <- categorization %>% as.factor() %>% levels()
 
-  rarefied <- mclapply(seq_along(categories), function (j) {
-    category <- categories[j]
-    individuals <- which(categorization == category)
-    subset_sizes <- lseq(2, min(60, length(individuals)), 15) %>%
-      floor() %>% unique()
-    
-    lapply(subset_sizes, function (subset_size) {
-      print(str_c(category, ": ", subset_size))
-      temp <- tibble(
-        category = character(), subset_size = double(), pic = double()
+  rarefied <- mclapply(subset_sizes, function (subset_size) {
+    cats_of_size <- categories[which(category_sizes >= subset_size)]
+    kept_indivs <- which(categorization %in% cats_of_size)
+    temp <- wheat_ar[kept_indivs, ] %>%
+      add_column(
+        categorization = categorization[kept_indivs] %>% as.character(),
+        .before = 1
       )
-      for (i in 1:1000) {
-        temp <- temp %>% add_row(
-          category = categories[j], subset_size = subset_size,
-          pic = PicCalc(wheat_formatted[, sample(individuals, subset_size)])
-        )
-      }
-      temp
-    }) %>% do.call(rbind, .)
+
+    print(str_c(categorization_names[i], ": ", subset_size))
+    tibble(
+      category = temp$categorization %>% as.factor() %>% levels(),
+      subset_size = subset_size,
+      pic = allelic.richness(temp, min.n = subset_size)$Ar %>% colMeans()
+    )
   }, mc.cores = detectCores()) %>% do.call(rbind, .)
 
   plot <- rarefied %>% ggplot() +
@@ -75,26 +83,23 @@ lapply(seq_along(categorizations), function (i) {
       aes(subset_size, pic, colour = category), size = 0.5, alpha = 0.2,
       pch = 16
     ) +
-    geom_smooth(
-      aes(jitter(subset_size), pic, colour = category), se = FALSE, alpha = 0.5
-    ) +
+    geom_smooth(aes(jitter(subset_size), pic, colour = category), se = FALSE) +
     scale_colour_manual(values = categorization_colours[[i]]) +
     labs(colour = "Category") +
     ggtitle(
       str_c(
-        "Rarefaction Curves of Average PIC of\nSub-samples By ",
+        "Rarefaction Curves of Average\nAllelic Richness of Sub-samples\nBy ",
         categorization_names[i]
       )
     ) +
     xlab("Sample Size") +
-    ylab("Average PIC") +
+    ylab("Average Allelic Richness") +
     guides(colour = guide_legend(nrow = 3)) +
     theme(
       legend.position = "bottom", legend.text = element_text(size = 4)
     )
-
   ggsave(
-    str_c("PIC_rarefaction_by_", categorization_names[i], ".png"), plot = plot, 
+    str_c("Allelic_richness_rarefaction_by_", categorization_names[i], ".png"), plot = plot, 
     path = PIC, width = 100, height = 120, units = "mm"
   )
 })
