@@ -12,7 +12,7 @@ import::from(magrittr, "%>%")
 import::from(parallel, "detectCores", "mclapply")
 import::from(pgda, "calc_eh", "snpgds_parse")
 import::from(readr, "read_rds")
-import::from(stringr, "str_c")
+import::from(stringr, "str_c", "str_replace", "str_wrap")
 import::from(tibble, "add_column", "add_row", "as_tibble", "tibble")
 
 wheat_data <- snpgds_parse(phys_gds)
@@ -36,8 +36,8 @@ categorizations <- list(
   wheat_data$sample$annot$texture
 )
 categorization_names <- c(
-  "clusters", "breeding_programs", "era", "market_class", "phenotype",
-  "growth_habit", "colour", "texture"
+  "HDBSCAN Clusters", "Breeding Programs", "Era", "Market Class", "Phenotype",
+  "Growth Habit", "Colour", "Texture"
 )
 categorization_colours <- list(
   colours_hdbscan_pic_legend, colours_bp, colours_era, colours_mc, colours_pheno,
@@ -52,8 +52,10 @@ lapply(seq_along(categorizations), function (i) {
   rarefied <- mclapply(seq_along(categories), function (j) {
     category <- categories[j]
     individuals <- which(categorization == category)
-    subset_sizes <- lseq(2, min(60, length(individuals)), 15) %>%
+    subset_sizes <- lseq(2, length(individuals), 10) %>%
       floor() %>% unique()
+    # subset_sizes <- lseq(2, min(60, length(individuals)), 15) %>%
+    #   floor() %>% unique()
     
     lapply(subset_sizes, function (subset_size) {
       print(str_c(category, ": ", subset_size))
@@ -72,11 +74,12 @@ lapply(seq_along(categorizations), function (i) {
 
   plot <- rarefied %>% ggplot() +
     geom_point(
-      aes(subset_size, pic, colour = category), size = 0.5, alpha = 0.2,
+      aes(log10(subset_size), pic, colour = str_wrap(category, 10)), size = 0.5, alpha = 0.2,
       pch = 16
     ) +
     geom_smooth(
-      aes(jitter(subset_size), pic, colour = category), se = FALSE, alpha = 0.5
+      aes(log10(jitter(subset_size)), pic, colour = str_wrap(category, 10)),
+      se = FALSE, alpha = 0.5
     ) +
     scale_colour_manual(values = categorization_colours[[i]]) +
     labs(colour = "Category") +
@@ -88,13 +91,21 @@ lapply(seq_along(categorizations), function (i) {
     ) +
     xlab("Sample Size") +
     ylab("Average PIC") +
-    guides(colour = guide_legend(nrow = 3)) +
+    guides(
+      colour = guide_legend(nrow = (length(categories) / 3) %>% ceiling())) +
     theme(
-      legend.position = "bottom", legend.text = element_text(size = 4)
+      legend.position = "bottom", 
+      legend.text = element_text(
+        size = ifelse(length(categories) <= 4, 12,
+          ifelse(length(categories) <= 8, 8, 4)
+        )
+      )
     )
 
   ggsave(
-    str_c("PIC_rarefaction_by_", categorization_names[i], ".png"), plot = plot, 
-    path = PIC, width = 100, height = 120, units = "mm"
+    str_c(
+      "PIC_rarefaction_by_", str_replace(categorization_names[i], " ", "_"),
+      ".png"
+    ), plot = plot, path = PIC, width = 100, height = 120, units = "mm"
   )
 })
