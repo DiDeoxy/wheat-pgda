@@ -10,8 +10,9 @@ colour_set <- c(
 # defining the colour sets
 colours_era <- colour_set[c(1, 5, 3, 2, 4, 6, 22)]
 colours_bp <- colour_set[c(3, 1, 5, 4, 12, 2, 20, 22, 6, 7, 8, 9, 13)]
-colours_mc <- colour_set[c(5, 4, 3, 6, 2, 11, 1, 7, 22)]
+colours_bp_pic <- colour_set[c(3, 1, 12, 2, 20, 22, 6, 7, 8, 13)]
 colours_pheno <- colour_set[c(1, 2, 7, 16, 12, 4, 9, 22)]
+colours_pheno_pic <- colour_set[c(1, 2, 7, 12, 4, 9, 22)]
 colours_dend <- colour_set[c(22, 4, 22, 1, 3, 5, 1, 2, 22)]
 colours_hdbscan <- colour_set[c(22, 2, 4, 3, 5, 1)]
 # clusters 2 and 3 are swapped on the legend of the dendrogram for writeup

@@ -4,7 +4,7 @@ import::from(dplyr, "bind_rows")
 import::from(emdbook, "lseq")
 import::from(GeneticSubsetter, "PicCalc")
 import::from(
-  ggplot2, "aes", "element_text", "geom_point", "geom_smooth", "ggplot",
+  ggplot2, "aes", "element_text", "geom_point", "geom_line", "ggplot",
   "ggsave", "ggtitle","guide_legend", "guides", "labs", "scale_colour_manual",
   "theme", "xlab", "ylab"
 )
@@ -24,21 +24,12 @@ wheat_ar <- wheat_data$genotypes %>%
   t() %>%
   as.data.frame()
 
-# wheat_test <- wheat_data$genotypes %>%
-#   replace(. == 0, 1) %>%
-#   replace(. == 3, NA) %>%
-#   t() %>%
-#   as.data.frame() %>%
-#   add_column(clusters %>% as.character(), .before = 1)
-# test <- allelic.richness(wheat_test)
-# test$Ar %>% head()
-# test$Ar %>% colMeans() %>% str()
-
 clusters <- factor(read_rds(hdbscan)$cluster)
 levels(clusters) <- c(
   "Noise", "Cluster 1 (HRW)", "Cluster 2 (SWS)", "Cluster 3 (CWES)",
-  "Cluster 4 (CPSR/W)", "Cluster 5 (HRS)"
+  "Cluster 4 (CPSR/W)", "Cluster 5 (CXRS)"
 )
+clusters <- clusters %>% as.character()
 
 categorizations <- list(
   clusters, wheat_data$sample$annot$bp, wheat_data$sample$annot$era,
@@ -51,39 +42,40 @@ categorization_names <- c(
   "growth_habit", "colour", "texture"
 )
 categorization_colours <- list(
-  colours_hdbscan_legend, colours_bp, colours_era, colours_mc, colours_pheno,
+  colours_hdbscan_pic_legend, colours_bp, colours_era, colours_mc, colours_pheno,
   colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)]
 )
 
 lapply(1, function (i) {
-  subset_sizes <- lseq(2, 60, 15) %>% floor() %>% unique()
+  subset_sizes <- lseq(2, 200, 16) %>% floor() %>% unique()
   categorization <- categorizations[[i]]
   category_sizes <- categorization %>% table()
-  categories <- categorization %>% as.factor() %>% levels()
 
   rarefied <- mclapply(subset_sizes, function (subset_size) {
-    cats_of_size <- categories[which(category_sizes >= subset_size)]
-    kept_indivs <- which(categorization %in% cats_of_size)
-    temp <- wheat_ar[kept_indivs, ] %>%
+    temp <- wheat_ar %>%
       add_column(
-        categorization = categorization[kept_indivs] %>% as.character(),
+        categorization = categorization %>% as.character(),
         .before = 1
       )
 
     print(str_c(categorization_names[i], ": ", subset_size))
+    # cats_of_size <- which(category_sizes >= subset_size)
     tibble(
-      category = temp$categorization %>% as.factor() %>% levels(),
+      # category = (temp$categorization %>% as.factor() %>% levels())[cats_of_size],
+      category = (temp$categorization %>% as.factor() %>% levels()),
       subset_size = subset_size,
-      pic = allelic.richness(temp, min.n = subset_size)$Ar %>% colMeans()
+      # pic = (allelic.richness(temp, min.n = subset_size)$Ar %>% colMeans())[cats_of_size]
+      pic = (allelic.richness(temp, min.n = subset_size)$Ar %>% colMeans())
     )
   }, mc.cores = detectCores()) %>% do.call(rbind, .)
+  print(rarefied)
 
   plot <- rarefied %>% ggplot() +
     geom_point(
-      aes(subset_size, pic, colour = category), size = 0.5, alpha = 0.2,
+      aes(subset_size, pic, colour = category), size = 0.5,
       pch = 16
     ) +
-    geom_smooth(aes(jitter(subset_size), pic, colour = category), se = FALSE) +
+    geom_line(aes(subset_size, pic, colour = category)) +
     scale_colour_manual(values = categorization_colours[[i]]) +
     labs(colour = "Category") +
     ggtitle(
@@ -99,7 +91,7 @@ lapply(1, function (i) {
       legend.position = "bottom", legend.text = element_text(size = 4)
     )
   ggsave(
-    str_c("Allelic_richness_rarefaction_by_", categorization_names[i], ".png"), plot = plot, 
-    path = PIC, width = 100, height = 120, units = "mm"
+    str_c("Allelic_richness_rarefaction_by_", categorization_names[i], ".png"),
+    plot = plot, path = PIC, width = 100, height = 120, units = "mm"
   )
 })
