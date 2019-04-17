@@ -45,7 +45,7 @@ categorization_colours <- list(
   colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)], colour_set[c(1, 4, 22)]
 )
 
-lapply(seq_along(categorizations), function (i) {
+lapply(4:8, function (i) {
   categorization <- categorizations[[i]]
   print(categorization_names[i])
   categories <- categorization %>% as.factor() %>% levels()
