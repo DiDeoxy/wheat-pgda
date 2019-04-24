@@ -25,7 +25,6 @@
 # wget -P refseq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/gtf/triticum_aestivum/Triticum_aestivum.IWGSC.42.gtf.gz
 # gunzip refseq/Triticum_aestivum.IWGSC.42.gtf.gz
 
-
 # # 2
 # # extract genes from refseq delete reference
 # echo "extract_genes_from_reference_and_delete"
@@ -43,76 +42,75 @@
 #     -dbtype nucl \
 #     -parse_seqids
 
-# # 4a
-# # concat resi
-# echo "concat_ugt"
-# rm data/raw/gene_seqs/resi/UGT/UGT.fasta
-# cat data/raw/gene_seqs/resi/UGT/*.fasta > data/raw/gene_seqs/resi/UGT/UGT.fasta
-# echo "filter_ugt"
-# python src/python/filter_fasta.py \
-#     data/raw/gene_seqs/resi/UGT/UGT.fasta \
-#     data/raw/gene_seqs/resi/UGT_filtered.fasta \
-#     "ugt|glycolsy|udp"
-# echo "concat_resi"
-# rm data/raw/gene_seqs/resi/all.fasta
-# cat data/raw/gene_seqs/resi/*.fasta > data/raw/gene_seqs/resi/all.fasta
-
-
-# # 5a
-# # align resi genes
-# echo "align_resi_genes"
-# mkdir -p data/intermediate/blast
-# blastn \
-#     -num_threads 4 \
-#     -query data/raw/gene_seqs/resi/all.fasta \
-#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
-#     > data/intermediate/blast/resi.txt
-
-# # 6a
-# # get top resi alignments
-# echo "get_top_resi_alignments"
-# python src/python/get_top_alignments.py \
-#     data/intermediate/blast/resi.txt \
-#     data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     data/intermediate/blast/top_resi.csv
-
-# 4b
-# concate pheno
-echo "concat_GLU"
-rm data/raw/gene_seqs/pheno/GLU/GLU.fasta
-cat data/raw/gene_seqs/pheno/GLU/*.fasta > data/raw/gene_seqs/pheno/GLU/GLU.fasta
-echo "filter_GLU"
+# 4a
+# concat resi
+echo "concat_ugt"
+rm data/raw/gene_seqs/resi/UGT/UGT.fasta
+cat data/raw/gene_seqs/resi/UGT/*.fasta > data/raw/gene_seqs/resi/UGT/UGT.fasta
+echo "filter_ugt"
 python src/python/filter_fasta.py \
-    data/raw/gene_seqs/pheno/GLU/GLU.fasta \
-    data/raw/gene_seqs/pheno/GLU_filtered.fasta \
-    "GLU|mw|weight"
-echo "filter_Pins"
-python src/python/filter_fasta.py \
-    data/raw/gene_seqs/pheno/Pins/pins.fasta \
-    data/raw/gene_seqs/pheno/Pins_filtered.fasta \
-    "pin"
-echo "concat_pheno"
-rm data/raw/gene_seqs/pheno/all.fasta
-cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
+    data/raw/gene_seqs/resi/UGT/UGT.fasta \
+    data/raw/gene_seqs/resi/UGT_filtered.fasta \
+    "ugt|glycolsy|udp"
+echo "concat_resi"
+rm data/raw/gene_seqs/resi/all.fasta
+cat data/raw/gene_seqs/resi/*.fasta > data/raw/gene_seqs/resi/all.fasta
 
-# 5b
-# align pheno genes
-echo "align_pheno_genes"
+# 5a
+# align resi genes
+echo "align_resi_genes"
+mkdir -p data/intermediate/blast
 blastn \
     -num_threads 4 \
-    -query data/raw/gene_seqs/pheno/all.fasta \
+    -query data/raw/gene_seqs/resi/all.fasta \
     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
-    > data/intermediate/blast/pheno.txt
+    > data/intermediate/blast/resi.txt
 
-# 6b
-# get top pheno alignments
-echo "get_top_pheno_alignments"
+# 6a
+# get top resi alignments
+echo "get_top_resi_alignments"
 python src/python/get_top_alignments.py \
-    data/intermediate/blast/pheno.txt \
+    data/intermediate/blast/resi.txt \
     data/raw/blast_db/ref_seq_v1_genes.fasta \
-    data/intermediate/blast/top_pheno.csv
+    data/intermediate/blast/top_resi.csv
+
+# # 4b
+# # concate pheno
+# echo "concat_GLU"
+# rm data/raw/gene_seqs/pheno/GLU/GLU.fasta
+# cat data/raw/gene_seqs/pheno/GLU/*.fasta > data/raw/gene_seqs/pheno/GLU/GLU.fasta
+# echo "filter_GLU"
+# python src/python/filter_fasta.py \
+#     data/raw/gene_seqs/pheno/GLU/GLU.fasta \
+#     data/raw/gene_seqs/pheno/GLU_filtered.fasta \
+#     "GLU|mw|weight"
+# echo "filter_Pins"
+# python src/python/filter_fasta.py \
+#     data/raw/gene_seqs/pheno/Pins/pins.fasta \
+#     data/raw/gene_seqs/pheno/Pins_filtered.fasta \
+#     "pin"
+# echo "concat_pheno"
+# rm data/raw/gene_seqs/pheno/all.fasta
+# cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
+
+# # 5b
+# # align pheno genes
+# echo "align_pheno_genes"
+# blastn \
+#     -num_threads 4 \
+#     -query data/raw/gene_seqs/pheno/all.fasta \
+#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
+#     > data/intermediate/blast/pheno.txt
+
+# # 6b
+# # get top pheno alignments
+# echo "get_top_pheno_alignments"
+# python src/python/get_top_alignments.py \
+#     data/intermediate/blast/pheno.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_pheno.csv
 
 # 7
 # convert genbank ids of aligned gene sequences to gene names

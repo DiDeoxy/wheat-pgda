@@ -38,6 +38,7 @@ for (cluster in levels(clusters)) {
       )
     )
 }
+
 phys_gen_snp_pos <- phys_gen_snp_pos %>%
     add_column(All = calc_eh(wheat_data_phys$genotypes)) %>%
     select(-Noise) %>%
@@ -45,6 +46,8 @@ phys_gen_snp_pos <- phys_gen_snp_pos %>%
       group, eh, `Cluster 1 (HRW)`, `Cluster 2 (SWS)`, `Cluster 3 (CWES)`,
       `Cluster 4 (CPSR/W)`, `Cluster 5 (HRS)`, All
     )
+
+colMeans(phys_gen_snp_pos[, 3:8])
 
 # allows application of same colour to each set of chromosomes
 chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
