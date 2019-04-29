@@ -2,13 +2,11 @@
 source(file.path("src", "R", "file_paths.R"))
 import::from(pgda, "calc_plot_map_stats")
 
-import::from(ggplot2, "scale_x_log10", "scale_y_log10")
-
 # all markers
 calc_plot_map_stats(
   phys_gds,
   "MAF and MR Pruned Marker Set",
-  6000,
+  1e4,
   basename(phys_gds)
 )
 
@@ -16,6 +14,6 @@ calc_plot_map_stats(
 calc_plot_map_stats(
   ld_gds,
   "MAF, MR, and LD Pruned Marker Set",
-  500,
+  1e3,
   basename(ld_gds)
 )
