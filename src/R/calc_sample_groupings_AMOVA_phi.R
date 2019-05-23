@@ -95,18 +95,18 @@ write_csv(
   amova_table, file.path("results", "amova_phi_table.csv"), col_names = TRUE
 )
 
-# correlation stuff
-mis_pheno <- which(strata_genind$strata$pheno == "UNKNOWN")
-mis_bp <- which(strata_genind$strata$bp == "N/A")
-mis_era <- which(strata_genind$strata$era == "UNKNOWN")
-mis_pheno_bp <- unique(c(mis_pheno, mis_bp))
-mis_pheno_era <- unique(c(mis_pheno, mis_era))
-mis_bp_era <- unique(c(mis_era, mis_bp))
-mis_pheno_bp_era <- unique(c(mis_bp_era, mis_pheno))
+# # correlation stuff
+# mis_pheno <- which(strata_genind$strata$pheno == "UNKNOWN")
+# mis_bp <- which(strata_genind$strata$bp == "N/A")
+# mis_era <- which(strata_genind$strata$era == "UNKNOWN")
+# mis_pheno_bp <- unique(c(mis_pheno, mis_bp))
+# mis_pheno_era <- unique(c(mis_pheno, mis_era))
+# mis_bp_era <- unique(c(mis_era, mis_bp))
+# mis_pheno_bp_era <- unique(c(mis_bp_era, mis_pheno))
 
-assocstats(table(strata_genind$strata$bp[-mis_pheno_bp] %>% factor() %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_bp] %>% factor() %>% as.integer()))
-assocstats(table(strata_genind$strata$era[-mis_pheno_era] %>% factor() %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_era] %>% factor() %>% as.integer()))
-# table(strata_genind$strata$bp[-mis_bp_era], strata_genind$strata$era[-mis_bp_era])
-assocstats(table(strata_genind$strata$bp[-mis_bp_era] %>% factor() %>% as.integer(), strata_genind$strata$era[-mis_bp_era] %>% factor() %>% as.integer()))
-# table(strata_genind$strata$bp[-mis_pheno_bp_era], strata_genind$strata$era[-mis_pheno_bp_era])
-assocstats(table(strata_genind$strata$bp[-mis_pheno_bp_era] %>% factor() %>% as.integer(), strata_genind$strata$era[-mis_pheno_bp_era] %>% factor() %>% as.integer()))
+# assocstats(table(strata_genind$strata$bp[-mis_pheno_bp] %>% factor() %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_bp] %>% factor() %>% as.integer()))
+# assocstats(table(strata_genind$strata$era[-mis_pheno_era] %>% factor() %>% as.integer(), strata_genind$strata$pheno[-mis_pheno_era] %>% factor() %>% as.integer()))
+# # table(strata_genind$strata$bp[-mis_bp_era], strata_genind$strata$era[-mis_bp_era])
+# assocstats(table(strata_genind$strata$bp[-mis_bp_era] %>% factor() %>% as.integer(), strata_genind$strata$era[-mis_bp_era] %>% factor() %>% as.integer()))
+# # table(strata_genind$strata$bp[-mis_pheno_bp_era], strata_genind$strata$era[-mis_pheno_bp_era])
+# assocstats(table(strata_genind$strata$bp[-mis_pheno_bp_era] %>% factor() %>% as.integer(), strata_genind$strata$era[-mis_pheno_bp_era] %>% factor() %>% as.integer()))

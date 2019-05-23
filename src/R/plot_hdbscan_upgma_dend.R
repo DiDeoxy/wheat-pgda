@@ -20,6 +20,8 @@ levels(clusters) <- c(
   "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
 )
 
+table(wheat_data$sample$annot$mc)
+
 wheat_gds <- snpgdsOpen(ld_gds)
 ## making the distance object
 ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
@@ -45,8 +47,8 @@ circos.track(
   panel.fun = function(x, y) {
     circos.text(
       1:length(label_order), rep(0, length(label_order)),
-      wheat_data$sample$id[label_order], facing = "clockwise", niceFacing = T,
-      cex = 0.25, adj = c(0, -0.2), font = 2
+      wheat_data$sample$id[label_order], facing = "clockwise",
+      niceFacing = TRUE, cex = 0.25, adj = c(0, -0.2), font = 2
     )
   }
 )
