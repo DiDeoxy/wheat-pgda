@@ -38,5 +38,5 @@ ifelse(
 josts_d_by_chrom <- file.path("results", "josts_d_by_chrom")
 ifelse(! dir.exists(josts_d_by_chrom), dir.create(josts_d_by_chrom), FALSE)
 
-PIC <- file.path("results", "PIC")
-ifelse(! dir.exists(PIC), dir.create(PIC), FALSE)
+allele_richness <- file.path("results", "allele_richness")
+ifelse(! dir.exists(allele_richness), dir.create(allele_richness), FALSE)
