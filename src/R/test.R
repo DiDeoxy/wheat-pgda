@@ -1,104 +1,96 @@
+# import file paths and functions
 source(file.path("src", "R", "file_paths.R"))
-source(file.path("src", "R", "colour_sets.R"))
-import::from(
-  ggplot2, "aes", "annotation_logticks", "element_blank", "element_text",
-  "geom_line", "ggplot", "ggsave", "ggtitle","guide_legend", "guides", "labs",
-  "scale_colour_manual", "scale_x_log10", "theme", "xlab", "ylab"
-)
+import::from(dplyr, "as_tibble")
+import::from(igraph, "graph_from_edgelist", "max_cliques")
 import::from(magrittr, "%>%")
-import::from(parallel, "detectCores")
-import::from(pgda, "allele_richness", "snpgds_parse")
-import::from(readr, "read_rds")
-import::from(scrime, "knncatimpute", "rowTables")
-import::from(stringr, "str_c", "str_replace", "str_wrap")
-import::from(tibble, "tibble")
+import::from(pgda, "snpgds_parse", "snpgds_sample_subset", "snpgds_snp_subset")
+import::from(
+  SNPRelate, "snpgdsClose", "snpgdsIBS", "snpgdsLDpruning", "snpgdsOpen",
+  "snpgdsSelectSNP"
+)
+import::from(stringr, "str_c")
 
-wheat_data <- snpgds_parse(ld_gds)
+# identify snps with a maf below 0.05
+wheat_gds <- snpgdsOpen(file.path(gds, "phys.gds"))
+kept_id <- snpgdsSelectSNP(
+  wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
+)
+snpgdsClose(wheat_gds)
 
-geno_imputed <- wheat_data$geno %>%
-    replace(. == 0, 1) %>%
-    replace(. == 3, NA) %>%
-    t() %>%
-    knncatimpute() %>%
-    t()
-
-clusters <- factor(read_rds(hdbscan)$cluster)
-levels(clusters) <- c(
-  "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
+# reomve these markers from the phys map
+wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
+kept_index <- match(kept_id, wheat_data$snp$id)
+snpgds_snp_subset(
+  wheat_data, file.path(gds, "maf_mr_filtered_phys.gds"), kept_index
 )
 
-categorizations <- list(
-  clusters, wheat_data$sample$annot$bp, wheat_data$sample$annot$era,
-  wheat_data$sample$annot$mc, wheat_data$sample$annot$pheno,
-  wheat_data$sample$annot$habit, wheat_data$sample$annot$colour,
-  wheat_data$sample$annot$texture
+# remove these markers from the gen map
+wheat_data <- snpgds_parse(file.path(gds, "gen.gds"))
+kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
+snpgds_snp_subset(
+  wheat_data, file.path(gds, "maf_mr_filtered_gen.gds"), kept_index
 )
 
-categorization_names <- c(
-  "HDBSCAN Clusters", "Breeding Program", "Era", "Market Class", "Phenotype",
-  "Growth Habit", "Colour", "Texture"
-)
+# eliminate those individuals that show identity by state
+# (IBS, fractional identity) greater than 0.99
+wheat_gds <- snpgdsOpen(file.path(gds, "maf_mr_filtered_phys.gds"))
+IBS <- snpgdsIBS(wheat_gds, autosome.only = FALSE)
+snpgdsClose(wheat_gds)
 
-categorization_colours <- list(
-  colours_hdbscan_ar_legend, colours_bp, colours_era, colours_mc,
-  colours_pheno_ar, colour_set[c(1, 22, 4)], colour_set[c(1, 22, 4)],
-  colour_set[c(1, 4, 22)]
-)
+pairs <- which(IBS$ibs >= 0.99, arr.ind = TRUE)
+pairs <- cbind(IBS$sample.id[pairs[, 1]], IBS$sample.id[pairs[, 2]])
 
-lapply(1:length(categorizations), function (i) {
-  categorization <- categorizations[[i]]
-  print(categorization_names[i])
-  categories <- categorization %>% as.factor() %>% levels()
+indices <- vector()
+for (i in 1:dim(pairs)[1]) {
+  if (pairs[i, 1] == pairs[i, 2]) {
+    indices <- c(indices, i)
+  }
+}
+pairs <- pairs[-indices, ]
 
-  rarefied <- lapply(seq_along(categories), function (j) {
-    category <- categories[j]
-    indivs <- which(categorization == category)
-    if (length(indivs) > 1) {
-      tibble(
-        category = category, sample_size = 1:length(indivs),
-        allele_richness = allele_richness(
-          geno_imputed[, indivs], num_cores = detectCores()
-        ) %>% colMeans()
-      )
-    }
-  }) %>% do.call(rbind, .)
-
-  plot <- rarefied %>% ggplot() +
-    geom_line(
-      aes(sample_size, allele_richness, colour = str_wrap(category, 10))
-    ) +
-    scale_x_log10() +
-    scale_colour_manual(values = categorization_colours[[i]]) +
-    ggtitle(
-      str_c(
-        "Rarefaction Curves of Average Allele\nRichness of Sub-samples By\n",
-        categorization_names[i]
-      )
-    ) +
-    xlab("Sample Size") +
-    ylab("Average Allele Richness") +
-    labs(colour = str_wrap(categorization_names[i], 5)) +
-    guides(
-      colour = guide_legend(nrow = (
-        (rarefied$category %>% unique() %>% length()) / 3
-      ) %>% ceiling())
-    ) +
-    theme(
-      legend.position = "bottom", 
-      legend.text = element_text(
-        size = ifelse(length(categories) <= 4, 10,
-          ifelse(length(categories) <= 8, 8, 4)
-        )
-      ),
-      panel.grid.minor = element_blank()
-    ) +
-    annotation_logticks(sides = "b")
-
-  ggsave(
-    str_c(
-      "allele_richness_rarefaction_by_",
-      str_replace(categorization_names[i], " ", "_"), ".png"
-    ),
-    plot = plot, path = allele_richness, width = 100, height = 120, units = "mm"
+# print out a table of the maximal cliques constructed from the pairs
+graph_from_edgelist(pairs) %>%
+  max_cliques() %>%
+  lapply(names) %>%
+  lapply(`length<-`, max(lengths(.))) %>%
+  do.call(rbind, .) %>%
+  cbind(str_c("Clique ", 1:nrow(.)), .) %>%
+  as_tibble() %>%
+  write.table(
+    file.path("results", "clique_table.csv"), sep = ",",
+    row.names = FALSE, quote = FALSE,
+    col.names = c("Clique", str_c("Cultivar ", 1:(ncol(.) - 1)))
   )
-})
+
+# used clique_table.csv to identify cultivars to prune from each clique
+NILs <- c(
+  "Carberry 1", "CDC Stanley 1", "PT754", "SWS349", "Somerset 1",
+  "Stettler 1", "PT434", "BW811", "AC Minto 1", "Avocet 1",
+  "BW275 1", "PT616", "BW427 1", "BW492", "BW948",
+  "AC Reed 1", "SWS390", "SWS408", "SWS410", "SWS241",
+  "SWS345", "SWS363"
+)
+
+# mr pruned phys map
+wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_phys.gds"))
+sample_index <- match(NILs, wheat_data$sample$id)
+# create gds object without the NILs
+snpgds_sample_subset(wheat_data, phys_gds, sample_index)
+
+# mr pruned gen map
+wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_gen.gds"))
+sample_index <- match(NILs, wheat_data$sample$id)
+snpgds_sample_subset(wheat_data, gen_gds, sample_index)
+
+# create ld pruned set of markes
+wheat_gds <- snpgdsOpen(phys_gds)
+set.seed(1000)
+kept_id <- snpgdsLDpruning(
+  wheat_gds, autosome.only = FALSE, slide.max.bp = 1e7, ld.threshold = 0.7
+) %>% unlist()
+snpgdsClose(wheat_gds)
+
+wheat_data <- snpgds_parse(phys_gds)
+kept_index <- match(kept_id, wheat_data$snp$id)
+
+snpgds_snp_subset(wheat_data, ld_gds, kept_index)

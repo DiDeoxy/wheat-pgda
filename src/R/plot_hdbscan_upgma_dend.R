@@ -29,7 +29,7 @@ snpgdsClose(wheat_gds)
 
 upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
-  color_branches(k = 9, col = colours_dend) %>%
+  color_branches(k = 6, col = colours_dend) %>%
   set("branches_lwd", 1.5)
 label_order <- order.dendrogram(upgma_dend)
 

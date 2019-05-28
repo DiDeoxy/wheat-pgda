@@ -43,7 +43,7 @@ samp_annot <- list(
 
 # construct the SNPRelate GDS object fromt the input data with physical map
 snpgdsCreateGeno(
-  file.path(gds, "full_phys.gds"),
+  file.path(gds, "phys.gds"),
   genmat = data.matrix(genotypes),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker,
@@ -57,7 +57,7 @@ snpgdsCreateGeno(
 gen_order <- order(maps$chrom, maps$gen_pos)
 
 snpgdsCreateGeno(
-  file.path(gds, "full_gen.gds"),
+  file.path(gds, "gen.gds"),
   genmat = data.matrix(genotypes[gen_order, ]),
   sample.id = metadata$`Real Name`,
   snp.id = maps$marker[gen_order],

@@ -3,8 +3,8 @@ import::from(mmod, "D_Jost")
 import::from(readr, "read_rds", "write_rds")
 
 # calc maximal josts D from Alcala & Rosenberg, 2018 so we can normalize
-m = 2/3
-k = 3
+k = 3 # num groups
+m = (k - 1) / k
 km <- k * m
 k_msqr <- k * m^2
 km_i <- as.integer(km)

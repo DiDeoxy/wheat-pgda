@@ -10,13 +10,34 @@ import::from(
 )
 import::from(stringr, "str_c")
 
-# eliminate those individuals that show identity by state
-# (IBS, fractional identity) greater than 0.99
-wheat_gds <- snpgdsOpen(file.path(gds, "full_phys.gds"))
-IBS <- snpgdsIBS(wheat_gds, autosome.only = F)
+# identify snps with a maf below 0.05
+wheat_gds <- snpgdsOpen(file.path(gds, "phys.gds"))
+kept_id <- snpgdsSelectSNP(
+  wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
+)
 snpgdsClose(wheat_gds)
 
-pairs <- which(IBS$ibs >= 0.99, arr.ind = T)
+# reomve these markers from the phys map
+wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
+kept_index <- match(kept_id, wheat_data$snp$id)
+snpgds_snp_subset(
+  wheat_data, file.path(gds, "maf_mr_filtered_phys.gds"), kept_index
+)
+
+# remove these markers from the gen map
+wheat_data <- snpgds_parse(file.path(gds, "gen.gds"))
+kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
+snpgds_snp_subset(
+  wheat_data, file.path(gds, "maf_mr_filtered_gen.gds"), kept_index
+)
+
+# eliminate those individuals that show identity by state
+# (IBS, fractional identity) greater than 0.99
+wheat_gds <- snpgdsOpen(file.path(gds, "maf_mr_filtered_phys.gds"))
+IBS <- snpgdsIBS(wheat_gds, autosome.only = FALSE)
+snpgdsClose(wheat_gds)
+
+pairs <- which(IBS$ibs >= 0.99, arr.ind = TRUE)
 pairs <- cbind(IBS$sample.id[pairs[, 1]], IBS$sample.id[pairs[, 2]])
 
 indices <- vector()
@@ -43,43 +64,23 @@ graph_from_edgelist(pairs) %>%
 
 # used clique_table.csv to identify cultivars to prune from each clique
 NILs <- c(
-  "PT434", "BW811", "AC Minto 1", "Avocet 1", "BW275 1", "BW395",
-  "PT616", "BW427 1", "BW492", "BW948", "Carberry 1", "CDC Stanley 1",
-  "PT754", "SWS349", "Somerset 1", "Stettler 1", "SWS241", "SWS345",
-  "AC Reed 1", "SWS87", "SWS390", "SWS408", "SWS410"
+  "Carberry 1", "CDC Stanley 1", "PT754", "SWS349", "Somerset 1",
+  "Stettler 1", "PT434", "BW811", "AC Minto 1", "Avocet 1",
+  "BW275 1", "PT616", "BW427 1", "BW492", "BW948",
+  "AC Reed 1", "SWS390", "SWS408", "SWS410", "SWS241",
+  "SWS345", "SWS363"
 )
 
 # mr pruned phys map
-wheat_data <- snpgds_parse(file.path(gds, "full_phys.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_phys.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
 # create gds object without the NILs
-snpgds_sample_subset(
-  wheat_data, file.path(gds, "full_phys_sample_subset.gds"), sample_index
-)
+snpgds_sample_subset(wheat_data, phys_gds, sample_index)
 
 # mr pruned gen map
-wheat_data <- snpgds_parse(file.path(gds, "full_gen.gds"))
+wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_gen.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
-snpgds_sample_subset(
-  wheat_data, file.path(gds, "full_gen_sample_subset.gds"), sample_index
-)
-
-# identify snps with a maf below 0.05
-wheat_gds <- snpgdsOpen(file.path(gds, "full_phys_sample_subset.gds"))
-kept_id <- snpgdsSelectSNP(
-  wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
-)
-snpgdsClose(wheat_gds)
-
-# reomve these markers from the phys map
-wheat_data <- snpgds_parse(file.path(gds, "full_phys_sample_subset.gds"))
-kept_index <- match(kept_id, wheat_data$snp$id)
-snpgds_snp_subset(wheat_data, file.path(phys_gds), kept_index)
-
-# remove these markers from the gen map
-wheat_data <- snpgds_parse(file.path(gds, "full_gen_sample_subset.gds"))
-kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
-snpgds_snp_subset(wheat_data, file.path(gen_gds), kept_index)
+snpgds_sample_subset(wheat_data, gen_gds, sample_index)
 
 # create ld pruned set of markes
 wheat_gds <- snpgdsOpen(phys_gds)

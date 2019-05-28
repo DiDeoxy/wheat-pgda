@@ -27,8 +27,8 @@ Rscript src/R/create_gds.R
 # 4
 # create a series of gds files, first pruning sets of samples with >99% IBS
 # then removing markers with a MAF < 0.05 or a MR > 0.10, finally LD prune
-echo "sample_maf_mr_and_ld_prune_data"
-Rscript src/R/sample_maf_mr_and_ld_prune_data.R
+echo "filter_maf_mr_sample_and_ld_prune"
+Rscript src/R/filter_maf_mr_sample_and_ld_prune.R
 
 # 5
 # calculate HDBSCAN clusters
