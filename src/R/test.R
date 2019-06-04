@@ -1,96 +1,80 @@
 # import file paths and functions
 source(file.path("src", "R", "file_paths.R"))
-import::from(dplyr, "as_tibble")
-import::from(igraph, "graph_from_edgelist", "max_cliques")
-import::from(magrittr, "%>%")
-import::from(pgda, "snpgds_parse", "snpgds_sample_subset", "snpgds_snp_subset")
-import::from(
-  SNPRelate, "snpgdsClose", "snpgdsIBS", "snpgdsLDpruning", "snpgdsOpen",
-  "snpgdsSelectSNP"
-)
-import::from(stringr, "str_c")
+library(tidyverse)
+library(pgda)
 
-# identify snps with a maf below 0.05
-wheat_gds <- snpgdsOpen(file.path(gds, "phys.gds"))
-kept_id <- snpgdsSelectSNP(
-  wheat_gds, maf = 0.05, missing.rate = 0.10, autosome.only = F
-)
-snpgdsClose(wheat_gds)
+# mean_dist <- 14547261565 / 14003
 
-# reomve these markers from the phys map
-wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
-kept_index <- match(kept_id, wheat_data$snp$id)
-snpgds_snp_subset(
-  wheat_data, file.path(gds, "maf_mr_filtered_phys.gds"), kept_index
-)
 
-# remove these markers from the gen map
-wheat_data <- snpgds_parse(file.path(gds, "gen.gds"))
-kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
-snpgds_snp_subset(
-  wheat_data, file.path(gds, "maf_mr_filtered_gen.gds"), kept_index
-)
-
-# eliminate those individuals that show identity by state
-# (IBS, fractional identity) greater than 0.99
-wheat_gds <- snpgdsOpen(file.path(gds, "maf_mr_filtered_phys.gds"))
-IBS <- snpgdsIBS(wheat_gds, autosome.only = FALSE)
-snpgdsClose(wheat_gds)
-
-pairs <- which(IBS$ibs >= 0.99, arr.ind = TRUE)
-pairs <- cbind(IBS$sample.id[pairs[, 1]], IBS$sample.id[pairs[, 2]])
-
-indices <- vector()
-for (i in 1:dim(pairs)[1]) {
-  if (pairs[i, 1] == pairs[i, 2]) {
-    indices <- c(indices, i)
-  }
+coverage_by_chrom <- function (snp_data) {
+  by(snp_data, snp_data$chrom, function (chrom_data) {
+    intervals <- tibble(start = double(), end = double())
+    cur_interval <- list(start = double(), end = double())
+    for (i in 1:nrow(chrom_data)) {
+      if (i == 1) {
+        cur_interval$start <- max(0, chrom_data[i, ]$pos - half_mean_dist)
+        cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
+      } else if (i > 1 && i < nrow(chrom_data)) {
+        if ((chrom_data[i, ]$pos - half_mean_dist) <= cur_interval$end) {
+          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
+        } else {
+          intervals <- intervals %>%
+            add_row(start = cur_interval$start, end = cur_interval$end)
+          cur_interval$start <- chrom_data[i, ]$pos - half_mean_dist
+          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
+        }
+      } else {
+        if ((chrom_data[i, ]$pos - half_mean_dist) <= cur_interval$end) {
+          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
+          intervals <- intervals %>%
+            add_row(start = cur_interval$start, end = cur_interval$end)
+        } else {
+          intervals <- intervals %>%
+            add_row(start = cur_interval$start, end = cur_interval$end)
+          cur_interval$start <- chrom_data[i, ]$pos - half_mean_dist
+          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
+          intervals <- intervals %>%
+            add_row(start = cur_interval$start, end = cur_interval$end)
+        }
+      }
+    }
+    (intervals[, 2] - intervals[, 1]) %>% sum()
+  }) %>% as.list() %>% unlist()
 }
-pairs <- pairs[-indices, ]
 
-# print out a table of the maximal cliques constructed from the pairs
-graph_from_edgelist(pairs) %>%
-  max_cliques() %>%
-  lapply(names) %>%
-  lapply(`length<-`, max(lengths(.))) %>%
-  do.call(rbind, .) %>%
-  cbind(str_c("Clique ", 1:nrow(.)), .) %>%
-  as_tibble() %>%
-  write.table(
-    file.path("results", "clique_table.csv"), sep = ",",
-    row.names = FALSE, quote = FALSE,
-    col.names = c("Clique", str_c("Cultivar ", 1:(ncol(.) - 1)))
-  )
-
-# used clique_table.csv to identify cultivars to prune from each clique
-NILs <- c(
-  "Carberry 1", "CDC Stanley 1", "PT754", "SWS349", "Somerset 1",
-  "Stettler 1", "PT434", "BW811", "AC Minto 1", "Avocet 1",
-  "BW275 1", "PT616", "BW427 1", "BW492", "BW948",
-  "AC Reed 1", "SWS390", "SWS408", "SWS410", "SWS241",
-  "SWS345", "SWS363"
-)
-
-# mr pruned phys map
 wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_phys.gds"))
-sample_index <- match(NILs, wheat_data$sample$id)
-# create gds object without the NILs
-snpgds_sample_subset(wheat_data, phys_gds, sample_index)
+half_mean_dist <- 0.5 * (wheat_data$chrom_lengths %>% sum() / 14003)
+cov_by_chrom <- coverage_by_chrom(wheat_data$snp)
+cov_by_chrom / wheat_data$chrom_lengths
+cov_by_chrom %>% sum() / wheat_data$chrom_lengths %>% sum()
 
-# mr pruned gen map
+(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6) /
+((wheat_data$chrom[seq(1, 19, 3)] %>% sum() / 1e6) +
+(wheat_data$chrom[seq(2, 20, 3)] %>% sum() / 1e6) +
+(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6))
+
+(wheat_data$chrom[seq(1, 19, 3)] %>% sum() / 1e6) / 5567
+(wheat_data$chrom[seq(2, 20, 3)] %>% sum() / 1e6) / 7266
+(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6) / 1170
+
 wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_gen.gds"))
-sample_index <- match(NILs, wheat_data$sample$id)
-snpgds_sample_subset(wheat_data, gen_gds, sample_index)
+half_mean_dist <- 0.5 * (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist() / 14003)
+cov_by_chrom <- coverage_by_chrom(wheat_data$snp)
+cov_by_chrom / (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist())
+cov_by_chrom %>% sum() / (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist()) %>% sum()
 
-# create ld pruned set of markes
-wheat_gds <- snpgdsOpen(phys_gds)
-set.seed(1000)
-kept_id <- snpgdsLDpruning(
-  wheat_gds, autosome.only = FALSE, slide.max.bp = 1e7, ld.threshold = 0.7
-) %>% unlist()
-snpgdsClose(wheat_gds)
 
-wheat_data <- snpgds_parse(phys_gds)
-kept_index <- match(kept_id, wheat_data$snp$id)
+median(order_diffs)
+getmode(order_diffs)
+mean(order_diffs)
+sd(order_diffs)
+hist(order_diffs)
+summary(order_diffs)
 
-snpgds_snp_subset(wheat_data, ld_gds, kept_index)
+test1 <- c("a", "b", "c", "d", "e")
+test2 <- c("c", "e", "b", "a", "d")
+
+match(test1, test2)
+match(rev(test1), rev(test2))
+test2[match(test1, test2)]
+rev(test2)[match(rev(test1), rev(test2))] %>% rev()
