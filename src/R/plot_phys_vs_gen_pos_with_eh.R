@@ -1,4 +1,5 @@
 source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
 import::from(pgda, "calc_eh", "max_lengths", "snpgds_parse")
 import::from(GGally, "ggmatrix")
 import::from(
@@ -79,7 +80,7 @@ colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
 rep(6, 3), rep(7, 3))
 
 # create a function for making a gradient of colours
-colour_gradient <- colorRampPalette(c("Red", "Green", "Blue"))
+colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])
 
 # calc the lengths of the different genomes and homoeologous sets
 max_phys_lengths <- phys_data$chrom_lengths %>% max_lengths() / 1e6
@@ -117,7 +118,7 @@ plots <- by(snp_data, snp_data$chrom,
       labs(
         colour = "Expected Heterozygosity"
       ) +
-      scale_colour_gradientn(colours = colour_gradient(100)) +
+      scale_colour_gradientn(colours = colour_gradient(50)) +
       theme(legend.key.size = unit(15, "points"))
       # geom_point(
       #   aes(haplo_phys, haplo_gen),
@@ -138,8 +139,8 @@ plots_matrix <- ggmatrix(
 
 # plot the matrix
 png(
-  file.path("results", "chrom_marker_phys_vs_gen_pos_and_eh.png"),
-  family = "Times New Roman", width = 120, height = 267, pointsize = 5,
+  file.path("results", "phys_vs_gen_pos_with_eh.png"),
+  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()

@@ -1,0 +1,97 @@
+source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
+import::from(pgda, "max_lengths", "snpgds_parse")
+import::from(GGally, "ggmatrix")
+import::from(
+  ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_manual", 
+  "theme", "xlim", "ylim"
+)
+import::from(magrittr, "%>%")
+import::from(stringr, "str_c", "str_wrap")
+import::from(tibble, "tibble")
+
+phys_data <- snpgds_parse(phys_gds)
+gen_data <- snpgds_parse(gen_gds)
+
+snp_data <- tibble(
+  phys_id = phys_data$snp$id, gen_id = gen_data$snp$id,
+  chrom = phys_data$snp$chrom,
+  phys_pos_mb = phys_data$snp$pos / 1e6,
+  gen_pos_cm = gen_data$snp$pos / 100
+)
+
+# calc the lengths of the different genomes and homoeologous sets
+max_phys_lengths <- phys_data$chrom_lengths %>% max_lengths() / 1e6
+max_gen_lengths <- gen_data$chrom_lengths %>% max_lengths() / 100
+
+# create a function for making a gradient of colours
+levels <- c(
+  "0-4", "5-10", "11-15", "16-20", "21-50", "51-100", "101-500", "501-1500"
+)
+colour_levels <- colour_set[c(7, 4, 2, 3, 5, 1, 6, 19)]
+names(colour_levels) <- levels
+
+plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
+  chrom <- chrom_data$chrom[1]
+
+  gen_to_phys_order <- match(chrom_data$phys_id, chrom_data$gen_id)
+  order_diff <- (
+    gen_to_phys_order - 1:length(gen_to_phys_order)
+  ) %>% abs()
+
+  order_diff_intervals <- cut(
+    order_diff, c(-1, 4, 10, 15, 20, 50, 100, 500, 1500), levels
+  )
+
+  ggplot() +
+    xlim(
+      0,
+      max_phys_lengths[[
+        ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
+      ]]
+    ) +
+    ylim(
+      0,
+      max_gen_lengths[[
+        ifelse(grepl("1", chrom), "one",
+          ifelse(grepl("2", chrom), "two",
+            ifelse(grepl("3", chrom), "three",
+              ifelse(grepl("4", chrom), "four",
+                ifelse(grepl("5", chrom), "five",
+                  ifelse(grepl("6", chrom), "six", "seven")
+                )
+              )
+            )
+          )
+        )
+      ]]
+    ) +
+    geom_point(
+      aes(
+        chrom_data$phys_pos_mb, chrom_data$gen_pos_cm[gen_to_phys_order],
+        colour = order_diff_intervals
+      ), size = 0.3
+    ) +
+    labs(colour = levels) +
+    scale_colour_manual(name = "Order Difference", values = colour_levels)
+})
+
+plots_matrix <- ggmatrix(
+  plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+  xlab = "Pseudo-Chromosomal Position in Mb", ylab = "Genetic Position in cM",
+  title = str_wrap(
+    str_c(
+      "Pseudo-Chromosomal vs Genetic Position with Markers Coloured by ",
+      "Magnitude of Difference in Order Between Maps"
+    ), width = 70
+  ),
+  legend = c(2, 1)
+)
+
+# plot the matrix
+png(
+  file.path("results", "phys_vs_gen_pos_with_order_diff.png"),
+  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
+  units = "mm", res = 300)
+plots_matrix + theme(legend.position = "bottom")
+dev.off()

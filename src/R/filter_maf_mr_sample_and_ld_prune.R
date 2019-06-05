@@ -64,10 +64,10 @@ graph_from_edgelist(pairs) %>%
 
 # used clique_table.csv to identify cultivars to prune from each clique
 NILs <- c(
-  "Carberry 1", "CDC Stanley 1", "PT754", "SWS349", "Somerset 1",
-  "Stettler 1", "PT434", "BW811", "AC Minto 1", "Avocet 1",
-  "BW275 1", "PT616", "BW427 1", "BW492", "BW948",
-  "AC Reed 1", "SWS390", "SWS408", "SWS410", "SWS241",
+  "Carberry 1", "PT754", "SWS349", "Somerset 1","Stettler 1",
+  "PT434", "BW811", "AC Minto 1", "Avocet 1", "BW275 1",
+  "PT616", "BW427 1", "BW492", "BW948", "AC Reed 1",
+  "SWS87", "SWS390", "SWS408", "SWS410", "SWS241",
   "SWS345", "SWS363"
 )
 

@@ -1,80 +1,102 @@
-# import file paths and functions
 source(file.path("src", "R", "file_paths.R"))
+source(file.path("src", "R", "colour_sets.R"))
 library(tidyverse)
+library(GGally)
 library(pgda)
+library(circlize)
 
-# mean_dist <- 14547261565 / 14003
+phys_data <- snpgds_parse(phys_gds)
+gen_data <- snpgds_parse(gen_gds)
 
+snp_data <- tibble(
+  phys_id = phys_data$snp$id, gen_id = gen_data$snp$id,
+  chrom = phys_data$snp$chrom,
+  phys_pos_mb = phys_data$snp$pos / 1e6,
+  gen_pos_cm = gen_data$snp$pos / 100
+)
+snp_data_list <- split(snp_data, snp_data$chrom)
 
-coverage_by_chrom <- function (snp_data) {
-  by(snp_data, snp_data$chrom, function (chrom_data) {
-    intervals <- tibble(start = double(), end = double())
-    cur_interval <- list(start = double(), end = double())
-    for (i in 1:nrow(chrom_data)) {
-      if (i == 1) {
-        cur_interval$start <- max(0, chrom_data[i, ]$pos - half_mean_dist)
-        cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
-      } else if (i > 1 && i < nrow(chrom_data)) {
-        if ((chrom_data[i, ]$pos - half_mean_dist) <= cur_interval$end) {
-          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
-        } else {
-          intervals <- intervals %>%
-            add_row(start = cur_interval$start, end = cur_interval$end)
-          cur_interval$start <- chrom_data[i, ]$pos - half_mean_dist
-          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
-        }
-      } else {
-        if ((chrom_data[i, ]$pos - half_mean_dist) <= cur_interval$end) {
-          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
-          intervals <- intervals %>%
-            add_row(start = cur_interval$start, end = cur_interval$end)
-        } else {
-          intervals <- intervals %>%
-            add_row(start = cur_interval$start, end = cur_interval$end)
-          cur_interval$start <- chrom_data[i, ]$pos - half_mean_dist
-          cur_interval$end <- chrom_data[i, ]$pos + half_mean_dist
-          intervals <- intervals %>%
-            add_row(start = cur_interval$start, end = cur_interval$end)
-        }
-      }
-    }
-    (intervals[, 2] - intervals[, 1]) %>% sum()
-  }) %>% as.list() %>% unlist()
-}
+# calc the lengths of the different genomes and homoeologous sets
+max_lengths_phys <- by(snp_data$phys_pos_mb, snp_data$chrom, max) %>% max_lengths()
+max_lengths_gen <- by(snp_data$gen_pos_cm, snp_data$chrom, max) %>% max_lengths()
+max_markers <- by(snp_data, snp_data$chrom, nrow) %>% max_lengths()
 
-wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_phys.gds"))
-half_mean_dist <- 0.5 * (wheat_data$chrom_lengths %>% sum() / 14003)
-cov_by_chrom <- coverage_by_chrom(wheat_data$snp)
-cov_by_chrom / wheat_data$chrom_lengths
-cov_by_chrom %>% sum() / wheat_data$chrom_lengths %>% sum()
+# create a function for making a gradient of colours
+levels <- c(
+  "0-4", "5-10", "11-15", "16-20", "21-50", "51-100", "101-500", "501-1500"
+)
+colour_levels <- colour_set[c(7, 4, 2, 3, 5, 1, 6, 19)]
+names(colour_levels) <- levels
 
-(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6) /
-((wheat_data$chrom[seq(1, 19, 3)] %>% sum() / 1e6) +
-(wheat_data$chrom[seq(2, 20, 3)] %>% sum() / 1e6) +
-(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6))
+chroms <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
+  t() %>% as.vector()
 
-(wheat_data$chrom[seq(1, 19, 3)] %>% sum() / 1e6) / 5567
-(wheat_data$chrom[seq(2, 20, 3)] %>% sum() / 1e6) / 7266
-(wheat_data$chrom[seq(3, 21, 3)] %>% sum() / 1e6) / 1170
+circos.initialize(
+  chroms, xlim = c(0, 1)
+)
+i <- 1
+circos.track(
+  ylim = c(0, 1), track.height = 0.15, bg.border = NA,
+  panel.fun = function(x, y) {
+    circos.text(
+      1, 0, chroms[i], facing = "clockwise",
+      niceFacing = TRUE, cex = 1, adj = c(0, -0.2), font = 2
+    )
+    i <<- i + 1
+  }
+)
+i <- 1
+circos.track(
+  track.height = 0.3,
+  ylim = c(
+    0,
+    by(snp_data$gen_pos_cm, snp_data$chrom, max) %>%
+      as.list() %>% unlist() %>% max()
+  ),
+  panel.fun = function (x, y) {
+    gen_to_phys_order <- match(
+      snp_data_list[[i]]$phys_id, snp_data_list[[i]]$gen_id
+    )
+    order_diff <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
 
-wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_gen.gds"))
-half_mean_dist <- 0.5 * (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist() / 14003)
-cov_by_chrom <- coverage_by_chrom(wheat_data$snp)
-cov_by_chrom / (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist())
-cov_by_chrom %>% sum() / (by(wheat_data$snp$pos, wheat_data$snp$chrom, max) %>% as.list() %>% unlist()) %>% sum()
+    cols <- colour_levels[
+      (
+        cut(order_diff, c(-1, 4, 10, 15, 20, 50, 100, 500, 1500), levels ) %>%
+          as.integer()
+      )
+    ]
+    circos.points(
+      x = snp_data_list[[i]]$phys_pos_mb / max(snp_data_list[[i]]$phys_pos_mb),
+      y = snp_data_list[[i]]$gen_pos_cm[gen_to_phys_order], col = cols,
+      pch = 19, cex = 0.5
+    )
+    i <<- i + 1
+  }
+)
+i <- 1
+circos.track(
+  track.height = 0.3,
+  ylim = c(
+    0, by(snp_data, snp_data$chrom, nrow) %>% as.list() %>% unlist() %>% max()
+  ),
+  panel.fun = function (x, y) {
+    gen_to_phys_order <- match(
+      snp_data_list[[i]]$phys_id, snp_data_list[[i]]$gen_id
+    )
+    order_diff <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
 
+    cols <- colour_levels[
+      (
+        cut(order_diff, c(-1, 4, 10, 15, 20, 50, 100, 500, 1500), levels ) %>%
+          as.integer()
+      )
+    ]
+    circos.points(
+      x = 1:length(gen_to_phys_order) / length(gen_to_phys_order),
+      y = gen_to_phys_order, col = cols, pch = 19, cex = 0.5
+    )
+    i <<- i + 1
+  }
+)
+circos.clear()
 
-median(order_diffs)
-getmode(order_diffs)
-mean(order_diffs)
-sd(order_diffs)
-hist(order_diffs)
-summary(order_diffs)
-
-test1 <- c("a", "b", "c", "d", "e")
-test2 <- c("c", "e", "b", "a", "d")
-
-match(test1, test2)
-match(rev(test1), rev(test2))
-test2[match(test1, test2)]
-rev(test2)[match(rev(test1), rev(test2))] %>% rev()
