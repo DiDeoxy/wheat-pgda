@@ -26,9 +26,9 @@ max_gen_lengths <- gen_data$chrom_lengths %>% max_lengths() / 100
 
 # create a function for making a gradient of colours
 levels <- c(
-  "0-4", "5-10", "11-15", "16-20", "21-50", "51-100", "101-500", "501-1500"
+  "0-6", "7-22", "23-64", "65-123", "124-165", "166-273", "274-424", "425-1160"
 )
-colour_levels <- colour_set[c(7, 4, 2, 3, 5, 1, 6, 19)]
+colour_levels <- colours_order_diff
 names(colour_levels) <- levels
 
 plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
@@ -40,7 +40,7 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
   ) %>% abs()
 
   order_diff_intervals <- cut(
-    order_diff, c(-1, 4, 10, 15, 20, 50, 100, 500, 1500), levels
+    order_diff, c(-1, 6, 22, 64, 123, 165, 273, 424, 1160), levels
   )
 
   ggplot() +

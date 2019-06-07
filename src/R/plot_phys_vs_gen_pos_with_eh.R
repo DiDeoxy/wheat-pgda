@@ -80,7 +80,7 @@ colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
 rep(6, 3), rep(7, 3))
 
 # create a function for making a gradient of colours
-colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])
+colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(50)
 
 # calc the lengths of the different genomes and homoeologous sets
 max_phys_lengths <- phys_data$chrom_lengths %>% max_lengths() / 1e6
@@ -118,7 +118,7 @@ plots <- by(snp_data, snp_data$chrom,
       labs(
         colour = "Expected Heterozygosity"
       ) +
-      scale_colour_gradientn(colours = colour_gradient(50)) +
+      scale_colour_gradientn(colours = colour_gradient) +
       theme(legend.key.size = unit(15, "points"))
       # geom_point(
       #   aes(haplo_phys, haplo_gen),

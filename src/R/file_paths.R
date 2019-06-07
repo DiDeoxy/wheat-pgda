@@ -14,9 +14,9 @@ ifelse(! dir.exists(inter_markers), dir.create(inter_markers), FALSE)
 gds <- file.path(intermediate, "gds")
 ifelse(! dir.exists(gds), dir.create(gds), FALSE)
 
-phys_gds <- file.path(gds, "maf_mr_sample_filtered_phys.gds")
-gen_gds <- file.path(gds, "maf_mr_sample_filtered_gen.gds")
-ld_gds <- file.path(gds, "maf_mr_sample_filtered_ld_pruned_phys.gds")
+phys_gds <- file.path(gds, "sample_pruned_phys.gds")
+gen_gds <- file.path(gds, "sample_pruned_gen.gds")
+ld_gds <- file.path(gds, "maf_mr_filtered_sample_ld_pruned_phys.gds")
 
 geninds <- file.path(intermediate, "geninds")
 ifelse(! dir.exists(geninds), dir.create(geninds), FALSE)

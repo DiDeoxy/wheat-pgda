@@ -20,14 +20,18 @@ snp_data <- tibble(
   gen_pos_cm = gen_data$snp$pos / 100
 )
 
+gen_pos_counts <- by(snp_data, snp_data$chrom, function (chrom_data) {
+  table(chrom_data$gen_pos_cm) %>% as.vector()
+}) %>% unlist()
+
 # calc the lengths of the different genomes and homoeologous sets
 max_markers <- by(snp_data, snp_data$chrom, nrow) %>% max_lengths()
 
 # create a function for making a gradient of colours
 levels <- c(
-  "0-4", "5-10", "11-15", "16-20", "21-50", "51-100", "101-500", "501-1500"
+  "0-7", "8-26", "27-72", "73-126", "127-173", "174-298", "299-436", "437-1248"
 )
-colour_levels <- colour_set[c(7, 4, 2, 3, 5, 1, 6, 19)]
+colour_levels <- colours_order_diff
 names(colour_levels) <- levels
 
 # use to hold all diffs for calcing stats from
@@ -44,7 +48,7 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
   order_diffs <<- c(order_diffs, order_diff)
 
   order_diff_intervals <- cut(
-    order_diff, c(-1, 4, 10, 15, 20, 50, 100, 500, 1500), levels
+    order_diff, c(-1, 7, 26, 72, 126, 173, 298, 436, 1248), levels
   )
 
   ggplot() +
@@ -101,3 +105,4 @@ plots_matrix + theme(legend.position = "bottom")
 dev.off()
 
 summary(order_diffs)
+quantile(order_diffs, c(0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.992187))

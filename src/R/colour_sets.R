@@ -8,6 +8,8 @@ colour_set <- c(
 # pie(rep(1, 22), col = colour_set)
 
 # defining the colour sets
+# colours_order_diff <- colour_set[c(7, 4, 2, 5, 1, 6, 19, 22)]
+colours_order_diff <- colour_set[c(2, 4, 5, 1, 6, 19, 13, 15)]
 colours_era <- colour_set[c(1, 5, 3, 2, 4, 6, 22)]
 colours_bp <- colour_set[c(3, 1, 5, 4, 12, 2, 20, 22, 6, 7, 8, 9, 13)]
 colours_mc <- colour_set[c(5, 4, 3, 6, 2, 11, 1, 7, 22)]
