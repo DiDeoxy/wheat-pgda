@@ -1,6 +1,6 @@
 source(file.path("src", "R", "file_paths.R"))
 source(file.path("src", "R", "colour_sets.R"))
-import::from(pgda, "calc_eh", "max_lengths", "snpgds_parse")
+import::from(pgda, "calc_eh", "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(GGally, "ggmatrix")
 import::from(
   ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_gradientn", 
@@ -14,12 +14,13 @@ import::from(tibble, "tibble")
 phys_data <- snpgds_parse(phys_gds)
 gen_data <- snpgds_parse(gen_gds)
 
-snp_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
+gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
 
 # make a tibble with the relevant data
 snp_data <- tibble(
-  chrom = phys_data$snp$chrom, phys = phys_data$snp$pos / 1e6,
-  gen = gen_data$snp$pos[snp_phys_order] / 100,
+  chrom = phys_data$snp$chrom,
+  phys_pos_mb = phys_data$snp$pos / 1e6,
+  gen_pos_cm = gen_data$snp$pos[gen_to_phys_order] / 100,
   eh = calc_eh(phys_data$genotypes)
 )
 
@@ -83,8 +84,12 @@ rep(6, 3), rep(7, 3))
 colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(50)
 
 # calc the lengths of the different genomes and homoeologous sets
-max_phys_lengths <- phys_data$chrom_lengths %>% max_lengths() / 1e6
-max_gen_lengths <- gen_data$chrom_lengths %>% max_lengths() / 100
+max_phys_lengths <- span_by_chrom(
+  phys_data$snp$chrom, phys_data$snp$pos
+) %>% max_lengths() / 1e6
+max_gen_lengths <- span_by_chrom(
+  gen_data$snp$chrom, gen_data$snp$pos
+) %>% max_lengths() / 100
 
 # create plots of phys position vs gen pos
 plots <- by(snp_data, snp_data$chrom,
@@ -114,7 +119,7 @@ plots <- by(snp_data, snp_data$chrom,
           )
         ]]
       ) +
-      geom_point(aes(phys, gen, colour = eh), size = 0.5) +
+      geom_point(aes(phys_pos_mb, gen_pos_cm, colour = eh), size = 0.5) +
       labs(
         colour = "Expected Heterozygosity"
       ) +

@@ -9,11 +9,12 @@ install.packages(
     "adegenet", "ade4", "ape", "BiocManager", "circlize", "dbscan",
     "dendextend", "devtools", "extrafont", "GeneticSubsetter", "GGally", 
     "ggrepel", "igraph", "import", "mmod", "plyr", "poppr", "pracma",
-    "RColorBrewer", "roxygen2", "scrime", "tidyverse", "vcd"
+    "RColorBrewer", "Rfast", "roxygen2", "scrime", "tidyverse", "vcd"
   )
 )
 library(extrafont); font_import(); loadfonts()
 
 
 BiocManager::install("SNPRelate")
-devtools::install_github("https://github.com/DiDeoxy/PGDA")
+# devtools::install_github("https://github.com/DiDeoxy/PGDA")
+devtools::install_git("/home/maxh/Projects/PGDA")

@@ -16,7 +16,8 @@ ifelse(! dir.exists(gds), dir.create(gds), FALSE)
 
 phys_gds <- file.path(gds, "sample_pruned_phys.gds")
 gen_gds <- file.path(gds, "sample_pruned_gen.gds")
-ld_gds <- file.path(gds, "maf_mr_filtered_sample_ld_pruned_phys.gds")
+ld_phys_gds <- file.path(gds, "maf_mr_filtered_sample_ld_pruned_phys.gds")
+ld_gen_gds <- file.path(gds, "maf_mr_filtered_sample_ld_pruned_gen.gds")
 
 geninds <- file.path(intermediate, "geninds")
 ifelse(! dir.exists(geninds), dir.create(geninds), FALSE)

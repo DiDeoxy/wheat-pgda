@@ -9,7 +9,8 @@ km <- k * m
 k_msqr <- k * m^2
 km_i <- as.integer(km)
 km_d <- (km - km_i)
-max_D <- (2 * k * (km_i + (km_d)^2 - k_msqr)) / ((k - 1) * (k - 2 * km_d * (1 - km_d)))
+max_D <- (2 * k * (km_i + (km_d)^2 - k_msqr)) /
+    ((k - 1) * (k - 2 * km_d * (1 - km_d)))
 
 # load the genind object
 comp_genind <- read_rds(file.path(geninds, "chrs_chrw_csws.rds"))

@@ -8,28 +8,32 @@ import::from(
 import::from(dendextend, "color_branches", "set")
 import::from(magrittr, "%>%")
 import::from(pgda, "draw_rects", "snpgds_parse")
-import::from(readr, "read_rds")
+import::from(readr, "read_rds", "write_csv")
 import::from(SNPRelate, "snpgdsClose", "snpgdsIBS", "snpgdsOpen")
 import::from(stringr, "str_c")
 
 ## setting up the data
-wheat_data <- snpgds_parse(ld_gds)
+wheat_data <- snpgds_parse(ld_phys_gds)
 
 clusters <- factor(read_rds(hdbscan)$cluster)
 levels(clusters) <- c(
   "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
 )
 
-table(wheat_data$sample$annot$mc)
+write_csv(
+  matrix(wheat_data$sample$id[which(clusters == "Noise")], 7, 5) %>%
+    as.data.frame(),
+  path = file.path("results", "noise_cultivars.csv")
+)
 
-wheat_gds <- snpgdsOpen(ld_gds)
+wheat_gds <- snpgdsOpen(ld_phys_gds)
 ## making the distance object
 ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
 upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
-  color_branches(k = 6, col = colours_dend) %>%
+  color_branches(k = 9, col = colours_dend) %>%
   set("branches_lwd", 1.5)
 label_order <- order.dendrogram(upgma_dend)
 
@@ -104,12 +108,12 @@ legend(
   pch = pch, col = colours_hdbscan_legend, cex = cex, bg = colors()[109]
 )
 
-title(
-  main = str_c(
-    "UPGMA Dendrogram of 365 Varieties\nwith HDBSCAN Clusters and ",
-    "Categorical Data In Surrounding Rows"
-  ),
-  cex.main = 0.7
+# title(
+#   main = str_c(
+#     "UPGMA Dendrogram of 365 Varieties\nwith HDBSCAN Clusters and ",
+#     "Categorical Data In Surrounding Rows"
+#   ),
+#   cex.main = 0.7
 )
 dev.off()
 

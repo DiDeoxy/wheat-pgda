@@ -20,10 +20,15 @@ kept_id <- snpgdsLDpruning(
 snpgdsClose(wheat_gds)
 
 wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
-kept_index <- match(kept_id, wheat_data$snp$id)
-
+kept_index <- match(kept_id, wheat_data$snp$id) %>% sort()
 snpgds_snp_subset(
   wheat_data, file.path(gds, "maf_mr_filtered_ld_pruned_phys.gds"), kept_index
+)
+
+wheat_data <- snpgds_parse(file.path(gds, "gen.gds"))
+kept_index <- match(kept_id, wheat_data$snp$id) %>%sort()
+snpgds_snp_subset(
+  wheat_data, file.path(gds, "maf_mr_filtered_ld_pruned_gen.gds"), kept_index
 )
 
 # eliminate those individuals that show identity by state
@@ -81,7 +86,13 @@ snpgds_sample_subset(wheat_data, gen_gds, sample_index)
 wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_ld_pruned_phys.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
 # create gds object without the NILs
-snpgds_sample_subset(wheat_data, ld_gds, sample_index)
+snpgds_sample_subset(wheat_data, ld_phys_gds, sample_index)
+
+# mr pruned phys map
+wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_ld_pruned_gen.gds"))
+sample_index <- match(NILs, wheat_data$sample$id)
+# create gds object without the NILs
+snpgds_sample_subset(wheat_data, ld_gen_gds, sample_index)
 
 
 

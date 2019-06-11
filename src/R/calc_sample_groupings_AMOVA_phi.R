@@ -92,5 +92,5 @@ for (hierarchy in hierarchies) {
 amova_table
 
 write_csv(
-  amova_table, file.path("results", "amova_phi_table.csv"), col_names = TRUE
+  amova_table, file.path("results", "amova_var_table.csv"), col_names = TRUE
 )

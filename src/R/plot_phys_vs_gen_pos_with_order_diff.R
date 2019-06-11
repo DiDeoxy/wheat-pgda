@@ -1,6 +1,6 @@
 source(file.path("src", "R", "file_paths.R"))
 source(file.path("src", "R", "colour_sets.R"))
-import::from(pgda, "max_lengths", "snpgds_parse")
+import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(GGally, "ggmatrix")
 import::from(
   ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_manual", 
@@ -14,22 +14,26 @@ phys_data <- snpgds_parse(phys_gds)
 gen_data <- snpgds_parse(gen_gds)
 
 snp_data <- tibble(
-  phys_id = phys_data$snp$id, gen_id = gen_data$snp$id,
+  phys_id = phys_data$snp$id,
+  gen_id = gen_data$snp$id,
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
   gen_pos_cm = gen_data$snp$pos / 100
 )
 
 # calc the lengths of the different genomes and homoeologous sets
-max_phys_lengths <- phys_data$chrom_lengths %>% max_lengths() / 1e6
-max_gen_lengths <- gen_data$chrom_lengths %>% max_lengths() / 100
+max_phys_lengths <- span_by_chrom(
+  phys_data$snp$chrom, phys_data$snp$pos
+) %>% max_lengths() / 1e6
+max_gen_lengths <- span_by_chrom(
+  gen_data$snp$chrom, gen_data$snp$pos
+) %>% max_lengths() / 100
 
 # create a function for making a gradient of colours
 levels <- c(
-  "0-6", "7-22", "23-64", "65-123", "124-165", "166-273", "274-424", "425-1160"
+  "0-7", "8-26", "27-72", "73-126", "127-173", "174-298", "299-436", "437-1248"
 )
-colour_levels <- colours_order_diff
-names(colour_levels) <- levels
+names(colours_order_diff) <- levels
 
 plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
   chrom <- chrom_data$chrom[1]
@@ -40,7 +44,7 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
   ) %>% abs()
 
   order_diff_intervals <- cut(
-    order_diff, c(-1, 6, 22, 64, 123, 165, 273, 424, 1160), levels
+    order_diff, c(-1, 7, 26, 72, 126, 173, 298, 436, 1248), levels
   )
 
   ggplot() +
@@ -73,7 +77,7 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
       ), size = 0.3
     ) +
     labs(colour = levels) +
-    scale_colour_manual(name = "Order Difference", values = colour_levels)
+    scale_colour_manual(name = "Order Difference", values = colours_order_diff)
 })
 
 plots_matrix <- ggmatrix(

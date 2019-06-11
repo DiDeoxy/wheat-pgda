@@ -12,7 +12,9 @@ import::from(tibble, "as_tibble", "tibble")
 # wheat_data <- snpgds_parse(phys_gds)
 wheat_data <- snpgds_parse(phys_gds)
 
-max_lengths <- wheat_data$chrom_lengths %>% max_lengths() / 1e6
+max_lengths <- span_by_chrom(
+  wheat_data$snp$chrom, wheat_data$snp$pos
+) %>% max_lengths() / 1e6
 
 # create a list of the ld between markers on each chromosome add NA column
 # and rows every 7.5 Mb so that gaps appear on image

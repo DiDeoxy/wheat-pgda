@@ -60,7 +60,7 @@ for (i in 1:length(grouping)) {
 
 ################################################################################
 # Make a geneind with all strata to perform AMOVA analyses on them
-wheat_data <- snpgds_parse(ld_gds)
+wheat_data <- snpgds_parse(ld_phys_gds)
 
 cluster <- read_rds(hdbscan)$cluster
 

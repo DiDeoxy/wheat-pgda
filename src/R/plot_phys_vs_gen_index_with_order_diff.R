@@ -1,6 +1,6 @@
 source(file.path("src", "R", "file_paths.R"))
 source(file.path("src", "R", "colour_sets.R"))
-import::from(pgda, "max_lengths", "snpgds_parse")
+import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(GGally, "ggmatrix")
 import::from(
   ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_manual", 
@@ -14,15 +14,12 @@ phys_data <- snpgds_parse(phys_gds)
 gen_data <- snpgds_parse(gen_gds)
 
 snp_data <- tibble(
-  phys_id = phys_data$snp$id, gen_id = gen_data$snp$id,
+  phys_id = phys_data$snp$id,
+  gen_id = gen_data$snp$id,
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
   gen_pos_cm = gen_data$snp$pos / 100
 )
-
-gen_pos_counts <- by(snp_data, snp_data$chrom, function (chrom_data) {
-  table(chrom_data$gen_pos_cm) %>% as.vector()
-}) %>% unlist()
 
 # calc the lengths of the different genomes and homoeologous sets
 max_markers <- by(snp_data, snp_data$chrom, nrow) %>% max_lengths()
@@ -31,8 +28,7 @@ max_markers <- by(snp_data, snp_data$chrom, nrow) %>% max_lengths()
 levels <- c(
   "0-7", "8-26", "27-72", "73-126", "127-173", "174-298", "299-436", "437-1248"
 )
-colour_levels <- colours_order_diff
-names(colour_levels) <- levels
+names(colours_order_diff) <- levels
 
 # use to hold all diffs for calcing stats from
 order_diffs <- c()
@@ -80,8 +76,8 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
         colour = order_diff_intervals
       ), size = 0.3
     ) +
-    labs(colour = levels) +
-    scale_colour_manual(name = "Order Difference", values = colour_levels)
+    # labs(colour = levels) +
+    scale_colour_manual(name = "Order Difference", values = colours_order_diff)
 })
 
 plots_matrix <- ggmatrix(
@@ -100,9 +96,11 @@ plots_matrix <- ggmatrix(
 png(
   file.path("results", "phys_vs_gen_index_with_order_diff.png"),
   family = "Times New Roman", width = 165, height = 208, pointsize = 5,
-  units = "mm", res = 300)
+  units = "mm", res = 300
+)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()
 
 summary(order_diffs)
 quantile(order_diffs, c(0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.992187))
+

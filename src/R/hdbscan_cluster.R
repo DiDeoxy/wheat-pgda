@@ -7,12 +7,12 @@ import::from(readr, "write_rds")
 import::from(scrime, "knncatimpute")
 
 # load the ld pruned wheat data
-wheat_data <- snpgds_parse(ld_gds)
+wheat_data <- snpgds_parse(ld_phys_gds)
 
 # impute the missing data
 wheat_imputed <- wheat_data$genotypes %>%
-    replace(. == 0, 1) %>%
-    replace(. == 3, NA) %>%
+    replace(. == 0, values = 1) %>%
+    replace(. == 3, values = NA) %>%
     t() %>%
     knncatimpute()
 
