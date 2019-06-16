@@ -5,6 +5,7 @@ import::from(
   "geom_line", "ggplot", "ggsave", "ggtitle","guide_legend", "guides", "labs",
   "scale_colour_manual", "scale_x_log10", "theme", "xlab", "ylab"
 )
+import::from(gridExtra, "grid.arrange")
 import::from(magrittr, "%>%")
 import::from(parallel, "detectCores")
 import::from(pgda, "allele_richness", "snpgds_parse")
@@ -13,7 +14,7 @@ import::from(scrime, "knncatimpute", "rowTables")
 import::from(stringr, "str_c", "str_replace", "str_wrap")
 import::from(tibble, "tibble")
 
-wheat_data <- snpgds_parse(ld_gds)
+wheat_data <- snpgds_parse(ld_phys_gds)
 
 geno_imputed <- wheat_data$geno %>%
     replace(. == 0, 1) %>%
@@ -35,8 +36,8 @@ categorizations <- list(
 )
 
 categorization_names <- c(
-  "HDBSCAN Clusters", "Breeding Program", "Era", "Market Class", "Phenotype",
-  "Growth Habit", "Colour", "Texture"
+  "HDBSCAN Clusters", "Breeding Program", "Era", "Market Class",
+  "Major Trait Group","Growth Habit", "Colour", "Texture"
 )
 
 categorization_colours <- list(
@@ -45,7 +46,7 @@ categorization_colours <- list(
   colour_set[c(1, 4, 22)]
 )
 
-lapply(1:length(categorizations), function (i) {
+plots <- lapply((1:length(categorizations))[c(2, 3, 4, 1)], function (i) {
   categorization <- categorizations[[i]]
   print(categorization_names[i])
   categories <- categorization %>% as.factor() %>% levels()
@@ -65,40 +66,50 @@ lapply(1:length(categorizations), function (i) {
 
   plot <- rarefied %>% ggplot() +
     geom_line(
-      aes(sample_size, allele_richness, colour = str_wrap(category, 10))
+      aes(sample_size, allele_richness, colour = str_wrap(category, 10)),
+      cex = 2
     ) +
     scale_x_log10() +
     scale_colour_manual(values = categorization_colours[[i]]) +
-    ggtitle(
-      str_c(
-        "Rarefaction Curves of Average Allele\nRichness of Sub-samples By\n",
-        categorization_names[i]
-      )
-    ) +
+    # ggtitle(
+    #   str_c(
+    #     "Rarefaction Curves of Average Allele\nRichness of Sub-samples By\n",
+    #     categorization_names[i]
+    #   )
+    # ) +
     xlab("Sample Size") +
     ylab("Average Allele Richness") +
     labs(colour = str_wrap(categorization_names[i], 5)) +
     guides(
       colour = guide_legend(nrow = (
-        (rarefied$category %>% unique() %>% length()) / 3
+        (rarefied$category %>% unique() %>% length()) / 6
       ) %>% ceiling())
     ) +
     theme(
       legend.position = "bottom", 
       legend.text = element_text(
         size = ifelse(length(categories) <= 4, 10,
-          ifelse(length(categories) <= 8, 8, 4)
+          ifelse(length(categories) <= 8, 10, 10)
         )
       ),
       panel.grid.minor = element_blank()
     ) +
     annotation_logticks(sides = "b")
 
-  ggsave(
-    str_c(
-      "allele_richness_rarefaction_by_",
-      str_replace(categorization_names[i], " ", "_"), ".png"
-    ),
-    plot = plot, path = allele_richness, width = 100, height = 120, units = "mm"
-  )
+  plot
+  # ggsave(
+  #   str_c(
+  #     "allele_richness_rarefaction_by_",
+  #     str_replace(categorization_names[i], " ", "_"), ".png"
+  #   ),
+  #   plot = plot, path = allele_richness, width = 100, height = 120, units = "mm"
+  # )
 })
+
+ggsave(
+  "allele_richness_rarefaction.png",
+  plot = grid.arrange(grobs = plots),
+  path = allele_richness,
+  width = 400, height = 400, units = "mm"
+)
+

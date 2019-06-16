@@ -39,19 +39,18 @@ genos <- list(
 )
 
 # calc each markers mjaf by each cluster group
+coding <- c(0, 2)
+mja <- rowMaxs(rowTables(wheat_data$genotypes, coding))
 mjafs_by_pop <- lapply(genos, function (geno) {
-  geno_counts <- rowTables(geno, c(0, 2))
-  print(head(geno_counts))
-  print(head(rowMaxs(geno_counts, value = TRUE)))
-  print(head(rowSums(geno_counts)))
-  print(head(rowMaxs(geno_counts, value = TRUE) / rowSums(geno_counts)))
-  rowMaxs(geno_counts, value = TRUE) / rowSums(geno_counts)
+  geno_counts <- rowTables(geno, coding)
+  max_genos <- geno_counts[cbind(seq_along(mja), mja)]
+  max_genos / rowSums(geno_counts)
 }) %>% do.call(cbind, .)
 
 # add the genes positons to the regions table
 snp_data <- wheat_data$snp %>%
   add_column(josts_d := read_rds(josts_d)) %>%
-  cbind(mjafs_by_pop %>% round(4)) %>% as_tibble()
+  cbind(mjafs_by_pop) %>% as_tibble()
 mean_d <- mean(snp_data$josts_d)
 snp_data <- snp_data %>%
   rowwise() %>%

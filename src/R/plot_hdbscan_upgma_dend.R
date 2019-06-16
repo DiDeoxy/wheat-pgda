@@ -40,7 +40,7 @@ label_order <- order.dendrogram(upgma_dend)
 ## drawing the circos plot
 png(
   file.path("results", "dend.png"), family = "Times New Roman", width = 210,
-  height = 210, pointsize = 15, units = "mm", res = 500
+  height = 210, pointsize = 15, units = "mm", res = 600
 )
 circos.par(
   cell.padding = c(0, 0, 0, 0), gap.degree = 0.5, track.margin = c(0.005, 0.005)

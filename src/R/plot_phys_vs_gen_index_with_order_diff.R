@@ -83,12 +83,13 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
 plots_matrix <- ggmatrix(
   plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
-  title = str_wrap(
-    str_c(
-      "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
-      "Magnitude of Difference in Order Between Maps"
-    ), width = 70
-  ),
+  # title = str_wrap(
+  #   str_c(
+  #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
+  #     "Magnitude of Difference in Order Between Maps"
+  #   ), 
+  #   width = 70
+  # ),
   legend = c(2, 1)
 )
 

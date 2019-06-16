@@ -1,23 +1,62 @@
-source(file.path("src", "R", "file_paths.R"))
+## ld decay
+
 library(pgda)
-library(magrittr)
+library(SNPRelate)
+library(tidyverse)
+source(file.path("src", "R", "file_paths.R"))
+# install.packages("sommer")
+library(sommer)
+library(mgcv)
+library(pracma)
 
-x_data <- list(
-  phys_data = snpgds_parse(phys_gds), gen_data = snpgds_parse(gen_gds),
-  ld_phys_data = snpgds_parse(ld_phys_gds),
-  ld_gen_data = snpgds_parse(ld_gen_gds)
-)
+wheat_data <- snpgds_parse(phys_gds)
 
-for (name in names(x_data)) {
-  print(name)
+# Calcualte ld between all snps on each chromosome
+wheat_gds <- snpgdsOpen(phys_gds)
+ld_decay_data <- by(
+  wheat_data$snp, wheat_data$snp$chrom, function (snp_data) {
+    tibble(
+      dist_mb = snp_data$pos %>% dist() %>% as.matrix() %>% as.vector() / 1e6,
+      ld = snpgdsLDMat(
+        wheat_gds, method = "composite", slide = -1, snp.id = snp_data$id
+      )$LD %>% abs() %>% as.vector()
+    )
+  }
+) %>% do.call(rbind, .)
+snpgdsClose(wheat_gds)
 
-  total_span <- span_by_chrom(
-    x_data[[name]]$snp$chrom, x_data[[name]]$snp$pos, diff = TRUE
-  ) %>% sum()
-  print(total_span)
-  print(total_span / nrow(x_data[[name]]$snp))
-  print(
-    coverage_by_chrom(x_data[[name]]$snp$chrom, x_data[[name]]$snp$pos) %>%
-    sum() / total_span
-  )
-}
+model <- gam(ld ~ s(dist_mb, bs = "cs"), data = ld_decay_data)
+
+predicted <- predict.gam(model, newdata = data.frame(dist_mb = 0:100))
+
+ggplot() +
+  geom_line(aes(seq_along(predicted), predicted))
+
+
+# wheat_data <- snpgds_parse(phys_gds)
+
+# # Calcualte ld between all snps on each chromosome
+# wheat_gds <- snpgdsOpen(phys_gds)
+# ld_decay_data <- by(
+#   wheat_data$snp, wheat_data$snp$chrom, function (snp_data) {
+#     neighbour_ld <- snpgdsLDMat(
+#       wheat_gds, method = "composite", slide = -1, snp.id = snp_data$id
+#     )$LD %>% Diag(., 1)
+#     bad_markers <- -which(neighbour_ld > 0.90)
+#     good_markers <- snp_data$id[bad_markers]
+#     good_indices <- seq_along(snp_data$id)[bad_markers]
+#     tibble(
+#       dist_mb = snp_data$pos[good_indices] %>% dist() %>% as.matrix() %>%
+#         as.vector() / 1e6,
+#       ld = snpgdsLDMat(
+#         wheat_gds, method = "composite", slide = -1, snp.id = good_markers
+#       )$LD %>% abs() %>% as.vector()
+#     )
+#   }
+# ) %>% do.call(rbind, .)
+# snpgdsClose(wheat_gds)
+
+
+# model <- gam(ld ~ s(dist_mb, bs = "cs"), data = ld_decay_data)
+
+# predict.gam(model, newdata = data.frame(dist_mb = 0:100))

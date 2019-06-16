@@ -1,7 +1,7 @@
 source(file.path("src", "R", "file_paths.R"))
 source(file.path("src", "R", "colour_sets.R"))
 import::from(dplyr, "full_join", "arrange", "select")
-import::from(pgda, "max_lengths", "snpgds_parse")
+import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(magrittr, "%>%")
 import::from(RColorBrewer, "brewer.pal")
 import::from(SNPRelate, "snpgdsClose", "snpgdsLDMat", "snpgdsOpen")
@@ -78,8 +78,8 @@ for (chr in 1:length(ld_mat)) {
   }
 }
 title(xlab = "Marker Position in Mb", outer = T, cex.lab = 1.5, line = 2.5)
-title(main = paste("LD Heatmaps by Chromosome"),
-  outer = T, cex.main = 1.5, line = 1)
+# title(main = paste("LD Heatmaps by Chromosome"),
+#   outer = T, cex.main = 1.5, line = 1)
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
@@ -87,3 +87,4 @@ legend(-.60, -.97,
   legend = c("0", "0.25", "0.50", "0.75", "1"), title = "Abs. Composite LD",
   fill = colours[c(1, 26, 51, 76, 101)], horiz = T)
 dev.off()
+

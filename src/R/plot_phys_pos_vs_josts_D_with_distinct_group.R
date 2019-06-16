@@ -10,7 +10,9 @@ import::from(
   "xlim", "ylim"
 )
 import::from(magrittr, "%>%")
-import::from(pgda, "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom")
+import::from(
+  pgda, "calc_eh", "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom"
+)
 import::from(plyr, "rbind.fill")
 import::from(readr, "read_rds", "write_csv")
 import::from(Rfast, "rowMaxs")
@@ -40,21 +42,24 @@ genos <- list(
 )
 
 # calc each markers mjaf by each cluster group
+coding <- c(0, 2)
+mja <- rowMaxs(rowTables(wheat_data$genotypes, coding))
 mjafs_by_pop <- lapply(genos, function (geno) {
-  geno_counts <- rowTables(geno, c(0, 2))
-  rowMaxs(geno_counts, value = TRUE) / rowSums(geno_counts)
+  geno_counts <- rowTables(geno, coding)
+  max_genos <- geno_counts[cbind(seq_along(mja), mja)]
+  max_genos / rowSums(geno_counts)
 }) %>% do.call(cbind, .)
 
 # add the genes positons to the regions table
 snp_data <- wheat_data$snp %>%
   add_column(josts_d := read_rds(josts_d)) %>%
   cbind(mjafs_by_pop %>% round(4))
-mean_d <- mean(snp_data$josts_d)
+top_quartile <- snp_data$josts_d %>% quantile(0.75, na.rm = T)
 snp_data <- snp_data %>%
   rowwise() %>%
   mutate(class =
     ifelse(
-      josts_d > mean_d,
+      josts_d >= top_quartile,
       c("CHRSD", "CHRWD", "CSWSD")[
         which.max(
           c(
@@ -64,7 +69,7 @@ snp_data <- snp_data %>%
           )
         )
       ],
-      "None"
+      "Indistinct"
     )
   )
 
@@ -148,7 +153,9 @@ dev.off()
 
 ################################################################################
 # print out all markers on each chromosome
-blah <- by(snp_data %>% select(-base), snp_data$chrom,
+blah <- by(
+  snp_data %>% select(id, chrom, pos_mb, chrs, chrw, csws, josts_d, type),
+  snp_data$chrom,
   function(chrom) {
     write_csv(
       chrom,

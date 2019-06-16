@@ -7,6 +7,8 @@ import::from(
   "scale_size_continuous", "theme", "unit", "xlim", "ylim"
 )
 import::from(magrittr, "%>%")
+import::from(Rfast, "rowMaxs")
+import::from(scrime, "rowTables")
 import::from(stringr, "str_c")
 import::from(tibble, "tibble")
 
@@ -14,14 +16,16 @@ import::from(tibble, "tibble")
 phys_data <- snpgds_parse(phys_gds)
 gen_data <- snpgds_parse(gen_gds)
 
-gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
+# recode the genotypes and count
+genos <- replace(phys_data$genotypes, phys_data$geno == 3, NA)
+allele_counts <- rowTables(genos, c(0, 2))
 
 # make a tibble with the relevant data
 snp_data <- tibble(
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
-  gen_pos_cm = gen_data$snp$pos[gen_to_phys_order] / 100,
-  eh = calc_eh(phys_data$genotypes)
+  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100,
+  mjafs = rowMaxs(allele_counts,  value = TRUE) / rowSums(allele_counts)
 )
 
 # # identify those snps within the extended haplotypes
@@ -75,13 +79,13 @@ snp_data <- tibble(
 # snp_data$haplo_gen[-haplo_index_snps_gen] <- NA
 
 # allows application of same colour to each set of chromosomes
-chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>% 
+chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
   t() %>% as.vector()
 colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
 rep(6, 3), rep(7, 3))
 
 # create a function for making a gradient of colours
-colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(50)
+colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(100)
 
 # calc the lengths of the different genomes and homoeologous sets
 max_phys_lengths <- span_by_chrom(
@@ -119,11 +123,10 @@ plots <- by(snp_data, snp_data$chrom,
           )
         ]]
       ) +
-      geom_point(aes(phys_pos_mb, gen_pos_cm, colour = eh), size = 0.5) +
-      labs(
-        colour = "Expected Heterozygosity"
+      geom_point(aes(phys_pos_mb, gen_pos_cm, colour = mjafs), size = 0.5) +
+      scale_colour_gradientn(
+         name = "Major Allele Frequency", colours = colour_gradient
       ) +
-      scale_colour_gradientn(colours = colour_gradient) +
       theme(legend.key.size = unit(15, "points"))
       # geom_point(
       #   aes(haplo_phys, haplo_gen),
@@ -136,15 +139,15 @@ plots <- by(snp_data, snp_data$chrom,
 plots_matrix <- ggmatrix(
   plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  title = str_c(
-    "Comparison of Order by Position between Location\n and Genetic Maps"
-  ),
+  # title = str_c(
+  #   "Comparison of Order by Position between Location\n and Genetic Maps"
+  # ),
   legend = c(1, 1)
 )
 
 # plot the matrix
 png(
-  file.path("results", "phys_vs_gen_pos_with_eh.png"),
+  file.path("results", "phys_vs_gen_pos_with_mjaf.png"),
   family = "Times New Roman", width = 165, height = 208, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix + theme(legend.position = "bottom")
