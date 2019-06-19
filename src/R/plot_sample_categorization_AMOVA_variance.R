@@ -3,7 +3,7 @@ source(file.path("src", "R", "colour_sets.R"))
 import::from(GGally, "ggmatrix")
 import::from(
   ggplot2, "aes", "coord_flip", "element_text", "facet_grid", "geom_bar",
-  "ggplot", "ggsave", "labs", "scale_fill_manual", "theme", "ylim"
+  "ggplot", "ggsave","ggtitle", "labs", "scale_fill_manual", "theme", "ylim"
 )
 import::from(magrittr, "%>%")
 import::from(readr, "read_csv")
@@ -51,20 +51,20 @@ amova_table$class <- factor(
 max_var <- by(amova_table, amova_table$type, function (type_data) {
   sum(type_data$`% Variation`)
 }) %>% max() %>% ceiling()
-amova_table$class
+
 plots <- by(amova_table, amova_table$type, function (type_data) {
   if (type_data$type[1] == "MTG(BP(Era))") {
     type_data$class <- factor(
       type_data$class, levels = levels(type_data$class)[c(2, 1, 3:5)]
-      type_data$class, levels = levels(type_data$class)[c(2, 1, 3:5)]
     )
+    colour_set <- colour_set[c(2, 1, 3:5)]
   } else if (type_data$type[1] == "MTG(BP-Era)") {
     type_data$class <- factor(
-      type_data$class, levels = levels(type_data$class)[c(1, 2, 4, 3, 5)]
+      type_data$class, levels = levels(type_data$class)[c(4, 1:3, 5)]
     )
+    colour_set <- colour_set[c(4, 1:3, 5)]
   }
-  # print(type_data$type)
-  print(type_data$class)
+
   type_data %>%
     ggplot(aes(type, `% Variation`, fill = class)) +
       geom_bar(stat = "identity") +
@@ -81,14 +81,13 @@ plots_matrix <- ggmatrix(
   plots, nrow = 1, ncol = 11,
   ylab = "Hierarchy",
   xlab = "% Variation",
+  title = "Genetic Distance Variance Partitioning",
   legend = c(1, 1)
-) + theme(legend.position = "bottom", legend.box = "vertical")
-
-# plots_matrix
+) + theme(legend.position = "bottom", legend.box = "vertical", text = element_text(size = 20))
 
 png(
   file.path("results", "categorization_AMOVA_variance.png"),
-  width = 320, height = 240, units = "mm", res = 300
+  width = 320, height = 240, units = "mm", res = 192
 )
 plots_matrix
 dev.off()

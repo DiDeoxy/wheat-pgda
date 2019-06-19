@@ -40,7 +40,7 @@ label_order <- order.dendrogram(upgma_dend)
 ## drawing the circos plot
 png(
   file.path("results", "dend.png"), family = "Times New Roman", width = 210,
-  height = 210, pointsize = 15, units = "mm", res = 600
+  height = 210, pointsize = 15, units = "mm", res = 192
 )
 circos.par(
   cell.padding = c(0, 0, 0, 0), gap.degree = 0.5, track.margin = c(0.005, 0.005)
@@ -108,13 +108,15 @@ legend(
   pch = pch, col = colours_hdbscan_legend, cex = cex, bg = colors()[109]
 )
 
-# title(
-#   main = str_c(
-#     "UPGMA Dendrogram of 365 Varieties\nwith HDBSCAN Clusters and ",
-#     "Categorical Data In Surrounding Rows"
-#   ),
-#   cex.main = 0.7
+title(
+  main = str_c(
+    "Clustering by LD Pruned Markers"
+    # "UPGMA Dendrogram of 365 Varieties\nwith HDBSCAN Clusters and ",
+    # "Categorical Data In Surrounding Rows"
+  ),
+  cex.main = 0.7
 )
+
 dev.off()
 
 ################################################################################

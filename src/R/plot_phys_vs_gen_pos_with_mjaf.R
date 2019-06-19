@@ -139,16 +139,17 @@ plots <- by(snp_data, snp_data$chrom,
 plots_matrix <- ggmatrix(
   plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-  # title = str_c(
-  #   "Comparison of Order by Position between Location\n and Genetic Maps"
-  # ),
+  title = str_c(
+    "Marker Pseudo-Chromosomal vs Genetic Position by\n",
+    "Chromosome Coloured by Major Allele Frequency"
+  ),
   legend = c(1, 1)
 )
 
 # plot the matrix
 png(
   file.path("results", "phys_vs_gen_pos_with_mjaf.png"),
-  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
-  units = "mm", res = 300)
+  family = "Times New Roman", width = 200, height = 240, pointsize = 5,
+  units = "mm", res = 192)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()

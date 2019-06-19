@@ -135,20 +135,23 @@ plots_matrix <- ggmatrix(
   plots,
   nrow = 7, ncol = 3, xlab = "Position in Mb",
   ylab = str_c(
-    "Normalized Jost's josts_d Value"
+    "Normalized Jost's D Value"
   ),
-  xAxisLabels = c("A", "B", "josts_d"), yAxisLabels = 1:7,
-  # title = "Normalized Jost's josts_d Values with Loess Curve By Chromosome ",
+  xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+  title = "Marker-by-Marker Jost's D Coloured by Distinct Group",
   legend = c(1, 1)
 )
 
 # plot the matrix
 png(
   file.path("results", "phys_pos_vs_josts_D_with_distinct_group.png"),
-  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
-  units = "mm", res = 300
+  family = "Times New Roman", width = 320, height = 240, units = "mm", res = 192
 )
-plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")
+plots_matrix + theme(
+  legend.position = "bottom", legend.box = "vertical",
+  plot.title = element_text(size = 20), axis.title = element_text(size = 20),
+  legend.text = element_text(size = 16)
+)
 dev.off()
 
 ################################################################################
