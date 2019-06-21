@@ -60,3 +60,17 @@ ggplot() +
 # model <- gam(ld ~ s(dist_mb, bs = "cs"), data = ld_decay_data)
 
 # predict.gam(model, newdata = data.frame(dist_mb = 0:100))
+
+
+genome_length <- c(
+    "1A" = 594102056, "1B" = 689851870, "1D" = 495451186,
+    "2A" = 780798557, "2B" = 801256715, "2D" = 651852609,
+    "3A" = 750843639, "3B" = 830829764, "3D" = 615552423,
+    "4A" = 744588157, "4B" = 673617499, "4D" = 509857067,
+    "5A" = 709773743, "5B" = 713149757, "5D" = 566080677,
+    "6A" = 618079260, "6B" = 720988478, "6D" = 473592718,
+    "7A" = 736706236, "7B" = 750620385, "7D" = 750620385
+  ) %>% sum()
+
+
+span_by_chrom(wheat_data$snp$chrom, wheat_data$snp$pos, diff = TRUE) %>% sum() / genome_length

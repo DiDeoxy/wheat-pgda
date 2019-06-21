@@ -21,6 +21,9 @@ install.packages(
   )
 )
 
+# for vs code extension
+install.packages("languageserver")
+
 BiocManager::install("SNPRelate")
 # devtools::install_github("https://github.com/DiDeoxy/PGDA")
 devtools::install_git("../PGDA")
