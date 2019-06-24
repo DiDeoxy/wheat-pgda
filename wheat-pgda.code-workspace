@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "C:\\Users\\Max Hargreaves\\Documents\\projects\\pgda"
+		},
+		{
+			"path": "C:\\Users\\Max Hargreaves\\Documents\\projects\\wheat-pgda-r"
+		}
+	],
+	"settings": {
+		"python.pythonPath": "src/python/ALIGN/bin/python"
+	}
+}
