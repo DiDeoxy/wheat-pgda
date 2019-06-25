@@ -5,7 +5,9 @@ colour_set <- c(
     "#aaffc3", "#808000", "#ffd8b1", "#000080", "#808080",
     "#FFFFFF", "#000000"
 )
+# png(file.path("results", "colous.png"))
 # pie(rep(1, 22), col = colour_set)
+# dev.off()
 
 # defining the colour sets
 # colours_order_diff <- colour_set[c(7, 4, 2, 5, 1, 6, 19, 22)]

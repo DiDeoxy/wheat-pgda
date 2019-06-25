@@ -1,76 +1,152 @@
-## ld decay
-
-library(pgda)
-library(SNPRelate)
-library(tidyverse)
 source(file.path("src", "R", "file_paths.R"))
-# install.packages("sommer")
-library(sommer)
-library(mgcv)
-library(pracma)
+source(file.path("src", "R", "colour_sets.R"))
+import::from(dplyr, "arrange", "distinct", "mutate", "rowwise", "select")
+import::from(GGally, "ggmatrix")
+import::from(
+  ggplot2,
+  "aes", "element_text", "ggplot", "geom_hline", "geom_line", "geom_point",
+  "geom_smooth",
+  "guide_legend", "labs", "scale_colour_manual", "scale_shape_manual", 
+  "scale_x_continuous", "theme", "xlab", "ylab", "xlim", "ylim"
+)
+import::from(ggrepel, "geom_text_repel")
+import::from(magrittr, "%>%")
+import::from(
+  pgda, "calc_eh", "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom"
+)
+import::from(plyr, "rbind.fill")
+import::from(readr, "read_csv", "read_rds", "write_csv")
+import::from(Rfast, "rowMaxs")
+import::from(scrime, "rowTables")
+import::from(stringr, "str_c", "str_wrap")
+import::from(tibble, "add_column", "add_row", "as_tibble", "tibble")
+import::from(tidyr, "gather", "spread")
 
+# load the data from the gds object
 wheat_data <- snpgds_parse(phys_gds)
 
-# Calcualte ld between all snps on each chromosome
-wheat_gds <- snpgdsOpen(phys_gds)
-ld_decay_data <- by(
-  wheat_data$snp, wheat_data$snp$chrom, function (snp_data) {
-    tibble(
-      dist_mb = snp_data$pos %>% dist() %>% as.matrix() %>% as.vector() / 1e6,
-      ld = snpgdsLDMat(
-        wheat_gds, method = "composite", slide = -1, snp.id = snp_data$id
-      )$LD %>% abs() %>% as.vector()
+# recode the genotypes
+wheat_data$genotypes <- replace(wheat_data$genotypes, wheat_data$geno == 3, NA)
+
+# get the cluster groups
+cluster <- read_rds(hdbscan)$cluster
+genos <- list(
+  chrs = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
+  ],
+  chrw = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "HRW" & cluster == 1)
+  ],
+  csws = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "SWS" & cluster == 2)
+  ]
+)
+
+# calc each markers mjaf by each cluster group
+coding <- c(0, 2)
+mja <- rowMaxs(rowTables(wheat_data$genotypes, coding))
+mjafs_by_pop <- lapply(genos, function (geno) {
+  geno_counts <- rowTables(geno, coding)
+  max_genos <- geno_counts[cbind(seq_along(mja), mja)]
+  max_genos / rowSums(geno_counts)
+}) %>% do.call(cbind, .)
+
+# add the genes positons to the regions table
+snp_data <- wheat_data$snp %>%
+  mutate(pos_mb = pos / 1e6) %>%
+  arrange(chrom, pos_mb) %>%
+  select(-pos) %>%
+  add_column(josts_d := read_rds(josts_d), class = "josts_d") %>%
+  cbind(mjafs_by_pop)
+
+top_quartile <- snp_data$josts_d %>% quantile(0.75, na.rm = T)
+
+# load the gene positions
+all_genes <- rbind.fill(
+  load_genes(
+    file.path(blast, "selected_pheno.csv"), base = 1
+  ) %>% mutate(gene_type = "Phenotype Genes", pos_mb = pos / 1e6) %>%
+    select(-pos),
+  load_genes(
+    file.path(blast, "selected_resi.csv"), base = 1
+  ) %>% mutate(gene_type = "Resistance Genes", pos_mb = pos / 1e6) %>%
+    select(-pos)
+) %>% arrange(chrom, pos_mb)
+
+snp_data <- snp_data %>%
+  rbind.fill(all_genes) %>%
+  mutate(
+    type = pmin(gene_type, class, na.rm = TRUE),
+    jdb = pmin(josts_d, base, na.rm = TRUE)
+  ) %>%
+  select(-c(gene_type, class, base, josts_d)) %>%
+  spread(type, jdb) %>%
+  gather(value_type, values, -c(id, chrom, pos_mb)) %>%
+  arrange(pos_mb)
+
+gene_ranges <- read_csv(file.path(intermediate, "gene_ranges.csv"))
+
+genes_nearby_markers <- lapply(1:nrow(gene_ranges), function (row) {
+  add_column(
+    snp_data[
+      which(
+        snp_data$chrom == gene_ranges[row, ]$chrom &
+        snp_data$pos_mb >= gene_ranges[row, ]$window_start &
+        snp_data$pos_mb <= gene_ranges[row, ]$window_end
+      ),
+    ],
+    group = gene_ranges[row, ]$genes
+  )
+})
+
+legend_title <- "MJAF, Jost's D,\nand Gene Type"
+lables <- c(
+  "CHRS MJAF", "CHRW MJAF", "CSWS MJAF", "Jost's D", "Phenotype Genes",
+  "Resistance Genes"
+)
+lapply(genes_nearby_markers, function(gene_data) {
+  png(
+    file.path(
+      zoomed_marker_plots,
+      str_c(
+        str_c(
+          gene_data$chrom[1], gene_data$group[1],
+          round(min(gene_data$pos_mb), 0), round(max(gene_data$pos_mb), 0),
+          sep = "_"
+        ),
+        ".png"
+      )
+    ),
+    family = "Times New Roman",
+    width = 320, height = 240,
+    units = "mm", res = 192
+  )
+  print(gene_data %>%
+    ggplot(aes(pos_mb, values)) +
+    ylim(0, 1) +
+    xlim(range(gene_data$pos_mb)) +
+    geom_point(aes(colour = value_type, shape = value_type)) +
+    geom_hline(yintercept = top_quartile) +
+    geom_text_repel(
+      aes(
+        label = ifelse(
+          value_type == "Phenotype Genes" | value_type == "Resistance Genes",
+          id, ""
+        )
+      )
+    ) +
+    scale_colour_manual(
+      legend_title, labels = lables,
+      values = colour_set[c(1, 2, 4, 22, 15, 19)]
+    ) +
+    scale_shape_manual(
+      legend_title, labels = lables,
+      values = c(16, 16, 16, 15, 25, 25)
+    ) +
+    labs(
+      x = "Position in Mb", y = "MJAF and Jost's D",
+      title = str_c(gene_data$chrom[1], gene_data$group[1], sep = "_")
     )
-  }
-) %>% do.call(rbind, .)
-snpgdsClose(wheat_gds)
-
-model <- gam(ld ~ s(dist_mb, bs = "cs"), data = ld_decay_data)
-
-predicted <- predict.gam(model, newdata = data.frame(dist_mb = 0:100))
-
-ggplot() +
-  geom_line(aes(seq_along(predicted), predicted))
-
-
-# wheat_data <- snpgds_parse(phys_gds)
-
-# # Calcualte ld between all snps on each chromosome
-# wheat_gds <- snpgdsOpen(phys_gds)
-# ld_decay_data <- by(
-#   wheat_data$snp, wheat_data$snp$chrom, function (snp_data) {
-#     neighbour_ld <- snpgdsLDMat(
-#       wheat_gds, method = "composite", slide = -1, snp.id = snp_data$id
-#     )$LD %>% Diag(., 1)
-#     bad_markers <- -which(neighbour_ld > 0.90)
-#     good_markers <- snp_data$id[bad_markers]
-#     good_indices <- seq_along(snp_data$id)[bad_markers]
-#     tibble(
-#       dist_mb = snp_data$pos[good_indices] %>% dist() %>% as.matrix() %>%
-#         as.vector() / 1e6,
-#       ld = snpgdsLDMat(
-#         wheat_gds, method = "composite", slide = -1, snp.id = good_markers
-#       )$LD %>% abs() %>% as.vector()
-#     )
-#   }
-# ) %>% do.call(rbind, .)
-# snpgdsClose(wheat_gds)
-
-
-# model <- gam(ld ~ s(dist_mb, bs = "cs"), data = ld_decay_data)
-
-# predict.gam(model, newdata = data.frame(dist_mb = 0:100))
-
-
-genome_length <- c(
-    "1A" = 594102056, "1B" = 689851870, "1D" = 495451186,
-    "2A" = 780798557, "2B" = 801256715, "2D" = 651852609,
-    "3A" = 750843639, "3B" = 830829764, "3D" = 615552423,
-    "4A" = 744588157, "4B" = 673617499, "4D" = 509857067,
-    "5A" = 709773743, "5B" = 713149757, "5D" = 566080677,
-    "6A" = 618079260, "6B" = 720988478, "6D" = 473592718,
-    "7A" = 736706236, "7B" = 750620385, "7D" = 750620385
-  ) %>% sum()
-
-
-span_by_chrom(wheat_data$snp$chrom, wheat_data$snp$pos, diff = TRUE) %>% sum() / genome_length
+  )
+  dev.off()
+})

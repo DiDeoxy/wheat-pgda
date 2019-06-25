@@ -8,7 +8,9 @@ import::from(
   "scale_size_continuous", "theme", "unit", "xlim", "ylim"
 )
 import::from(magrittr, "%>%")
-import::from(reader, "read_rds")
+import::from(readr, "read_rds")
+import::from(Rfast, "rowMaxs")
+import::from(scrime, "rowTables")
 import::from(stringr, "str_c")
 import::from(tibble, "as_tibble", "tibble")
 

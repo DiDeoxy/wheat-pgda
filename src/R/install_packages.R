@@ -20,6 +20,7 @@ install.packages(
     "adegenet", "devtools", "mmod", "poppr", "Rfast", "roxygen2"
   )
 )
+install.packages()
 
 # for vs code extension
 install.packages("languageserver")

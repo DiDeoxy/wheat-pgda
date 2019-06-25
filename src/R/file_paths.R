@@ -41,3 +41,8 @@ ifelse(! dir.exists(josts_d_by_chrom), dir.create(josts_d_by_chrom), FALSE)
 
 allele_richness <- file.path("results", "allele_richness")
 ifelse(! dir.exists(allele_richness), dir.create(allele_richness), FALSE)
+
+zoomed_marker_plots <- file.path("results", "zoomed_marker_plots")
+ifelse(
+  ! dir.exists(zoomed_marker_plots), dir.create(zoomed_marker_plots), FALSE
+)
