@@ -62,7 +62,7 @@ labels <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
 colours <- colorRampPalette(colour_set[c(4, 2, 3, 5, 1)])(101)
 png(
   file.path("results", "ld_heatmaps.png"), family = "Times New Roman",
-  width = 120, height = 240, pointsize = 12, units = "mm", res = 300
+  width = 98, height = 192, pointsize = 12, units = "mm", res = 300
 )
 par(mfrow = c(7, 3), oma = c(7, 1, 3, 2), mar = c(0, 2, 0, 0))
 for (chr in 1:length(ld_mat)) {
@@ -83,7 +83,7 @@ title(main = paste("LD Heatmaps by Chromosome"),
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
-legend(-.60, -.97,
+legend(-.60, -.98,
   legend = c("0", "0.25", "0.50", "0.75", "1"), title = "Abs. Composite LD",
   fill = colours[c(1, 26, 51, 76, 101)], horiz = T)
 dev.off()

@@ -107,23 +107,23 @@ plots <- by(snp_data, snp_data$chrom,
           ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
         ]]
       ) +
-      ylim(
-        0,
-        max_gen_lengths[[
-          ifelse(grepl("1", chrom), "one", 
-            ifelse(grepl("2", chrom), "two",
-              ifelse(grepl("3", chrom), "three",
-                ifelse(grepl("4", chrom), "four",
-                  ifelse(grepl("5", chrom), "five",
-                    ifelse(grepl("6", chrom), "six", "seven")
-                  )
-                )
-              )
-            )
-          )
-        ]]
-      ) +
-      geom_point(aes(phys_pos_mb, gen_pos_cm, colour = mjafs), size = 0.5) +
+      # ylim(
+      #   0,
+      #   max_gen_lengths[[
+      #     ifelse(grepl("1", chrom), "one", 
+      #       ifelse(grepl("2", chrom), "two",
+      #         ifelse(grepl("3", chrom), "three",
+      #           ifelse(grepl("4", chrom), "four",
+      #             ifelse(grepl("5", chrom), "five",
+      #               ifelse(grepl("6", chrom), "six", "seven")
+      #             )
+      #           )
+      #         )
+      #       )
+      #     )
+      #   ]]
+      # ) +
+      geom_point(aes(phys_pos_mb, mjafs, colour = gen_pos_cm), size = 0.5) +
       scale_colour_gradientn(
          name = "Major Allele Frequency", colours = colour_gradient
       ) +

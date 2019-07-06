@@ -80,8 +80,21 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
     scale_colour_manual(name = "Order Difference", values = colours_order_diff)
 })
 
-plots_matrix <- ggmatrix(
-  plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+# plots_matrix <- ggmatrix(
+#   plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+#   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
+#   # title = str_wrap(
+#   #   str_c(
+#   #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
+#   #     "Magnitude of Difference in Order Between Maps"
+#   #   ), 
+#   #   width = 70
+#   # ),
+#   legend = c(2, 1)
+# )
+
+plots_matrix_index <- ggmatrix(
+  plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
   # title = str_wrap(
   #   str_c(
@@ -95,13 +108,14 @@ plots_matrix <- ggmatrix(
 
 # plot the matrix
 png(
-  file.path("results", "phys_vs_gen_index_with_order_diff.png"),
-  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
+  file.path("results", "2D_4A_phys_vs_gen_index_with_order_diff.png"),
+  family = "Times New Roman", width = 140, height = 110, pointsize = 5,
   units = "mm", res = 300
 )
-plots_matrix + theme(legend.position = "bottom")
+# plots[[10]]
+plots_matrix_index + theme(legend.position = "bottom")
 dev.off()
 
-summary(order_diffs)
-quantile(order_diffs, c(0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.992187))
+# summary(order_diffs)
+# quantile(order_diffs, c(0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.992187))
 

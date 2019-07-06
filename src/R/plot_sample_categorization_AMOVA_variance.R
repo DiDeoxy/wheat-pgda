@@ -79,15 +79,15 @@ plots <- by(amova_table, amova_table$type, function (type_data) {
 
 plots_matrix <- ggmatrix(
   plots, nrow = 1, ncol = 11,
-  ylab = "Hierarchy",
-  xlab = "% Variation",
+  xlab = "Hierarchy",
+  ylab = "% Variation",
   title = "Genetic Distance Variance Partitioning",
   legend = c(1, 1)
 ) + theme(legend.position = "bottom", legend.box = "vertical", text = element_text(size = 20))
 
 png(
   file.path("results", "categorization_AMOVA_variance.png"),
-  width = 320, height = 240, units = "mm", res = 192
+  width = 210, height = 120, units = "mm", res = 192
 )
 plots_matrix
 dev.off()
