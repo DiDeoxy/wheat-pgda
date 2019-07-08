@@ -85,7 +85,8 @@ colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
 rep(6, 3), rep(7, 3))
 
 # create a function for making a gradient of colours
-colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(100)
+# colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(100)
+colour_gradient <- gray.colors(100, start = 0.8, end = 0.1)
 
 # calc the lengths of the different genomes and homoeologous sets
 max_phys_lengths <- span_by_chrom(
@@ -107,25 +108,30 @@ plots <- by(snp_data, snp_data$chrom,
           ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
         ]]
       ) +
-      ylim(
-        0,
-        max_gen_lengths[[
-          ifelse(grepl("1", chrom), "one", 
-            ifelse(grepl("2", chrom), "two",
-              ifelse(grepl("3", chrom), "three",
-                ifelse(grepl("4", chrom), "four",
-                  ifelse(grepl("5", chrom), "five",
-                    ifelse(grepl("6", chrom), "six", "seven")
-                  )
-                )
-              )
-            )
-          )
-        ]]
+      # ylim(
+      #   0,
+      #   max_gen_lengths[[
+      #     ifelse(grepl("1", chrom), "one", 
+      #       ifelse(grepl("2", chrom), "two",
+      #         ifelse(grepl("3", chrom), "three",
+      #           ifelse(grepl("4", chrom), "four",
+      #             ifelse(grepl("5", chrom), "five",
+      #               ifelse(grepl("6", chrom), "six", "seven")
+      #             )
+      #           )
+      #         )
+      #       )
+      #     )
+      #   ]]
+      # ) +
+      ylim(0.5, 1) +
+      geom_point(
+        aes(
+          phys_pos_mb, mjafs, colour = (gen_pos_cm / max(max_gen_lengths) * 100)
+        ), size = 0.5
       ) +
-      geom_point(aes(phys_pos_mb, gen_pos_cm, colour = mjafs), size = 0.5) +
       scale_colour_gradientn(
-         name = "Major Allele Frequency", colours = colour_gradient
+         name = "Percent Max cM Position", colours = colour_gradient
       ) +
       theme(legend.key.size = unit(15, "points"))
       # geom_point(
@@ -137,18 +143,20 @@ plots <- by(snp_data, snp_data$chrom,
 )
 
 plots_matrix <- ggmatrix(
-  plots, nrow = 7, ncol = 3, xlab = "Position in Mb", ylab = "Position in cM",
+  plots, nrow = 7, ncol = 3,
+  xlab = "Position in Mb", ylab = "Major Allele Frequency",
   xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   title = str_c(
-    "Marker Pseudo-Chromosomal vs Genetic Position by\n",
-    "Chromosome Coloured by Major Allele Frequency"
+    "Marker Pseudo-Chromosomal vs Major Allele Frequency by\n",
+    "Chromosome Coloured by Markers' Percent of Global\n",
+    "Maximum Genetic Position"
   ),
-  legend = c(1, 1)
+  legend = c(5, 1)
 )
 
 # plot the matrix
 png(
-  file.path("results", "phys_vs_gen_pos_with_mjaf.png"),
+  file.path("results", "phys_vs_mjaf_with_gen_pos.png"),
   family = "Times New Roman", width = 200, height = 240, pointsize = 5,
   units = "mm", res = 192)
 plots_matrix + theme(legend.position = "bottom")

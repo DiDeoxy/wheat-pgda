@@ -83,7 +83,7 @@ title(main = paste("LD Heatmaps by Chromosome"),
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
-legend(-.60, -.97,
+legend(-.60, -.98,
   legend = c("0", "0.25", "0.50", "0.75", "1"), title = "Abs. Composite LD",
   fill = colours[c(1, 26, 51, 76, 101)], horiz = T)
 dev.off()

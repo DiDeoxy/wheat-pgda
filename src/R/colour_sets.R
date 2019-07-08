@@ -5,7 +5,7 @@ colour_set <- c(
     "#aaffc3", "#808000", "#ffd8b1", "#000080", "#808080",
     "#FFFFFF", "#000000"
 )
-# png(file.path("results", "colous.png"))
+# png(file.path("results", "colours.png"))
 # pie(rep(1, 22), col = colour_set)
 # dev.off()
 
