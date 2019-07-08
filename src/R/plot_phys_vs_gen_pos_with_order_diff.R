@@ -74,28 +74,34 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
       aes(
         chrom_data$phys_pos_mb, chrom_data$gen_pos_cm[gen_to_phys_order],
         colour = order_diff_intervals
-      ), size = 0.3
+      ), size = 0.6
     ) +
     labs(colour = levels) +
     scale_colour_manual(name = "Order Difference", values = colours_order_diff)
 })
 
-plots_matrix <- ggmatrix(
-  plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+# plots_matrix <- ggmatrix(
+#   plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
+#   xlab = "Pseudo-Chromosomal Position in Mb", ylab = "Genetic Position in cM",
+#   # title = str_wrap(
+#   #   str_c(
+#   #     "Pseudo-Chromosomal vs Genetic Position with Markers Coloured by ",
+#   #     "Magnitude of Difference in Order Between Maps"
+#   #   ), width = 70
+#   # ),
+#   legend = c(2, 1)
+# )
+
+plots_matrix_pos <- ggmatrix(
+  plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
   xlab = "Pseudo-Chromosomal Position in Mb", ylab = "Genetic Position in cM",
-  title = str_wrap(
-    str_c(
-      "Pseudo-Chromosomal vs Genetic Position with Markers Coloured by ",
-      "Magnitude of Difference in Order Between Maps"
-    ), width = 70
-  ),
   legend = c(2, 1)
 )
 
 # plot the matrix
 png(
-  file.path("results", "phys_vs_gen_pos_with_order_diff.png"),
-  family = "Times New Roman", width = 165, height = 208, pointsize = 5,
+  file.path("results", "2D_4A_phys_vs_gen_pos_with_order_diff.png"),
+  family = "Times New Roman", width = 140, height = 192, pointsize = 5,
   units = "mm", res = 300)
-plots_matrix + theme(legend.position = "bottom")
+plots_matrix_pos + theme(legend.position = "bottom")
 dev.off()

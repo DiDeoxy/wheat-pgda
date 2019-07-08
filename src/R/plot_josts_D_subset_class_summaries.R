@@ -51,12 +51,12 @@ mjafs_by_pop <- lapply(genos, function (geno) {
 snp_data <- wheat_data$snp %>%
   add_column(josts_d := read_rds(josts_d)) %>%
   cbind(mjafs_by_pop) %>% as_tibble()
-mean_d <- mean(snp_data$josts_d)
+top_quartile <- snp_data$josts_d %>% quantile(0.75, na.rm = T)
 snp_data <- snp_data %>%
   rowwise() %>%
   mutate(class =
     ifelse(
-      josts_d > mean_d,
+      josts_d > top_quartile,
       c("CHRSD", "CHRWD", "CSWSD")[
         which.max(
           c(
