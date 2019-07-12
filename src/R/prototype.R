@@ -1,126 +1,66 @@
-# import file paths and functions
 source(file.path("src", "R", "file_paths.R"))
-import::from(ape, "read.gff")
+source(file.path("src", "R", "colour_sets.R"))
+import::from(dplyr, "arrange", "distinct", "mutate", "rowwise", "select")
+import::from(GGally, "ggmatrix")
 import::from(
-  dplyr, "arrange", "do", "filter", "group_by", "left_join", "n", "rename",
-  "select", "ungroup"
+  ggplot2,
+  "aes", "element_text", "ggplot", "geom_hline", "geom_line", "geom_rect",
+  "geom_point",
+  "geom_smooth",
+  "guide_legend", "labs", "scale_colour_manual", "scale_shape_manual", 
+  "scale_x_continuous", "theme", "xlab", "ylab", "xlim", "ylim"
 )
+import::from(ggrepel, "geom_text_repel")
 import::from(magrittr, "%>%")
-import::from(parallel, "detectCores", "mclapply")
 import::from(
-  readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv",
-  "read_rds", "type_convert", "write_rds"
+  pgda, "calc_eh", "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom"
 )
-import::from(stringr, "str_c")
-import::from(tibble, "as_tibble", "tibble")
+import::from(plyr, "rbind.fill")
+import::from(readr, "read_csv", "read_rds", "write_csv")
+import::from(Rfast, "rowMaxs")
+import::from(scrime, "rowTables")
+import::from(stringr, "str_c", "str_replace", "str_wrap")
+import::from(tibble, "add_column", "add_row", "as_tibble", "tibble")
+import::from(tidyr, "gather", "spread")
 
-chr_orders <- list(
-  ABD = outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
-    t() %>% as.vector(),
-  ADB = outer(as.character(1:7), c("A", "D", "B"), paste, sep = "") %>%
-    t() %>% as.vector(),
-  BAD = outer(as.character(1:7), c("B", "A", "D"), paste, sep = "") %>%
-    t() %>% as.vector(),
-  BDA = outer(as.character(1:7), c("B", "D", "A"), paste, sep = "") %>%
-    t() %>% as.vector(),
-  DBA = outer(as.character(1:7), c("D", "B", "A"), paste, sep = "") %>%
-    t() %>% as.vector(),
-  DAB = outer(as.character(1:7), c("D", "A", "B"), paste, sep = "") %>%
-    t() %>% as.vector()
-)
+# load the data from the gds object
+wheat_data <- snpgds_parse(phys_gds)
 
-# parse the GFF3 format file of the wheat 90K snp chip physical map positions
-marker_aligns <- lapply(chr_orders$ABD, function (chr) {
-  chr_feats <- read.gff(
-    file.path(
-      markers, "90K_RefSeqv1_probe_alignments",
-      str_c("Infinium90K-chr", chr, ".gff3")
-    )
-  )
-  apply(chr_feats, 1, function (feat) {
-    attributes <- strsplit(feat[9], split = ";")[[1]]
-    name <- strsplit(attributes[2], split = "=")[[1]][2]
-    ID <- strsplit(attributes[4], split = "=")[[1]][2]
-    coverage <- strsplit(attributes[1], split = "=")[[1]][2]
-    per_id <- strsplit(attributes[3], split = "=")[[1]][2]
-    chrom <- substr(feat[1], 4, nchar(feat[1]))
-    pos <- floor( (as.integer(feat[4]) + as.integer(feat[5]) ) / 2)
-    return(c(name, ID, chrom, pos, coverage, per_id, use.names = F))
-  }) %>% t()
-}) %>% do.call(rbind, .)
+# recode the genotypes
+wheat_data$genotypes <- replace(wheat_data$genotypes, wheat_data$geno == 3, NA)
 
-# format the alignemnts, rename, filter, and split by marker
-marker_aligns <- marker_aligns %>%
-  as_tibble() %>%
-  type_convert(
-    col_type = list(
-      col_character(), col_character(), col_character(), col_integer(),
-      col_double(), col_double()
-    )
-  ) %>%
-  rename(
-    marker = V1, ID = V2, chrom = V3, pos = V4, coverage = V5, per_id = V6
-  ) %>%
-  filter(coverage >= 90, per_id >= 98) %>%
-  split(.$marker)
-
-# a function of rfinding the best alignment of each maker based on which
-# linkage group it is assigned to
-best_alignments <- function (marker_align) {
-  gen_data <- marker_gen_pos[
-    which(marker_gen_pos$marker == marker_align$marker[1]),
+# get the cluster groups
+cluster <- read_rds(hdbscan)$cluster
+genos <- list(
+  chrs = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "HRS" & cluster == 5)
+  ],
+  chrw = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "HRW" & cluster == 1)
+  ],
+  csws = wheat_data$genotype[,
+    which(wheat_data$sample$annot$pheno == "SWS" & cluster == 2)
   ]
-  if (nrow(gen_data)) {
-    best_alignment <- marker_align[
-      which(marker_align$chrom == gen_data$chrom), 
-    ]
-    if (nrow(best_alignment) == 1) {
-      return(best_alignment)
-    }
-  }
-  return(tibble())
-}
+)
 
-# load the filtered gen map
-marker_gen_pos <- read_rds(file.path(inter_markers, "pozniak_filtered_map.rds"))
+# calc each markers mjaf by each cluster group
+coding <- c(0, 2)
+mja <- rowMaxs(rowTables(wheat_data$genotypes, coding))
+mjafs_by_pop <- lapply(genos, function (geno) {
+  geno_counts <- rowTables(geno, coding)
+  max_genos <- geno_counts[cbind(seq_along(mja), mja)]
+  max_genos / rowSums(geno_counts)
+}) %>% do.call(cbind, .)
 
 # add the genes positons to the regions table
 snp_data <- wheat_data$snp %>%
   mutate(pos_mb = pos / 1e6) %>%
   arrange(chrom, pos_mb) %>%
   select(-pos) %>%
-  add_column(josts_d := read_rds(josts_d)) %>%
+  add_column(josts_d := read_rds(josts_d), class = "josts_d") %>%
   cbind(mjafs_by_pop)
 
-# format the genotype data into the proper format for snpgds format
-genotypes <- read_csv(
-  file.path(markers, "Jan_6_wheat_genotypes_curtis.csv")
-) %>%
-  select(-X1, -X3, -X4, -X5, -Name) %>%
-  .[-1:-2, ] %>%
-  rename(marker = X2) %>%
-  replace(. == "C1", 0) %>%
-  replace(. == "c1", 0) %>%
-  replace(. == "C2", 2) %>%
-  replace(. == "NC", 3)
-
-snp_data <- snp_data %>%
-  rowwise() %>%
-  mutate(class =
-    ifelse(
-      josts_d > top_quartile,
-      c("CHRSD", "CHRWD", "CSWSD")[
-        which.max(
-          c(
-            sum(abs(chrs - chrw), abs(chrs - csws)),
-            sum(abs(chrw - chrs), abs(chrw - csws)),
-            sum(abs(csws - chrs), abs(csws - chrw))
-          )
-        )
-      ],
-      "None"
-    )
-  )
+top_quartile <- snp_data$josts_d %>% quantile(0.75, na.rm = T)
 
 # load the gene positions
 all_genes <- rbind.fill(
@@ -132,7 +72,7 @@ all_genes <- rbind.fill(
     file.path(blast, "selected_resi.csv"), base = 1
   ) %>% mutate(gene_type = "Resistance Genes", pos_mb = pos / 1e6) %>%
     select(-pos)
-)
+) %>% arrange(chrom, pos_mb)
 
 snp_data <- snp_data %>%
   rbind.fill(all_genes) %>%
@@ -140,86 +80,108 @@ snp_data <- snp_data %>%
     type = pmin(gene_type, class, na.rm = TRUE),
     jdb = pmin(josts_d, base, na.rm = TRUE)
   ) %>%
-  select(-c(base, josts_d, gene_type, class)) %>%
+  select(-c(gene_type, class, base, josts_d)) %>%
   spread(type, jdb) %>%
   gather(value_type, values, -c(id, chrom, pos_mb)) %>%
   arrange(chrom, pos_mb)
 
-  # print the number of markers with identical phys pos
-  markers_with_maps_genos %>%
-    filter(n() >= 2) %>%
-    nrow() %>%
-    str_c("Num markers with identical postions: ", .) %>%
-    print()
-
-genes_nearby_markers <- lapply(1:nrow(gene_ranges), function (row) {
-  add_column(
-    snp_data[
-      which(
-        snp_data$chrom == gene_ranges[row, ]$chrom &
-        snp_data$pos_mb >= gene_ranges[row, ]$window_start &
-        snp_data$pos_mb <= gene_ranges[row, ]$window_end
-      ),
-    ],
-    group = gene_ranges[row, ]$genes,
-    window_start = gene_ranges[row, ]$window_start,
-    window_end = gene_ranges[row, ]$window_end
-  )
-})
-
-genes_nearby_markers[[40]]
+chroms_data <- split(snp_data, snp_data$chrom)
+windows_data <- read_csv(file.path(intermediate, "windows.csv"))
 
 legend_title <- "MJAF, Jost's D,\nand Gene Type"
 lables <- c(
-  "CHRS MJAF", "CHRSD Jost's D", "CHRW MJAF", "CHRW Jost's D", "CSWS MJAF",
-  "CSWSD Jost's D", "None Jost's D", "Phenotype Genes", "Resistance Genes"
+  "CHRS MJAF", "CHRW MJAF", "CSWS MJAF", "Jost's D", "Phenotype Genes",
+  "Resistance Genes"
 )
-lapply(genes_nearby_markers, function(gene_data) {
-  if (nrow(gene_data)) {
-    png(
-      file.path(
-        zoomed_marker_plots,
-        str_c(
-          str_c(
-            gene_data$chrom[1],
-            gene_data$window_start[1], gene_data$window_end[1],
-            gene_data$group[1],
-            sep = "_"
-          ),
-          ".png"
-        )
-      ),
-      family = "Times New Roman",
-      width = 320, height = 240,
-      units = "mm", res = 192
-    )
-    print(gene_data %>%
-      ggplot(aes(pos_mb, values)) +
-      ylim(0, 1) +
-      xlim(gene_data$window_start[1], gene_data$window_end[1]) +
-      geom_point(aes(colour = value_type, shape = value_type), size = 2) +
-      geom_hline(yintercept = top_quartile) +
-      geom_text_repel(
-        aes(
-          label = ifelse(
-            value_type == "Phenotype Genes" | value_type == "Resistance Genes",
-            id, ""
-          )
-        )
-      ) +
-      scale_colour_manual(
-        legend_title, labels = lables,
-        values = colour_set[c(1, 1, 2, 2, 4, 4, 20, 15, 19)]
-      ) +
-      scale_shape_manual(
-        legend_title, labels = lables,
-        values = c(16, 11, 16, 11, 16, 11, 11, 25, 25)
-      ) +
-      labs(
-        x = "Position in Mb", y = "MJAF and Jost's D",
-        title = str_c(gene_data$chrom[1], gene_data$group[1], sep = "_")
+lapply(chroms_data[10], function(chrom_data) {
+  chrom <- chrom_data$chrom[1]
+  print(chrom)
+  chrom_windows <- windows_data[which(windows_data$chrom == chrom), ]
+
+  # full chrom plot
+  p1 <- chrom_data %>%
+    ggplot(aes(pos_mb, values)) +
+    ylim(0, 1) +
+    geom_point(
+      aes(colour = value_type, shape = value_type),
+      size = 3
+    ) +
+    geom_hline(yintercept = top_quartile) +
+    geom_text_repel(
+      aes(
+        label = ifelse(
+          value_type == "Phenotype Genes" | value_type == "Resistance Genes",
+          id, NA
+        ),
+        label_size = 1, xlim = range(chrom_data$pos_mb)
       )
+    ) +
+    scale_colour_manual(
+      legend_title, labels = lables,
+      values = colour_set[c(1, 2, 4, 22, 15, 19)],
+      na.translate = FALSE
+    ) +
+    scale_shape_manual(
+      legend_title, labels = lables,
+      values = c(16, 16, 16, 15, 25, 25),
+      na.translate = FALSE
+    ) +
+    scale_x_continuous(breaks = seq(0, max(chrom_data$pos_mb), by = 10)) +
+    labs(
+      x = "Position in Mb", y = "MJAF and Jost's D",
+      title = str_c(chrom_data$chrom[1])
+      # title = str_c(chrom_data$chrom[1], chrom_data$group[1], sep = "_")
     )
-    dev.off()
+  p2 <- NA
+  if (nrow(chrom_windows)) {
+    for (row in 1:nrow(chrom_windows)) {
+      if (any(is.na(p2))) {
+        p2 <- p1 +
+        geom_rect(
+          data = chrom_windows[row, ], inherit.aes = FALSE,
+          aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+          fill = colour_set[20], alpha = 0.3
+        )
+      } else {
+        p2 <- p2 +
+        geom_rect(
+          data = chrom_windows[row, ], inherit.aes = FALSE,
+          aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+          fill = colour_set[20], alpha = 0.3
+        )
+      }
+
+      # zoomed plots
+      file_name <- str_c(
+        str_c(
+          chrom,
+          round(chrom_windows[row, ]$start, 0),
+          round(chrom_windows[row, ]$end, 0),
+          chrom_windows[row, ]$genes,
+          sep = "_"
+        ),
+        ".png"
+      )
+      print(file_name)
+      png(
+        file.path(zoomed_marker_plots, file_name),
+        family = "Times New Roman",
+        width = 600, height = 200,
+        units = "mm", res = 192
+      )
+      print(
+        p1 +
+          xlim(chrom_windows[row, ]$start, chrom_windows[row, ]$end)
+      )
+      dev.off()
+    }
   }
+  png(
+    file.path(chrom_mjaf_josts_d, str_c(chrom_data$chrom[1], ".png")),
+    family = "Times New Roman",
+    width = 1800, height = 300,
+    units = "mm", res = 192
+  )
+  print(p2)
+  dev.off()
 })

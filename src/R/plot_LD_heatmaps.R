@@ -7,52 +7,52 @@ import::from(RColorBrewer, "brewer.pal")
 import::from(SNPRelate, "snpgdsClose", "snpgdsLDMat", "snpgdsOpen")
 import::from(tibble, "as_tibble", "tibble")
 
-# library(plyr)
-# load the data from the gds object
+# # library(plyr)
+# # load the data from the gds object
+# # wheat_data <- snpgds_parse(phys_gds)
 # wheat_data <- snpgds_parse(phys_gds)
-wheat_data <- snpgds_parse(phys_gds)
 
-max_lengths <- span_by_chrom(
-  wheat_data$snp$chrom, wheat_data$snp$pos
-) %>% max_lengths() / 1e6
+# max_lengths <- span_by_chrom(
+#   wheat_data$snp$chrom, wheat_data$snp$pos
+# ) %>% max_lengths() / 1e6
 
-# create a list of the ld between markers on each chromosome add NA column
-# and rows every 7.5 Mb so that gaps appear on image
+# # create a list of the ld between markers on each chromosome add NA column
+# # and rows every 7.5 Mb so that gaps appear on image
+# # wheat_gds <- snpgdsOpen(phys_gds)
 # wheat_gds <- snpgdsOpen(phys_gds)
-wheat_gds <- snpgdsOpen(phys_gds)
-ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
-  gap_pos <- vector()
-  prev <- 0
-  dist <- 7.5e6
-  for (cur in chrom$pos) {
-    if (cur - prev > dist) {
-      gap_pos <- c(
-        gap_pos,
-        # finding the average positions between two markers that are
-        # ~ dist apart
-        cbind(seq(prev, cur, dist), rev(seq(cur, prev, -dist))) %>% rowMeans()
-      )
-    }
-    prev <- cur
-  }
-  col_gaps_mat <- snpgdsLDMat(
-      wheat_gds, method = "composite", snp.id = chrom$id, slide = -1
-    )$LD %>%
-    abs() %>%
-    cbind(pos = chrom$pos) %>% 
-    as_tibble() %>%
-    full_join(tibble(pos = gap_pos)) %>%
-    arrange(pos) %>%
-    select(-pos)
-  both_gaps_mat <- t(col_gaps_mat) %>%
-    cbind(pos = chrom$pos) %>%
-    as_tibble() %>%
-    full_join(tibble(pos = gap_pos)) %>%
-    arrange(pos)
-  list(pos = both_gaps_mat$pos / 1e6,
-       mat = both_gaps_mat %>% select(-pos) %>% as.matrix())
-})
-snpgdsClose(wheat_gds)
+# ld_mat <- by(wheat_data$snp, wheat_data$snp$chrom, function (chrom) {
+#   gap_pos <- vector()
+#   prev <- 0
+#   dist <- 7.5e6
+#   for (cur in chrom$pos) {
+#     if (cur - prev > dist) {
+#       gap_pos <- c(
+#         gap_pos,
+#         # finding the average positions between two markers that are
+#         # ~ dist apart
+#         cbind(seq(prev, cur, dist), rev(seq(cur, prev, -dist))) %>% rowMeans()
+#       )
+#     }
+#     prev <- cur
+#   }
+#   col_gaps_mat <- snpgdsLDMat(
+#       wheat_gds, method = "composite", snp.id = chrom$id, slide = -1
+#     )$LD %>%
+#     abs() %>%
+#     cbind(pos = chrom$pos) %>% 
+#     as_tibble() %>%
+#     full_join(tibble(pos = gap_pos)) %>%
+#     arrange(pos) %>%
+#     select(-pos)
+#   both_gaps_mat <- t(col_gaps_mat) %>%
+#     cbind(pos = chrom$pos) %>%
+#     as_tibble() %>%
+#     full_join(tibble(pos = gap_pos)) %>%
+#     arrange(pos)
+#   list(pos = both_gaps_mat$pos / 1e6,
+#        mat = both_gaps_mat %>% select(-pos) %>% as.matrix())
+# })
+# snpgdsClose(wheat_gds)
 
 # plot the matrices
 cex <- 0.8
@@ -83,7 +83,7 @@ title(main = paste("LD Heatmaps by Chromosome"),
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
-legend(-.60, -.98,
+legend(-.70, -.96,
   legend = c("0", "0.25", "0.50", "0.75", "1"), title = "Abs. Composite LD",
   fill = colours[c(1, 26, 51, 76, 101)], horiz = T)
 dev.off()

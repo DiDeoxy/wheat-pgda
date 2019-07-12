@@ -157,7 +157,7 @@ plots_matrix <- ggmatrix(
 # plot the matrix
 png(
   file.path("results", "phys_vs_mjaf_with_gen_pos.png"),
-  family = "Times New Roman", width = 200, height = 240, pointsize = 5,
+  family = "Times New Roman", width = 160, height = 192, pointsize = 5,
   units = "mm", res = 192)
 plots_matrix + theme(legend.position = "bottom")
 dev.off()

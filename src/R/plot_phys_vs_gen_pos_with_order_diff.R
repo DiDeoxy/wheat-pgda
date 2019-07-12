@@ -74,7 +74,7 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
       aes(
         chrom_data$phys_pos_mb, chrom_data$gen_pos_cm[gen_to_phys_order],
         colour = order_diff_intervals
-      ), size = 0.6
+      ), size = 1.5
     ) +
     labs(colour = levels) +
     scale_colour_manual(name = "Order Difference", values = colours_order_diff)
@@ -94,14 +94,18 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
 
 plots_matrix_pos <- ggmatrix(
   plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
-  xlab = "Pseudo-Chromosomal Position in Mb", ylab = "Genetic Position in cM",
-  legend = c(2, 1)
+  xlab = "Position in Mb", ylab = "Position in cM",
+  legend = c(2, 1),
+  title = str_c(
+    "Pseudo-chromosomal vs Genetic position with markers\n",
+    "coloured by magnitude of order difference"
+  )
 )
 
 # plot the matrix
 png(
   file.path("results", "2D_4A_phys_vs_gen_pos_with_order_diff.png"),
-  family = "Times New Roman", width = 140, height = 192, pointsize = 5,
+  family = "Times New Roman", width = 160, height = 192, pointsize = 5,
   units = "mm", res = 300)
 plots_matrix_pos + theme(legend.position = "bottom")
 dev.off()

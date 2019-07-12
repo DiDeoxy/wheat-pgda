@@ -9,7 +9,7 @@
 # echo "setup_python_venv"
 # sudo apt-get install -y python3-venv
 # python3 -m venv src/python/ALIGN
-# source src/python/ALIGN/bin/activate
+source src/python/ALIGN/bin/activate
 # python -m pip install --upgrade pip
 # python -m pip install biopython pandas pyfaidx
 # python -m pip install git+https://github.com/daler/gffutils.git
@@ -73,47 +73,47 @@
 #     data/raw/blast_db/ref_seq_v1_genes.fasta \
 #     data/intermediate/blast/top_resi.csv
 
-# # 4b
-# # concate pheno
-# echo "concat_GLU"
-# rm data/raw/gene_seqs/pheno/GLU/GLU.fasta
-# cat data/raw/gene_seqs/pheno/GLU/*.fasta > data/raw/gene_seqs/pheno/GLU/GLU.fasta
-# echo "filter_GLU"
-# python src/python/filter_fasta.py \
-#     data/raw/gene_seqs/pheno/GLU/GLU.fasta \
-#     data/raw/gene_seqs/pheno/GLU_filtered.fasta \
-#     "GLU|mw|weight"
-# echo "filter_Pins"
-# python src/python/filter_fasta.py \
-#     data/raw/gene_seqs/pheno/Pins/pins.fasta \
-#     data/raw/gene_seqs/pheno/Pins_filtered.fasta \
-#     "pin"
-# echo "concat_pheno"
-# rm data/raw/gene_seqs/pheno/all.fasta
-# cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
+# 4b
+# concate pheno
+echo "concat_GLU"
+rm data/raw/gene_seqs/pheno/glu/glu.fasta
+cat data/raw/gene_seqs/pheno/glu/*.fasta > data/raw/gene_seqs/pheno/glu/glu.fasta
+echo "filter_GLU"
+python src/python/filter_fasta.py \
+    data/raw/gene_seqs/pheno/glu/glu.fasta \
+    data/raw/gene_seqs/pheno/GLU_filtered.fasta \
+    "glu|mw|weight"
+echo "filter_Pins"
+python src/python/filter_fasta.py \
+    data/raw/gene_seqs/pheno/Pins/pins.fasta \
+    data/raw/gene_seqs/pheno/Pins_filtered.fasta \
+    "pin"
+echo "concat_pheno"
+rm data/raw/gene_seqs/pheno/all.fasta
+cat data/raw/gene_seqs/pheno/*.fasta > data/raw/gene_seqs/pheno/all.fasta
 
-# # 5b
-# # align pheno genes
-# echo "align_pheno_genes"
-# blastn \
-#     -num_threads 4 \
-#     -query data/raw/gene_seqs/pheno/all.fasta \
-#     -db data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
-#     > data/intermediate/blast/pheno.txt
+# 5b
+# align pheno genes
+echo "align_pheno_genes"
+blastn \
+    -num_threads 4 \
+    -query data/raw/gene_seqs/pheno/all.fasta \
+    -db data/raw/blast_db/ref_seq_v1_genes.fasta \
+    -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
+    > data/intermediate/blast/pheno.txt
 
-# # 6b
-# # get top pheno alignments
-# echo "get_top_pheno_alignments"
-# python src/python/get_top_alignments.py \
-#     data/intermediate/blast/pheno.txt \
-#     data/raw/blast_db/ref_seq_v1_genes.fasta \
-#     data/intermediate/blast/top_pheno.csv
+# 6b
+# get top pheno alignments
+echo "get_top_pheno_alignments"
+python src/python/get_top_alignments.py \
+    data/intermediate/blast/pheno.txt \
+    data/raw/blast_db/ref_seq_v1_genes.fasta \
+    data/intermediate/blast/top_pheno.csv
 
-# # 7
-# # convert genbank ids of aligned gene sequences to gene names
-# echo "convert_genbank_ids"
-# bash src/bash/convert_genbank_ids_to_gene_names.sh
+# 7
+# convert genbank ids of aligned gene sequences to gene names
+echo "convert_genbank_ids"
+bash src/bash/convert_genbank_ids_to_gene_names.sh
 
 ###############################################################################
 # gotta do things different since fhb1 is missing from CS
@@ -173,13 +173,13 @@
 #     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
 #     > data/intermediate/blast/4AL13.txt
 
-# 6c
-# get top 4AL13 alignments
-echo "get_top_4AL13_alignments"
-python src/python/get_top_alignments.py \
-    data/intermediate/blast/4AL13.txt \
-    data/raw/blast_db/ref_seq_v1_genes.fasta \
-    data/intermediate/blast/top_4AL13.csv
+# # 6c
+# # get top 4AL13 alignments
+# echo "get_top_4AL13_alignments"
+# python src/python/get_top_alignments.py \
+#     data/intermediate/blast/4AL13.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_4AL13.csv
 
 # # 5d
 # # align 4AL5 genes
@@ -191,13 +191,13 @@ python src/python/get_top_alignments.py \
 #     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
 #     > data/intermediate/blast/4AL5.txt
 
-# 6d
-# get top 4AL5 alignments
-echo "get_top_4AL5_alignments"
-python src/python/get_top_alignments.py \
-    data/intermediate/blast/4AL5.txt \
-    data/raw/blast_db/ref_seq_v1_genes.fasta \
-    data/intermediate/blast/top_4AL5.csv
+# # 6d
+# # get top 4AL5 alignments
+# echo "get_top_4AL5_alignments"
+# python src/python/get_top_alignments.py \
+#     data/intermediate/blast/4AL5.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_4AL5.csv
 
 # # 5e
 # # align 4AL4 genes
@@ -209,10 +209,10 @@ python src/python/get_top_alignments.py \
 #     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length" \
 #     > data/intermediate/blast/4AL4.txt
 
-# 6e
-# get top 4AL4 alignments
-echo "get_top_4AL4_alignments"
-python src/python/get_top_alignments.py \
-    data/intermediate/blast/4AL4.txt \
-    data/raw/blast_db/ref_seq_v1_genes.fasta \
-    data/intermediate/blast/top_4AL4.csv
+# # 6e
+# # get top 4AL4 alignments
+# echo "get_top_4AL4_alignments"
+# python src/python/get_top_alignments.py \
+#     data/intermediate/blast/4AL4.txt \
+#     data/raw/blast_db/ref_seq_v1_genes.fasta \
+#     data/intermediate/blast/top_4AL4.csv

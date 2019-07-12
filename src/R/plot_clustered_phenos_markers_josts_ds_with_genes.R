@@ -186,7 +186,7 @@ plots_matrix <- ggmatrix(
 # plot the matrix
 png(
   file.path("results", "clustered_phenos_markers_josts_ds_with_genes.png"),
-  family = "Times New Roman", width = 254, height = 190, pointsize = 5,
+  family = "Times New Roman", width = 160, height = 192, pointsize = 5,
   units = "mm", res = 300
 )
 plots_matrix + theme(legend.position = "bottom", legend.box = "vertical")

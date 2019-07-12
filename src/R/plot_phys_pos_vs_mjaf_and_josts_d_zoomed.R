@@ -87,17 +87,22 @@ snp_data <- snp_data %>%
 gene_ranges <- read_csv(file.path(intermediate, "gene_ranges.csv"))
 
 genes_nearby_markers <- lapply(1:nrow(gene_ranges), function (row) {
-  add_column(
-    snp_data[
-      which(
-        snp_data$chrom == gene_ranges[row, ]$chrom &
-        snp_data$pos_mb >= gene_ranges[row, ]$window_start &
-        snp_data$pos_mb <= gene_ranges[row, ]$window_end
-      ),
-    ],
+  markers <- snp_data[
+    which(
+      snp_data$chrom == gene_ranges[row, ]$chrom &
+      snp_data$pos_mb >= gene_ranges[row, ]$window_start &
+      snp_data$pos_mb <= gene_ranges[row, ]$window_end
+    ),
+  ] %>%
+    add_row(pos_mb = gene_ranges[row, ]$window_start) %>%
+    add_row(pos_mb = gene_ranges[row, ]$window_end) %>% 
+    arrange(pos_mb)
+  list(
+    markers = markers,
     group = gene_ranges[row, ]$genes
   )
 })
+genes_nearby_markers[[1]]
 
 legend_title <- "MJAF, Jost's D,\nand Gene Type"
 lables <- c(
@@ -105,27 +110,28 @@ lables <- c(
   "Resistance Genes"
 )
 lapply(genes_nearby_markers, function(gene_data) {
-  png(
-    file.path(
-      zoomed_marker_plots,
-      str_c(
-        str_c(
-          gene_data$chrom[1], gene_data$group[1],
-          round(min(gene_data$pos_mb), 0), round(max(gene_data$pos_mb), 0),
-          sep = "_"
-        ),
-        ".png"
-      )
+  file_name <- str_c(
+    str_c(
+      gene_data$markers$chrom[2],
+      round(min(gene_data$markers$pos_mb), 0),
+      round(max(gene_data$markers$pos_mb), 0),
+      gene_data$group,
+      sep = "_"
     ),
+    ".png"
+  )
+  print(file_name)
+  png(
+    file.path(zoomed_marker_plots, file_name),
     family = "Times New Roman",
     width = 320, height = 240,
     units = "mm", res = 192
   )
-  print(gene_data %>%
+  print(gene_data$markers %>%
     ggplot(aes(pos_mb, values)) +
     ylim(0, 1) +
-    xlim(range(gene_data$pos_mb)) +
-    geom_point(aes(colour = value_type, shape = value_type)) +
+    xlim(range(gene_data$markers$pos_mb)) +
+    geom_point(aes(colour = value_type, shape = value_type), size = 3) +
     geom_hline(yintercept = top_quartile) +
     geom_text_repel(
       aes(
@@ -137,15 +143,18 @@ lapply(genes_nearby_markers, function(gene_data) {
     ) +
     scale_colour_manual(
       legend_title, labels = lables,
-      values = colour_set[c(1, 2, 4, 22, 15, 19)]
+      values = colour_set[c(1, 2, 4, 22, 15, 19)],
+      na.translate = FALSE
     ) +
     scale_shape_manual(
       legend_title, labels = lables,
-      values = c(16, 16, 16, 15, 25, 25)
+      values = c(16, 16, 16, 15, 25, 25),
+      na.translate = FALSE
     ) +
     labs(
       x = "Position in Mb", y = "MJAF and Jost's D",
-      title = str_c(gene_data$chrom[1], gene_data$group[1], sep = "_")
+      title = str_c(gene_data$markers$chrom[2])
+      # title = str_c(gene_data$chrom[1], gene_data$group[1], sep = "_")
     )
   )
   dev.off()
