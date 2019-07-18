@@ -18,7 +18,7 @@ snp_data <- tibble(
   gen_id = gen_data$snp$id,
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
-  gen_pos_cm = gen_data$snp$pos / 100
+  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100
 )
 
 # calc the lengths of the different genomes and homoeologous sets
@@ -80,21 +80,8 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
     scale_colour_manual(name = "Order Difference", values = colours_order_diff)
 })
 
-# plots_matrix <- ggmatrix(
-#   plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
-#   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
-#   # title = str_wrap(
-#   #   str_c(
-#   #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
-#   #     "Magnitude of Difference in Order Between Maps"
-#   #   ), 
-#   #   width = 70
-#   # ),
-#   legend = c(2, 1)
-# )
-
-plots_matrix_index <- ggmatrix(
-  plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
+plots_matrix <- ggmatrix(
+  plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
   # title = str_wrap(
   #   str_c(
@@ -106,6 +93,19 @@ plots_matrix_index <- ggmatrix(
   legend = c(2, 1)
 )
 
+# plots_matrix_index <- ggmatrix(
+#   plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
+#   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
+#   # title = str_wrap(
+#   #   str_c(
+#   #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
+#   #     "Magnitude of Difference in Order Between Maps"
+#   #   ), 
+#   #   width = 70
+#   # ),
+#   legend = c(2, 1)
+# )
+
 # plot the matrix
 png(
   file.path("results", "2D_4A_phys_vs_gen_index_with_order_diff.png"),
@@ -113,7 +113,7 @@ png(
   units = "mm", res = 300
 )
 # plots[[10]]
-plots_matrix_index + theme(legend.position = "bottom")
+plots_matrix + theme(legend.position = "bottom")
 dev.off()
 
 # summary(order_diffs)

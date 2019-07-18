@@ -1,6 +1,6 @@
 source(file.path("src", "R", "file_paths.R"))
 source(file.path("src", "R", "colour_sets.R"))
-import::from(pgda, "calc_eh", "max_lengths", "snpgds_parse", "span_by_chrom")
+import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(GGally, "ggmatrix")
 import::from(
   ggplot2, "aes", "ggplot", "geom_point", "labs",  "scale_colour_gradientn", 
@@ -27,62 +27,6 @@ snp_data <- tibble(
   gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100,
   mjafs = rowMaxs(allele_counts,  value = TRUE) / rowSums(allele_counts)
 )
-
-# # identify those snps within the extended haplotypes
-# snp_index_1A <- which(phys_data$snp$chrom == "1A")
-# haplo_id_1A <- phys_data$snp$id[snp_index_1A][
-#   which(phys_data$snp$pos_mb[snp_index_1A] > 70 &
-#     phys_data$snp$pos_mb[snp_index_1A] < 300)
-# ]
-# snp_index_2A <- which(phys_data$snp$chrom == "2A")
-# haplo_id_2A <- phys_data$snp$id[snp_index_2A][
-#   which(phys_data$snp$pos_mb[snp_index_2A] > 210 &
-#     phys_data$snp$pos_mb[snp_index_2A] < 470)
-# ]
-# snp_index_4A <- which(phys_data$snp$chrom == "4A")
-# haplo_id_4A <- phys_data$snp$id[snp_index_4A][
-#   which(phys_data$snp$pos_mb[snp_index_4A] > 230 &
-#     phys_data$snp$pos_mb[snp_index_4A] < 460)
-# ]
-# snp_index_5B <- which(phys_data$snp$chrom == "5B")
-# haplo_id_5B <- phys_data$snp$id[snp_index_5B][
-#   which(phys_data$snp$pos_mb[snp_index_5B] > 110 &
-#     phys_data$snp$pos_mb[snp_index_5B] < 210)
-# ]
-# snp_index_6A <- which(phys_data$snp$chrom == "6A")
-# haplo_id_6A <- phys_data$snp$id[snp_index_6A][
-#   which(phys_data$snp$pos_mb[snp_index_6A] > 170 &
-#     phys_data$snp$pos_mb[snp_index_6A] < 445)
-# ]
-# snp_index_6B <- which(phys_data$snp$chrom == "6B")
-# haplo_id_6B <- phys_data$snp$id[snp_index_6B][
-#   which(phys_data$snp$pos_mb[snp_index_6B] > 250 &
-#     phys_data$snp$pos_mb[snp_index_6B] < 380)
-# ]
-# snp_index_7A <- which(phys_data$snp$chrom == "7A")
-# haplo_id_7A <- phys_data$snp$id[snp_index_7A][
-#   which(phys_data$snp$pos_mb[snp_index_7A] > 310 &
-#     phys_data$snp$pos_mb[snp_index_7A] < 445)
-# ]
-# haplo_ids <- c(
-#   haplo_id_1A, haplo_id_2A, haplo_id_4A, haplo_id_5B, haplo_id_6A, haplo_id_6B,
-#   haplo_id_7A
-# )
-# haplo_index_snps_phys <- match(haplo_ids, phys_data$snp$id)
-# haplo_index_snps_gen <- match(haplo_ids, gen_data$snp$id)
-
-# # create a column in the snp_data set that contains D values for only
-# # those markers in the extended haplotypes, NA for all else
-# snp_data <- snp_data %>% mutate(haplo_phys = phys)
-# snp_data$haplo_phys[-haplo_index_snps_phys] <- NA
-# snp_data <- snp_data %>% mutate(haplo_gen = gen)
-# snp_data$haplo_gen[-haplo_index_snps_gen] <- NA
-
-# allows application of same colour to each set of chromosomes
-chroms_order <- outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
-  t() %>% as.vector()
-colour_order <- c(rep(1, 3), rep(2, 3), rep(3, 3), rep(4, 3), rep(5, 3),
-rep(6, 3), rep(7, 3))
 
 # create a function for making a gradient of colours
 # colour_gradient <- colorRampPalette(colour_set[c(1, 5, 3, 2, 4)])(100)
