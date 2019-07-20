@@ -15,5 +15,8 @@ max_D <- (2 * k * (km_i + (km_d)^2 - k_msqr)) /
 # load the genind object
 comp_genind <- read_rds(file.path(geninds, "chrs_chrw_csws.rds"))
 
+norm_josts_d <- D_Jost(comp_genind)[[1]] / max_D
+norm_josts_d[which(norm_josts_D < 0)] <- 0
+
 # calculate normalized josts d values and wrtie the out
-write_rds(D_Jost(comp_genind)[[1]] / max_D, josts_d)
+write_rds(norm_josts_d, josts_d)

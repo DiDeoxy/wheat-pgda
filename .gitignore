@@ -5,7 +5,8 @@
 .editorconfig
 data
 results
-refseq
+ref_seq
 Rplots.pdf
 src/python/ALIGN
 ncbi-blast-2.9.0+/
+cereba_blast

@@ -28,8 +28,7 @@ allele_counts <- rowTables(genos, c(0, 2))
 snp_data <- tibble(
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
-  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100,
-  mjafs = rowMaxs(allele_counts,  value = TRUE) / rowSums(allele_counts)
+  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100
 )
 
 A4L13_ests <- load_genes(

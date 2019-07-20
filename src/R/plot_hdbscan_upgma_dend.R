@@ -20,11 +20,11 @@ levels(clusters) <- c(
   "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
 )
 
-write_csv(
-  matrix(wheat_data$sample$id[which(clusters == "Noise")], 7, 5) %>%
-    as.data.frame(),
-  path = file.path("results", "noise_cultivars.csv")
-)
+# write_csv(
+#   matrix(wheat_data$sample$id[which(clusters == "Noise")], 7, 5) %>%
+#     as.data.frame(),
+#   path = file.path("results", "noise_cultivars.csv")
+# )
 
 wheat_gds <- snpgdsOpen(ld_phys_gds)
 ## making the distance object

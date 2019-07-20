@@ -51,3 +51,8 @@ chrom_mjaf_josts_d <- file.path("results", "chrom_mjaf_josts_d")
 ifelse(
   ! dir.exists(chrom_mjaf_josts_d), dir.create(chrom_mjaf_josts_d), FALSE
 )
+
+all_data_chroms <- file.path("results", "all_data_chroms")
+ifelse(
+  ! dir.exists(all_data_chroms), dir.create(all_data_chroms), FALSE
+)
