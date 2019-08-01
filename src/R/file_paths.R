@@ -36,20 +36,12 @@ ifelse(
   ! dir.exists(map_stats_and_plots), dir.create(map_stats_and_plots), FALSE
 )
 
-josts_d_by_chrom <- file.path("results", "josts_d_by_chrom")
-ifelse(! dir.exists(josts_d_by_chrom), dir.create(josts_d_by_chrom), FALSE)
-
 allele_richness <- file.path("results", "allele_richness")
 ifelse(! dir.exists(allele_richness), dir.create(allele_richness), FALSE)
 
 zoomed_marker_plots <- file.path("results", "zoomed_marker_plots")
 ifelse(
   ! dir.exists(zoomed_marker_plots), dir.create(zoomed_marker_plots), FALSE
-)
-
-chrom_mjaf_josts_d <- file.path("results", "chrom_mjaf_josts_d")
-ifelse(
-  ! dir.exists(chrom_mjaf_josts_d), dir.create(chrom_mjaf_josts_d), FALSE
 )
 
 all_data_chroms <- file.path("results", "all_data_chroms")

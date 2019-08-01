@@ -16,8 +16,8 @@ cereba_data <- read_tsv(
 ) %>%
   mutate(cereba_pos_mb = (sstart + send) / 2e6) %>%
   select(chrom, cereba_pos_mb) %>%
-  rbind.fill(read_csv(file.path(intermediate, "centromeres.csv")))
-# head(cereba_data)
+  rbind.fill(read_csv(file.path(intermediate, "centromeres.csv"))) %>%
+  mutate(cent_pos_mb = pos_mb) %>% select(-pos_mb)
 
 # calc the lengths of the different genomes and homoeologous sets
 max_phys_lengths <- span_by_chrom(

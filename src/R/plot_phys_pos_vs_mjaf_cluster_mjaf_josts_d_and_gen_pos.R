@@ -1,0 +1,501 @@
+# source(file.path("src", "R", "file_paths.R"))
+# source(file.path("src", "R", "colour_sets.R"))
+# import::from(dplyr, "bind_cols", "mutate", "rowwise", "select")
+# import::from(GGally, "ggmatrix")
+# import::from(
+#   ggplot2, "aes", "element_blank", "expand_limits", "facet_wrap", "ggplot",
+#   "geom_boxplot", "geom_col",
+#   "geom_point",
+#   "geom_rect", "geom_segment", "geom_violin", "guides", "labs",
+#   "scale_colour_gradientn",
+#   "scale_colour_manual", "scale_fill_manual", "scale_linetype",
+#   "scale_shape_manual", "scale_size_manual", "scale_x_continuous",
+#   "scale_y_continuous", "theme",
+#   "unit", "vars", "xlim", "ylim"
+# )
+# import::from(ggpubr, "as_ggplot", "get_legend")
+# import::from(ggrepel, "geom_label_repel")
+# import::from(gridExtra, "grid.arrange")
+# import::from(magrittr, "%>%", "%<>%")
+# import::from(pgda, "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom")
+# import::from(plyr, "rbind.fill")
+# import::from(readr, "read_csv", "read_rds", "write_csv")
+# import::from(Rfast, "rowMaxs")
+# import::from(scrime, "rowTables")
+# import::from(stringr, "str_c")
+# import::from(tibble, "add_column", "as_tibble", "tibble")
+# import::from(tidyr, "gather", "spread")
+
+# # load the data from the gds object
+# phys_data <- snpgds_parse(phys_gds)
+# gen_data <- snpgds_parse(gen_gds)
+
+# # recode the genotypes and count
+# genos <- replace(phys_data$genotypes, phys_data$geno == 3, NA)
+
+# # set the genotype coding
+# coding <- c(0, 2)
+
+# # load some data
+# josts_d <- read_rds(josts_d)
+# allele_counts <- rowTables(genos, coding)
+# mjafs <- rowMaxs(allele_counts, value = TRUE) / rowSums(allele_counts)
+# eh <- (mjafs * (1 - mjafs)) * 2
+# gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
+# window_ranges <- read_csv(file.path(intermediate, "windows.csv"))
+
+# ################################################################################
+# # caclualte each markers order difference between gen and phys maps and assign
+# # it to an interval
+
+# gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
+# order_diffs <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
+
+# order_diff_quantiles <- c("0%" = -1,
+#   quantile(
+#     order_diffs, c(1 / 2, 3 / 4, 7 / 8, 15 / 16, 31 / 32, 63 / 64, 127 / 128)
+#   ),
+#   "100%" = max(order_diffs)
+# )
+
+# intervals <- lapply(
+#   seq_along(order_diff_quantiles),
+#   function (i) {
+#     if (i < length(order_diff_quantiles)) {
+#       str_c(order_diff_quantiles[i] + 1, "-", order_diff_quantiles[i + 1])
+#     }
+#   }
+# ) %>% unlist()
+
+# order_diff_intervals <- cut(order_diffs, order_diff_quantiles, intervals)
+
+# ################################################################################
+# # get the cluster mjafs
+
+# cluster <- read_rds(hdbscan)$cluster
+# cluster_genos <- list(
+#   `CHRS EH` = genos[,
+#     which(phys_data$sample$annot$pheno == "HRS" & cluster == 5)
+#   ],
+#   `CHRW EH` = genos[,
+#     which(phys_data$sample$annot$pheno == "HRW" & cluster == 1)
+#   ],
+#   `CSWS EH` = genos[,
+#     which(phys_data$sample$annot$pheno == "SWS" & cluster == 2)
+#   ]
+# )
+
+# # get the group MJAFs
+# mja <- rowMaxs(rowTables(genos, coding))
+# eh_by_pop <- lapply(cluster_genos, function (sub_genos) {
+#   genos_counts <- rowTables(sub_genos, coding)
+#   max_genos <- genos_counts[cbind(seq_along(mja), mja)]
+#   mjafs <- max_genos / rowSums(genos_counts)
+#   (mjafs * (1 - mjafs)) * 2
+# }) %>% bind_cols() %>% round(4)
+
+# ################################################################################
+# # make the stat data dataframe
+
+# # gen and phys tibbles of the data so far
+# stat_data <- tibble(
+#   chrom = phys_data$snp$chrom,
+#   id = phys_data$snp$id,
+#   pos_mb = phys_data$snp$pos / 1e6,
+#   pos_cm = gen_data$snp$pos[gen_to_phys_order] / 100,
+#   eh = eh,
+#   odi = factor(order_diff_intervals),
+#   josts_d = josts_d
+# ) %>%
+#   bind_cols(eh_by_pop) %>%
+#   rowwise() %>%
+#   mutate(
+#     josts_d_class = factor(
+#       c("CHRSD Jost's D", "CHRWD Jost's D", "CSWSD Jost's D")[
+#         which.max(
+#           c(
+#             sum(
+#               abs(`CHRS EH` - `CHRW EH`), abs(`CHRS EH` - `CSWS EH`)
+#             ),
+#             sum(
+#               abs(`CHRW EH` - `CHRS EH`), abs(`CHRW EH` - `CSWS EH`)
+#             ),
+#             sum(
+#               abs(`CSWS EH` - `CHRS EH`), abs(`CSWS EH` - `CHRW EH`)
+#             )
+#           )
+#         )
+#       ]
+#     )
+#   )
+
+# # # write our the stat data by chrom
+# # by(
+# #   stat_data, stat_data$chrom, function (chrom_data) {
+# #     write_csv(
+# #       chrom_data %>% select(
+# #         id, chrom, pos_mb, `CHRS EH`, `CHRW EH`, `CSWS EH`, josts_d, class
+# #       ),
+# #       file.path(
+# #         all_data_chroms,
+# #         str_c(
+# #           chrom_data$chrom[1],
+# #           "_all_markers_josts_d_and_mjaf_freqs_by_pop_with_genes.csv"
+# #         )
+# #       )
+# #     )
+# #   }
+# # )
+
+# # split the data up
+# cluster_eh_data <- stat_data %>%
+#   select(c(chrom, id, pos_mb, `CHRS EH`, `CHRW EH`, `CSWS EH`)) %>%
+#   gather(stat, value, -c(chrom, id, pos_mb)) %>%
+#   split(.$chrom)
+
+# stat_data %<>%
+#   select(
+#     c(chrom, id, pos_mb, pos_cm, odi, josts_d, josts_d_class, eh)
+#   ) %>%
+#   split(.$chrom)
+
+# ################################################################################
+# # create a tibble of the genes and centromeres
+
+# landmarks <- rbind.fill(
+#   load_genes(
+#     file.path(blast, "selected_pheno.csv")
+#   ) %>% mutate(
+#     type = "Gene", base = 0.5, pos_mb = pos / 1e6
+#   ) %>%
+#     select(-pos),
+#   load_genes(
+#     file.path(blast, "selected_resi.csv")
+#   ) %>% mutate(
+#     type = "Gene", base = 0.5, pos_mb = pos / 1e6
+#   ) %>%
+#     select(-pos),
+#   cbind(
+#     id = "Centromere", type = "Centromere", base = 0.5,
+#     read_csv(file.path(intermediate, "centromeres.csv"))
+#   )
+# )
+
+# ################################################################################
+# # calc the lengths of the different genomes and homoeologous sets
+
+# max_phys_lengths <- span_by_chrom(
+#   phys_data$snp$chrom, phys_data$snp$pos
+# ) %>% max_lengths() / 1e6
+# max_gen_lengths <- span_by_chrom(
+#   gen_data$snp$chrom, gen_data$snp$pos
+# ) %>% max_lengths() / 100
+
+# ################################################################################
+# # calc the distirbution of markers in mono haplos and those not
+
+# mono_haplos <- cbind(
+#   id = "mono_haplo", type = "mono_haplo", base = 0.5,
+#   read_csv(file.path(intermediate, "haplo_windows.csv"))
+# ) %>%
+#   split(.$chrom)
+
+# plots <- lapply(names(mono_haplos), function (chrom) {
+#   chrom_data <- stat_data[[chrom]] %>%
+#     rowwise() %>%
+#     mutate(
+#       type = c("Distal", "Proximal")[
+#         which(
+#           c(
+#             pos_mb < mono_haplos[[chrom]]$pos_mb[1] |
+#             pos_mb > mono_haplos[[chrom]]$pos_mb[2],
+#             pos_mb >= mono_haplos[[chrom]]$pos_mb[1] &
+#             pos_mb <= mono_haplos[[chrom]]$pos_mb[2]
+#           )
+#         )
+#       ]
+#     )
+#   list(
+#     chrom_data %>% ggplot(aes(type, eh)) +
+#       ylim(0, 0.5) +
+#       geom_violin(aes(fill = type)) +
+#       geom_boxplot(width = 0.2)
+#   )
+# }) %>% unlist(recursive = FALSE)
+
+# # turn plot list into ggmatrix
+# plots_matrix <- ggmatrix(
+#   plots,
+#   nrow = 1, ncol = 6,
+#   xAxisLabels = c("1A", "1B", "5B", "6A", "6B", "7A")
+# )
+
+# # plot the matrix
+# png(
+#   file.path("results", "test2.png"),
+#   family = "Times New Roman", width = 500, height = 250, pointsize = 5,
+#   units = "mm", res = 192
+# )
+# plots_matrix
+# dev.off()
+
+################################################################################
+# plot the data
+chroms <- as.vector(
+  t(outer(as.character(1:7), c("A", "B", "D"), paste, sep = ""))
+)
+line_size <- 1
+point_size <- 3
+text_size <- 3
+seed <- 101
+plots <- lapply(chroms, function (chrom) {
+  print(chrom)
+
+  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
+  chrom_landmarks <- landmarks[which(landmarks$chrom == chrom), ]
+
+  max_pos_cm <- max_gen_lengths[[
+    ifelse(grepl("1", chrom), "one",
+      ifelse(grepl("2", chrom), "two",
+        ifelse(grepl("3", chrom), "three",
+          ifelse(grepl("4", chrom), "four",
+            ifelse(grepl("5", chrom), "five",
+              ifelse(grepl("6", chrom), "six", "seven")
+            )
+          )
+        )
+      )
+    )
+  ]]
+
+  max_pos_mb <- max_phys_lengths[[
+    ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
+  ]]
+
+  # list for point_plots
+  point_plots <- list()
+  dist_plots <- list()
+
+  base <- function(max_y) {
+    list(
+      expand_limits(x = c(0, max_pos_mb)),
+      scale_x_continuous(
+        breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
+      ),
+      geom_segment(
+        aes(
+          chrom_landmarks$pos_mb, 0,
+          xend = chrom_landmarks$pos_mb, yend = max_y,
+          linetype = chrom_landmarks$type
+        ), size = line_size, inherit.aes = FALSE
+      )
+    )
+  }
+
+  landmarks <- function(max_y) {
+    list(
+      geom_label_repel(
+        aes(
+          chrom_landmarks$pos_mb, chrom_landmarks$base * max_y,
+          label = chrom_landmarks$id
+        ), size = text_size, seed = seed, inherit.aes = FALSE
+      ),
+      scale_linetype("Landmarks")
+    )
+  }
+
+  no_x_axis <- theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+  no_y_axis <- theme(
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+  dist_plots$eh <- ggplot(stat_data[[chrom]], aes(chrom, eh)) +
+    geom_violin(fill = "black") +
+    geom_boxplot(width = 0.2) +
+    ylim(0, 0.5) +
+    labs(y = "Overall Expected Heterozygosity by Marker", title = chrom) +
+    no_x_axis
+
+  point_plots$eh <- ggplot() +
+    base(0.5) +
+    ylim(0, 0.5) +
+    geom_point(
+      aes(stat_data[[chrom]]$pos_mb, stat_data[[chrom]]$eh), size = point_size
+    ) +
+    landmarks(0.5) +
+    labs(title = chrom) +
+    no_x_axis +
+    no_y_axis
+
+  dist_plots$cluster_eh <- ggplot(
+      cluster_eh_data[[chrom]], aes(stat, (value * (1 - value)) * 2)
+    ) +
+    geom_violin(aes(fill = stat)) +
+    geom_boxplot(width = 0.2) +
+    ylim(0, 0.5) +
+    scale_fill_manual(
+      "Cluster MJAFs", values = colour_set[c(1, 2, 4)],
+      na.translate = FALSE, drop = FALSE
+    ) +
+    no_x_axis +
+    labs(y = "Cluster Expected Heterzygosity by Marker") +
+    guides(fill = FALSE)
+
+  point_plots$cluster_eh <- ggplot() +
+    base(0.5) +
+    ylim(0, 0.5) +
+    geom_point(
+      aes(
+        cluster_eh_data[[chrom]]$pos_mb,
+        (
+          cluster_eh_data[[chrom]]$value *
+          (1 - cluster_eh_data[[chrom]]$value)
+        ) * 2,
+        colour = cluster_eh_data[[chrom]]$stat
+      ), size = point_size
+    ) +
+    scale_colour_manual(
+      "Cluster EH",
+      values = colour_set[c(1, 2, 4)], na.translate = FALSE, drop = FALSE
+    ) +
+    landmarks(0.5) +
+    no_x_axis +
+    no_y_axis +
+    guides(linetype = FALSE)
+
+  dist_plots$josts_d <- ggplot(
+      stat_data[[chrom]], aes(josts_d_class, josts_d)
+    ) +
+    geom_violin(aes(fill = josts_d_class)) +
+    geom_boxplot(width = 0.2) +
+    ylim(0, 1) +
+    scale_fill_manual(
+      "Jost's D", values = colour_set[c(15, 17, 19)],
+      na.translate = FALSE, drop = FALSE
+    ) +
+    no_x_axis +
+    labs(y = "Jost's D by Marker") +
+    scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+    guides(fill = FALSE)
+
+  point_plots$josts_d <- ggplot() +
+    base(1) +
+    ylim(0, 1) +
+    geom_point(
+      aes(
+        stat_data[[chrom]]$pos_mb, stat_data[[chrom]]$josts_d,
+        colour = stat_data[[chrom]]$josts_d_class,
+      ), size = point_size
+    ) +
+    scale_colour_manual(
+      "Jost's D Class", values = colour_set[c(15, 17, 19)],
+      na.translate = FALSE, drop = FALSE
+    ) +
+    landmarks(1) +
+    no_x_axis +
+    no_y_axis +
+    guides(linetype = FALSE)
+
+  dist_plots$phys_pos_vs_gen_pos <- ggplot(
+      stat_data[[chrom]], aes(chrom, pos_cm)
+    ) +
+    geom_violin(fill = colour_set[3]) +
+    geom_boxplot(width = 0.2) +
+    ylim(0, max_pos_cm) +
+    labs(x = "Chromosome", y = "Position in cM")
+
+  point_plots$phys_pos_vs_gen_pos <- ggplot() +
+    base(max_pos_cm) +
+    ylim(0, max_pos_cm) +
+    geom_point(
+      aes(
+        stat_data[[chrom]]$pos_mb, stat_data[[chrom]]$pos_cm,
+        colour = stat_data[[chrom]]$odi
+      ), size = point_size
+    ) +
+    scale_colour_manual(
+      "Order\nDifference\nIntervals", values = colours_intervals
+    ) +
+    landmarks(max_pos_cm) +
+    labs(x = "Position in Mb") +
+    guides(linetype = FALSE) +
+    no_y_axis
+
+  plots <- c("eh", "cluster_eh", "josts_d", "phys_pos_vs_gen_pos")
+
+  if (nrow(chrom_window_ranges)) {
+
+    lapply(1:nrow(chrom_window_ranges), function (row) {
+
+      zoomed_plots_legends <- lapply(plots, function (plot) {
+        # blah <- list(
+        #   point_plots[[plot]] +
+        #     xlim(
+        #       chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
+        #     ) +
+        #     theme(legend.position = "none"),
+        #   as_ggplot(get_legend(point_plots[[plot]]))
+        # )
+
+        point_plots[[plot]] <<- point_plots[[plot]] +
+          geom_rect(
+            data = chrom_window_ranges[row, ],
+            aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+            fill = colour_set[20], alpha = 0.3
+          )
+
+        # blah
+      }) %>% unlist(recursive = FALSE)
+
+    # # plot the matrix
+    # png(
+    #   file.path(
+    #     zoomed_marker_plots,
+    #     str_c(
+    #       chrom, "_", chrom_window_ranges[row, ]$start, "_",
+    #       chrom_window_ranges[row, ]$end, "_", chrom_window_ranges[row, ]$genes,
+    #       ".png"
+    #     )
+    #   ),
+    #   family = "Times New Roman", width = 270, height = 345, pointsize = 5,
+    #   units = "mm", res = 96
+    # )
+    # grid.arrange(
+    #   grobs = zoomed_plots_legends, nrow = 4, ncol = 2, widths = c(42, 8)
+    # )
+    # dev.off()
+
+    })
+  }
+
+  plots_legends <- lapply(plots, function (plot) {
+    list(
+      dist_plots[[plot]],
+      point_plots[[plot]] + theme(legend.position = "none"),
+      as_ggplot(get_legend(point_plots[[plot]]))
+    )
+  }) %>% unlist(recursive = FALSE)
+
+}) %>% unlist(recursive = FALSE)
+
+chrom_1A <- c(1, 2, 3, 13, 14, 15, 25, 26, 27)
+group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
+order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+
+# plot the matrix
+png(
+  file.path("results", "phys_pos_vs_mjaf_cluster_mjaf_josts_d_and_gen_pos.png"),
+  family = "Times New Roman", width = 2700, height = 3450, pointsize = 5,
+  units = "mm", res = 72
+)
+grid.arrange(
+  grobs = plots[order], nrow = 28, ncol = 9, widths = rep(c(6, 41, 3), 3)
+)
+dev.off()

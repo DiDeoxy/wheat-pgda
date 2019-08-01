@@ -6,7 +6,9 @@ import::from(readr, "read_csv", "read_rds")
 import::from(SNPRelate, "snpgdsCreateGeno")
 
 # load the phys map with the genotypes
-maps_genotypes <- read_rds(file.path(inter_markers, "1A_1B_1D_maps_genotypes.rds"))
+maps_genotypes <- read_rds(
+  file.path(inter_markers, "1A_1B_1D_maps_genotypes.rds")
+)
 # select the map info
 maps <- maps_genotypes %>% select(marker, chrom, phys_pos, gen_pos)
 # select the genotype info and order the columns alphabetically

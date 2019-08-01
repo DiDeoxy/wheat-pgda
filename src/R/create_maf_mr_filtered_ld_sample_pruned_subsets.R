@@ -93,6 +93,3 @@ wheat_data <- snpgds_parse(file.path(gds, "maf_mr_filtered_ld_pruned_gen.gds"))
 sample_index <- match(NILs, wheat_data$sample$id)
 # create gds object without the NILs
 snpgds_sample_subset(wheat_data, ld_gen_gds, sample_index)
-
-
-

@@ -10,42 +10,62 @@ import::from(magrittr, "%>%")
 import::from(stringr, "str_c", "str_wrap")
 import::from(tibble, "tibble")
 
+################################################################################
+# import data
+
 phys_data <- snpgds_parse(phys_gds)
 gen_data <- snpgds_parse(gen_gds)
+
+################################################################################
+# caclulate each markers order difference between gen and phys maps and assign
+# it to an interval
+
+gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
+order_diffs <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
+
+order_diff_quantiles <- c(
+  "0%" = -1,
+  quantile(
+    order_diffs, c(1 / 2, 3 / 4, 7 / 8, 15 / 16, 31 / 32, 63 / 64, 127 / 128)
+  ),
+  "100%" = max(order_diffs)
+)
+
+intervals <- lapply(
+  seq_along(order_diff_quantiles),
+  function (i) {
+    if (i < length(order_diff_quantiles)) {
+      str_c(order_diff_quantiles[i] + 1, "-", order_diff_quantiles[i + 1])
+    }
+  }
+) %>% unlist()
+
+order_diff_intervals <- cut(order_diffs, order_diff_quantiles, intervals)
+
+################################################################################
+# collect the data
 
 snp_data <- tibble(
   phys_id = phys_data$snp$id,
   gen_id = gen_data$snp$id,
   chrom = phys_data$snp$chrom,
   phys_pos_mb = phys_data$snp$pos / 1e6,
-  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100
+  gen_pos_cm = gen_data$snp$pos[match(phys_data$snp$id, gen_data$snp$id)] / 100,
+  odi = order_diff_intervals
 )
 
+################################################################################
 # calc the lengths of the different genomes and homoeologous sets
+
 max_markers <- by(snp_data, snp_data$chrom, nrow) %>% max_lengths()
 
-# create a function for making a gradient of colours
-levels <- c(
-  "0-7", "8-26", "27-72", "73-126", "127-173", "174-298", "299-436", "437-1248"
-)
-names(colours_order_diff) <- levels
-
-# use to hold all diffs for calcing stats from
-order_diffs <- c()
+################################################################################
+# plot the data
 
 plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
   chrom <- chrom_data$chrom[1]
 
   gen_to_phys_order <- match(chrom_data$phys_id, chrom_data$gen_id)
-  order_diff <- (
-    gen_to_phys_order - 1:length(gen_to_phys_order)
-  ) %>% abs()
-
-  order_diffs <<- c(order_diffs, order_diff)
-
-  order_diff_intervals <- cut(
-    order_diff, c(-1, 7, 26, 72, 126, 173, 298, 436, 1248), levels
-  )
 
   ggplot() +
     xlim(
@@ -73,46 +93,32 @@ plots <- by(snp_data, snp_data$chrom, function (chrom_data) {
     geom_point(
       aes(
         1:length(gen_to_phys_order), gen_to_phys_order,
-        colour = order_diff_intervals
+        colour = chrom_data$odi
       ), size = 0.3
     ) +
     # labs(colour = levels) +
-    scale_colour_manual(name = "Order Difference", values = colours_order_diff)
+    scale_colour_manual(name = "Order Difference", values = colours_intervals)
 })
 
 plots_matrix <- ggmatrix(
   plots, nrow = 7, ncol = 3, xAxisLabels = c("A", "B", "D"), yAxisLabels = 1:7,
   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
-  # title = str_wrap(
-  #   str_c(
-  #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
-  #     "Magnitude of Difference in Order Between Maps"
-  #   ), 
-  #   width = 70
-  # ),
+  title = str_wrap(
+    str_c(
+      "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
+      "Magnitude of Difference in Order Between Maps"
+    ), 
+    width = 70
+  ),
   legend = c(2, 1)
 )
 
-# plots_matrix_index <- ggmatrix(
-#   plots[c(6, 10)], nrow = 2, ncol = 1, yAxisLabels = c("2D", "4A"),
-#   xlab = "Pseudo-Chromosomal Index", ylab = "Genetic Index",
-#   # title = str_wrap(
-#   #   str_c(
-#   #     "Pseudo-Chromosomal vs Genetic Order with Markers Coloured by ",
-#   #     "Magnitude of Difference in Order Between Maps"
-#   #   ), 
-#   #   width = 70
-#   # ),
-#   legend = c(2, 1)
-# )
-
 # plot the matrix
 png(
-  file.path("results", "2D_4A_phys_vs_gen_index_with_order_diff.png"),
-  family = "Times New Roman", width = 140, height = 110, pointsize = 5,
-  units = "mm", res = 300
+  file.path("results", "phys_vs_gen_index_with_order_diff.png"),
+  family = "Times New Roman", width = 360, height = 640, pointsize = 5,
+  units = "mm", res = 96
 )
-# plots[[10]]
 plots_matrix + theme(legend.position = "bottom")
 dev.off()
 
