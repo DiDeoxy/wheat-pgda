@@ -78,7 +78,7 @@ summaries <- tibble(
   "Mean" = all_D[4], "3rd Qu." = all_D[5], "Max." = all_D[6],
   "Fraction of Markers" = 1
 )
-for (genome in c("A", "B", "josts_d", 1:7)) {
+for (genome in c("A", "B", "D", 1:7)) {
   markers_on_genome <- which(grepl(genome, snp_data$chrom))
   genome_D <- summary(snp_data$josts_d[markers_on_genome])
 
@@ -122,7 +122,7 @@ summaries_long$Subset <- factor(
 # graph summaries
 png(
   file.path("results", "josts_D_subset_class_summaries.png"),
-  family = "Times New Roman", width = 104, height = 52, units = "mm", res = 300
+  family = "Times New Roman", width = 208, height = 104, units = "mm", res = 300
 )
 ggplot(summaries_long) +
   geom_point(aes(Values, Subset, colour = Statistic), size = 1.5) +

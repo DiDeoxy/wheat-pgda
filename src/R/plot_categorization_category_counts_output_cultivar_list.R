@@ -7,6 +7,7 @@ import::from(pgda, "snpgds_parse")
 import::from(
   ggplot2, "aes", "element_text", "ggplot", "geom_bar", "theme", "ylab", "xlab"
 )
+import::from(readr, "write_csv")
 import::from(tibble, "as_tibble")
 
 # load the data from the gds object
@@ -15,13 +16,11 @@ wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
 class_data <- rbind (
   cbind("Breeding Program", wheat_data$sample$annot$bp %>% as.character()),
   cbind("Era", wheat_data$sample$annot$era %>% as.character()),
-  cbind("Major Trait Group", wheat_data$sample$annot$pheno %>% as.character()),
+  cbind("Major Trait Group", wheat_data$sample$annot$mtg %>% as.character()),
   cbind("Market Class", wheat_data$sample$annot$mc %>% as.character())
 ) %>% as_tibble()
 rownames(class_data) <- c()
 colnames(class_data) <- c("Class", "Group")
-
-table(class_data)
 
 plots <- lapply(class_data %>% split(class_data$Class),
   function (class) {
@@ -39,7 +38,7 @@ plots <- lapply(class_data %>% split(class_data$Class),
 
 # plot the matrix
 png(
-  file.path("results", "test.png"),
+  file.path("results", "categoization_category_counts.png"),
   family = "Times New Roman", width = 160, height = 192, pointsize = 5,
   units = "mm", res = 192
 )
@@ -47,3 +46,9 @@ grid.arrange(
   grobs = plots, nrow = 2, ncol = 2
 )
 dev.off()
+
+write_csv(
+  sapply(wheat_data$sample$annot, function(annot) as.character(annot)) %>%
+    cbind(wheat_data$sample$id, .) %>% as.data.frame(),
+  file.path("results", "cultivars_and_metadata.csv")
+)

@@ -8,7 +8,6 @@ import::from(
 import::from(magrittr, "%>%")
 import::from(readr, "read_csv")
 
-
 amova_table <- read_csv(
   file.path("results", "amova_var_table.csv")
 )
@@ -83,7 +82,10 @@ plots_matrix <- ggmatrix(
   ylab = "% Variation",
   title = "Genetic Distance Variance Partitioning",
   legend = c(1, 1)
-) + theme(legend.position = "bottom", legend.box = "vertical", text = element_text(size = 20))
+) + theme(
+  legend.position = "bottom", legend.box = "vertical",
+  text = element_text(size = 20)
+)
 
 png(
   file.path("results", "categorization_AMOVA_variance.png"),

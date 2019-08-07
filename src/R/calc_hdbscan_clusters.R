@@ -19,5 +19,7 @@ wheat_imputed <- wheat_data$genotypes %>%
 # hdbscan the data
 wheat_hdbscan <- wheat_imputed %>% hdbscan(minPts = 9)
 
+table(wheat_hdbscan$cluster)
+
 # write the data out
 write_rds(wheat_hdbscan, path = hdbscan)

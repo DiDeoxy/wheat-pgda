@@ -9,7 +9,7 @@ import::from(magrittr, "%>%")
 import::from(parallel, "detectCores", "mclapply")
 import::from(
   readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv",
-  "read_rds", "type_convert", "write_rds"
+  "read_rds", "type_convert", "write_csv", "write_rds"
 )
 import::from(stringr, "str_c")
 import::from(tibble, "as_tibble", "tibble")
@@ -30,7 +30,7 @@ chr_orders <- list(
 )
 
 # parse the GFF3 format file of the wheat 90K snp chip physical map positions
-marker_aligns <- lapply(chr_orders$ABD, function (chr) {
+marker_aligns <- lapply(chr_orders[1], function (chr) {
   chr_feats <- read.gff(
     file.path(
       markers, "90K_RefSeqv1_probe_alignments",
@@ -64,7 +64,10 @@ marker_aligns <- marker_aligns %>%
   filter(coverage >= 90, per_id >= 98) %>%
   split(.$marker)
 
-# a function of rfinding the best alignment of each maker based on which
+# load the filtered gen map
+marker_gen_pos <- read_rds(file.path(inter_markers, "pozniak_filtered_map.rds"))
+
+# a function for finding the best alignment of each maker based on which
 # linkage group it is assigned to
 best_alignments <- function (marker_align) {
   gen_data <- marker_gen_pos[
@@ -72,7 +75,7 @@ best_alignments <- function (marker_align) {
   ]
   if (nrow(gen_data)) {
     best_alignment <- marker_align[
-      which(marker_align$chrom == gen_data$chrom), 
+      which(marker_align$chrom == gen_data$chrom),
     ]
     if (nrow(best_alignment) == 1) {
       return(best_alignment)
@@ -80,9 +83,6 @@ best_alignments <- function (marker_align) {
   }
   return(tibble())
 }
-
-# load the filtered gen map
-marker_gen_pos <- read_rds(file.path(inter_markers, "pozniak_filtered_map.rds"))
 
 # remove at least one marker mapping to the same position in phys map
 unique_marker <- function(markers) {
@@ -114,7 +114,7 @@ genotypes <- read_csv(
   replace(. == "C2", 2) %>%
   replace(. == "NC", 3)
 
-lapply(chr_orders[1], function (chr_order) {
+blah <- lapply(chr_orders[1], function (chr_order) {
   levels(marker_gen_pos$chrom) <<- chr_order
 
   # identify the best alignments and combine with the gen map and genotypes
@@ -160,6 +160,18 @@ lapply(chr_orders[1], function (chr_order) {
       inter_markers,
       str_c(
         chr_order[1], chr_order[2], chr_order[3], "maps_genotypes.rds",
+        sep = "_"
+      )
+    )
+  )
+  write_csv(
+    marker_gen_pos$marker[
+      which(! marker_gen_pos$marker %in% markers_with_maps_genos$marker)
+    ] %>% as.data.frame(),
+    file.path(
+      "results",
+      str_c(
+        chr_order[1], chr_order[2], chr_order[3], "filtered_markers.csv",
         sep = "_"
       )
     )

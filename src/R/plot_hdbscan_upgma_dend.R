@@ -67,7 +67,7 @@ draw_rects(
   wheat_data$sample$annot$mc, colours_mc, label_order, colors()[105]
 )
 draw_rects(
-  wheat_data$sample$annot$pheno, colours_pheno, label_order, colors()[525]
+  wheat_data$sample$annot$mtg, colours_mtg, label_order, colors()[525]
 )
 draw_rects(
   clusters, colours_hdbscan, label_order, colors()[109]
@@ -99,8 +99,8 @@ legend(
   bg = colors()[105]
 )
 legend(
-  "topleft", legend = levels(wheat_data$sample$annot$pheno), box.lwd = 2,
-  title = "Phenotype", pch = pch, col = colours_pheno, cex = cex,
+  "topleft", legend = levels(wheat_data$sample$annot$mtg), box.lwd = 2,
+  title = "mtgtype", pch = pch, col = colours_mtg, cex = cex,
   bg = colors()[525]
 )
 legend(
@@ -123,9 +123,9 @@ dev.off()
 # out put some table summarizing the groupings
 clusters <- read_rds(hdbscan)$cluster %>% replace(. == 0, "Noise") 
 
-table(data.frame(wheat_data$sample$annot$pheno, clusters)) %>%
+table(data.frame(wheat_data$sample$annot$mtg, clusters)) %>%
   as.data.frame.matrix() %>%
-  write.csv(file.path("results", "pheno_cluster_table.csv"), quote = FALSE)
+  write.csv(file.path("results", "mtg_cluster_table.csv"), quote = FALSE)
 table(data.frame(wheat_data$sample$annot$mc, clusters)) %>%
   as.data.frame.matrix() %>%
   write.csv(file.path("results", "mc_cluster_table.csv"), quote = FALSE)

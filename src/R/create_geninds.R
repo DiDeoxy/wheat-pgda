@@ -19,15 +19,15 @@ wheat_data$genotypes <- wheat_data$genotypes %>%
 cluster <- read_rds(hdbscan)$cluster
 
 # making indices in order to create subsets containing just the varieties of
-# the phenotype/cluster groups we are interested in
+# the mtgtype/cluster groups we are interested in
 index_chrs <- which(
-  wheat_data$sample$annot$pheno == "HRS" & cluster == 5
+  wheat_data$sample$annot$mtg == "HRS" & cluster == 5
 )
 index_chrw <- which(
-  wheat_data$sample$annot$pheno == "HRW" & cluster == 1
+  wheat_data$sample$annot$mtg == "HRW" & cluster == 1
 )
 index_csws <- which(
-  wheat_data$sample$annot$pheno == "SWS" & cluster == 2
+  wheat_data$sample$annot$mtg == "SWS" & cluster == 2
 )
 
 index_chrs_chrw_csws <- c(index_chrs, index_chrw, index_csws)
@@ -47,7 +47,7 @@ for (i in 1:length(grouping)) {
   index <- grouping$index[[i]]
   name <- grouping$name[i]
   print(name)
-  pop <- as.character(wheat_data$sample$annot$pheno[index])
+  pop <- as.character(wheat_data$sample$annot$mtg[index])
 
   subset_genind <- df2genind(t(data.frame(wheat_data$genotypes[, index])),
     ind.names = wheat_data$sample$id[index], loc.names = wheat_data$snp$id,
@@ -77,12 +77,12 @@ wheat_data$sample$annot$bp <- revalue(
 )
 
 # create vectors giving membership or not of varieties to each of the three
-# largest phenotypic groups
-major_phenos <- list()
-for (pheno in c("HRS", "HRW", "SWS")) {
-  major_phenos[[pheno]] <- as.character(wheat_data$sample$annot$pheno)
-  subset_index <- which(wheat_data$sample$annot$pheno == pheno)
-  major_phenos[[pheno]][-subset_index] <- "Other"
+# largest mtgtypic groups
+mtgs <- list()
+for (mtg in c("HRS", "HRW", "SWS")) {
+  mtgs[[mtg]] <- as.character(wheat_data$sample$annot$mtg)
+  subset_index <- which(wheat_data$sample$annot$mtg == mtg)
+  mtgs[[mtg]][-subset_index] <- "Other"
 }
 
 # create membership vectors of each cluster vs all other
@@ -97,13 +97,10 @@ strata <- tibble(
   era = wheat_data$sample$annot$era,
   bp = wheat_data$sample$annot$bp,
   bp_era = str_c(wheat_data$sample$annot$era, wheat_data$sample$annot$bp),
-  texture = wheat_data$sample$annot$texture,
-  colour = wheat_data$sample$annot$colour,
-  habit = wheat_data$sample$annot$habit,
-  pheno = wheat_data$sample$annot$pheno,
-  hrs = as.factor(major_phenos$HRS),
-  hrw = as.factor(major_phenos$HRW),
-  sws = as.factor(major_phenos$SWS),
+  mtg = wheat_data$sample$annot$mtg,
+  hrs = as.factor(mtgs$HRS),
+  hrw = as.factor(mtgs$HRW),
+  sws = as.factor(mtgs$SWS),
   clusters = as.factor(cluster),
   cluster1 = as.factor(cluster_isolated[[1]]),
   cluster2 = as.factor(cluster_isolated[[2]]),

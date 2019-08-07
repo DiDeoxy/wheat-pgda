@@ -18,9 +18,9 @@ genotypes <- maps_genotypes %>%
   select(order(current_vars()))
 
 # import categorical information on wheat varieites (market class,
-# breeding program, year of release, phenotype, etc.)
+# breeding program, year of release, mtgtype, etc.)
 metadata <- read_csv(
-  file.path(cultivars, "cultivar_metadata.csv") 
+  file.path(cultivars, "cultivar_metadata.csv")
 ) %>% arrange(`Real Name`)
 
 # transform year into binned eras
@@ -38,9 +38,8 @@ levels(era)[7] <- "UNKNOWN"
 # construct the sample annotation information from the metadata
 samp_annot <- list(
   bp = factor(metadata$`Breeding Program`), era = factor(era),
-  origin = factor(metadata$Origin), texture = factor(metadata$Texture),
-  colour = factor(metadata$Colour), habit = factor(metadata$Habit),
-  pheno = factor(metadata$Designation), mc = factor(metadata$Consensus)
+  origin = factor(metadata$Origin), mtg = factor(metadata$MTG),
+  mc = factor(metadata$MC)
 )
 
 # construct the SNPRelate GDS object fromt the input data with physical map
