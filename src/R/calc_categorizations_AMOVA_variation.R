@@ -18,8 +18,8 @@ sample_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
 snpgdsClose(wheat_gds)
 
 hierarchies <- c(
-  "bp", "era", "pheno", "pheno/bp", "pheno/era", "pheno/bp/era", "pheno/era/bp",
-  "bp_era", "pheno/bp_era", "clusters", "clusters/bp_era"
+  "bp", "era", "mtg", "mtg/bp", "mtg/era", "mtg/bp/era", "mtg/era/bp",
+  "bp_era", "mtg/bp_era", "clusters", "clusters/bp_era"
 )
 
 amova_table <- tibble(

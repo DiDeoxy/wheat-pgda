@@ -9,7 +9,7 @@ import::from(magrittr, "%>%")
 import::from(readr, "read_csv")
 
 amova_table <- read_csv(
-  file.path("results", "amova_var_table.csv")
+  file.path("results", "categorizations_AMOVA_variance.csv")
 )
 
 amova_table$Hierarchy <- factor(
@@ -89,7 +89,7 @@ plots_matrix <- ggmatrix(
 
 png(
   file.path("results", "categorization_AMOVA_variance.png"),
-  width = 210, height = 120, units = "mm", res = 192
+  width = 210, height = 180, units = "mm", res = 192
 )
 plots_matrix
 dev.off()

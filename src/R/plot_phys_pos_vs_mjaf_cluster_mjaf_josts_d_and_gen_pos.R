@@ -5,16 +5,7 @@ import::from(
   "ungroup"
 )
 import::from(GGally, "ggmatrix")
-import::from(
-  ggplot2, "aes", "element_blank", "element_line", "element_text",
-  "expand_limits", "facet_wrap", "ggplot", "geom_boxplot", "geom_col",
-  "geom_point", "geom_rect", "geom_segment", "geom_violin", "geom_vline",
-  "guides", "labs",
-  "scale_colour_gradientn", "scale_colour_manual", "scale_fill_manual",
-  "scale_linetype", "scale_shape_manual", "scale_size_manual",
-  "scale_x_continuous", "scale_y_continuous", "theme", "unit", "vars", "xlim",
-  "ylim"
-)
+library(ggplot2)
 import::from(ggpubr, "as_ggplot", "get_legend")
 import::from(ggrepel, "geom_label_repel")
 import::from(gridExtra, "grid.arrange")
@@ -50,11 +41,26 @@ chroms <- as.vector(
 )
 
 ################################################################################
-# caclualte each markers order difference between gen and phys maps and assign
-# it to an interval
+# caclualte each markers order difference between gen and phys maps 
 
 gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
 order_diffs <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
+
+png(file.path("results", "test.png"))
+order_diffs %>% as_tibble() %>% ggplot(aes(value)) +
+  stat_ecdf() +
+  # geom_density() +
+  scale_x_continuous(
+    trans = "pseudo_log",
+    breaks = c(0, 1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000)
+  ) +
+  labs(y = "Cumulative Density", x = "Marker Order Difference")
+dev.off()
+
+(order_diffs + 1) %>% as_tibble() %>% log10() %>% unique()
+
+################################################################################
+# create intervals for order diffs for easier mapping
 
 order_diff_quantiles <- c("0%" = -1,
   quantile(
@@ -151,7 +157,7 @@ snp_data %<>%
 
 landmarks <- rbind.fill(
   load_genes(
-    file.path(blast, "selected_mtg.csv")
+    file.path(blast, "selected_pheno.csv")
   ) %>% mutate(
     type = "Gene", base = 0.5, pos_mb = pos / 1e6
   ) %>%
@@ -210,7 +216,7 @@ plots <- lapply(names(mono_haplos), function (chrom) {
   chrom_data <- snp_data[[chrom]] %>%
     rowwise() %>%
     mutate(
-      type = c("Distal", "Proximal")[
+      type = c("All Other", "Monolithic Haplotype")[
         which(
           c(
             pos_mb < mono_haplos[[chrom]]$pos_mb[1] |
@@ -225,7 +231,8 @@ plots <- lapply(names(mono_haplos), function (chrom) {
   chrom_data %>% ggplot(aes(type, eh)) +
     ylim(0, 0.5) +
     geom_violin(aes(fill = type)) +
-    geom_boxplot(width = 0.2)
+    geom_boxplot(width = 0.2) +
+    labs(y = "Expected Heterozygosity")
 })
 
 # turn plot list into ggmatrix
@@ -237,7 +244,7 @@ plots_matrix <- ggmatrix(
 
 # plot the matrix
 png(
-  file.path("results", "test2.png"),
+  file.path("results", "mono_haplo_vs_distal_eh_dists.png"),
   family = "Times New Roman", width = 500, height = 250, pointsize = 5,
   units = "mm", res = 192
 )
@@ -306,7 +313,7 @@ plots <- sapply(chroms, function (chrom) {
     )
   }
 
-  landmarks <- function(max_y) {
+  plot_landmarks <- function(max_y) {
     list(
       geom_label_repel(
         aes(
@@ -345,7 +352,7 @@ plots <- sapply(chroms, function (chrom) {
       "Cluster MJAF",
       values = colour_set[c(1, 2, 4)], na.translate = FALSE, drop = FALSE
     ) +
-    landmarks(1) +
+    plot_landmarks(1) +
     labs(y = "Major Allele Frequency", title = chrom) +
     remove_x_axis +
     guides(linetype = FALSE)
@@ -376,7 +383,7 @@ plots <- sapply(chroms, function (chrom) {
       "Cluster EH",
       values = colour_set[c(1, 2, 4)], na.translate = FALSE, drop = FALSE
     ) +
-    landmarks(0.5) +
+    plot_landmarks(0.5) +
     remove_x_axis +
     labs(y = "Expected Heterzygosity") +
     guides(linetype = FALSE)
@@ -410,7 +417,7 @@ plots <- sapply(chroms, function (chrom) {
       "Jost's D Class", values = colour_set[c(15, 17, 19)],
       na.translate = FALSE, drop = FALSE
     ) +
-    landmarks(1) +
+    plot_landmarks(1) +
     remove_x_axis +
     labs(y = "Jost's D") +
     guides(linetype = FALSE)
@@ -436,7 +443,7 @@ plots <- sapply(chroms, function (chrom) {
     scale_colour_manual(
       "Order\nDifference\nIntervals", values = colours_intervals
     ) +
-    landmarks(max_pos_cm) +
+    plot_landmarks(max_pos_cm) +
     labs(x = "Position in Mb", y = "Position in cM") +
     guides(linetype = FALSE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 0))
@@ -455,6 +462,9 @@ plots <- sapply(chroms, function (chrom) {
   ) %>% unlist(recursive = FALSE)
 }, simplify = FALSE)
 
+################################################################################
+# plot all plots
+
 chrom_1A <- c(1, 2, 3, 13, 14, 15, 25, 26, 27)
 group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
 order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
@@ -467,6 +477,25 @@ png(
 )
 grid.arrange(
   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 28, ncol = 9,
+  widths = rep(c(6, 41, 3), 3)
+)
+dev.off()
+
+################################################################################
+# plot just phys pos vs gen pos graphs
+
+chrom_1A <- c(25, 26, 27)
+group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
+order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+
+# plot the matrix
+png(
+  file.path("results", "phys_pos_vs_gen_pos.png"),
+  family = "Times New Roman", width = 1800, height = 2800, pointsize = 5,
+  units = "mm", res = 96
+)
+grid.arrange(
+  grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 7, ncol = 9,
   widths = rep(c(6, 41, 3), 3)
 )
 dev.off()

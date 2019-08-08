@@ -3,7 +3,7 @@ source(file.path("src", "R", "file_paths.R"))
 import::from(dbscan, "hdbscan")
 import::from(magrittr, "%>%")
 import::from(pgda, "snpgds_parse")
-import::from(readr, "write_rds")
+import::from(readr, "write_csv", "write_rds")
 import::from(scrime, "knncatimpute")
 
 # load the ld pruned wheat data
@@ -19,7 +19,24 @@ wheat_imputed <- wheat_data$genotypes %>%
 # hdbscan the data
 wheat_hdbscan <- wheat_imputed %>% hdbscan(minPts = 9)
 
-table(wheat_hdbscan$cluster)
-
 # write the data out
 write_rds(wheat_hdbscan, path = hdbscan)
+
+################################################################################
+# output some tables
+
+write.csv(
+  table(
+    as.character(wheat_hdbscan$cluster),
+    as.character(wheat_data$sample$annot$mtg)
+  ) %>% as.data.frame.matrix(),
+  file.path("results", "clusters_vs_mtg.csv")
+)
+
+write.csv(
+  table(
+    as.character(wheat_hdbscan$cluster),
+    as.character(wheat_data$sample$annot$mc)
+  ) %>% as.data.frame.matrix(),
+  file.path("results", "clusters_vs_mc.csv")
+)
