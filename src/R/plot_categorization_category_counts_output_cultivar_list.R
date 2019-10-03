@@ -8,30 +8,29 @@ import::from(
   ggplot2, "aes", "element_text", "ggplot", "geom_bar", "theme", "ylab", "xlab"
 )
 import::from(readr, "write_csv")
-import::from(tibble, "as_tibble")
+import::from(tibble, "tibble")
+import::from(tidyr, "gather")
 
 # load the data from the gds object
 wheat_data <- snpgds_parse(file.path(gds, "phys.gds"))
 
-class_data <- rbind (
-  cbind("Breeding Program", wheat_data$sample$annot$bp %>% as.character()),
-  cbind("Era", wheat_data$sample$annot$era %>% as.character()),
-  cbind("Major Trait Group", wheat_data$sample$annot$mtg %>% as.character()),
-  cbind("Market Class", wheat_data$sample$annot$mc %>% as.character())
-) %>% as_tibble()
-rownames(class_data) <- c()
-colnames(class_data) <- c("Class", "Group")
+class_data <- tibble(
+  `Breeding Program` = wheat_data$sample$annot$bp %>% as.character(),
+  Era = wheat_data$sample$annot$era %>% as.character(),
+  `Major Trait Group` = wheat_data$sample$annot$mtg %>% as.character(),
+  `Market Class` = wheat_data$sample$annot$mc %>% as.character()
+) %>% gather(class, group)
 
-plots <- lapply(class_data %>% split(class_data$Class),
+plots <- lapply(class_data %>% split(class_data$class),
   function (class) {
     class %>%
       ggplot() +
-      geom_bar(aes(Group)) +
+      geom_bar(aes(group)) +
       theme(
         legend.position = "bottom",
         axis.text.x = element_text(angle = 90, hjust = 1)
       ) +
-      xlab(class$Class[1]) +
+      xlab(class[[1]]) +
       ylab("Count")
   }
 )
@@ -47,8 +46,12 @@ grid.arrange(
 )
 dev.off()
 
+genos_names <- t(wheat_data$genotypes) %>% replace(3, NA)
+colnames(genos_names) <- wheat_data$snp$id
+
 write_csv(
   sapply(wheat_data$sample$annot, function(annot) as.character(annot)) %>%
-    cbind(wheat_data$sample$id, .) %>% as.data.frame(),
+    cbind(cultivar = wheat_data$sample$id, ., genos_names) %>%
+    as.data.frame(),
   file.path("results", "cultivars_and_metadata.csv")
 )

@@ -465,7 +465,7 @@ plots <- sapply(chroms, function (chrom) {
 ################################################################################
 # plot all plots
 
-chrom_1A <- c(1, 2, 3, 13, 14, 15, 25, 26, 27)
+chrom_1A <- c(1:3, 13:15, 25:27)
 group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
 order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
 
@@ -484,19 +484,18 @@ dev.off()
 ################################################################################
 # plot just phys pos vs gen pos graphs
 
-chrom_1A <- c(25, 26, 27)
-group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
+group_1 <- c(10:12, 22:24, 34:36)
 order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
 
 # plot the matrix
 png(
   file.path("results", "phys_pos_vs_gen_pos.png"),
-  family = "Times New Roman", width = 1800, height = 2800, pointsize = 5,
+  family = "Times New Roman", width = 900, height = 900, pointsize = 5,
   units = "mm", res = 96
 )
 grid.arrange(
   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 7, ncol = 9,
-  widths = rep(c(6, 41, 3), 3)
+  widths = rep(c(6, 40, 4), 3)
 )
 dev.off()
 
