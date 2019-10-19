@@ -1,5 +1,5 @@
-source(file.path("src", "R", "file_paths.R"))
-source(file.path("src", "R", "colour_sets.R"))
+source(file.path("repos", "wheat-pgda", "src", "R", "file_paths.R"))
+source(file.path("repos", "wheat-pgda",  "src", "R", "colour_sets.R"))
 import::from(
   dplyr, "arrange", "bind_cols", "mutate", "mutate_at", "rowwise", "select",
   "ungroup"
@@ -16,7 +16,7 @@ import::from(readr, "read_csv", "read_rds", "write_csv")
 import::from(Rfast, "rowMaxs")
 import::from(scrime, "rowTables")
 import::from(stringr, "str_c")
-import::from(tibble, "add_column", "as_tibble", "tibble")
+import::from(tibble, "add_column", "enframe", "tibble")
 import::from(tidyr, "gather", "spread")
 
 # load the data from the gds object
@@ -47,9 +47,9 @@ gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
 order_diffs <- (gen_to_phys_order - 1:length(gen_to_phys_order)) %>% abs()
 
 png(file.path("results", "test.png"))
-order_diffs %>% as_tibble() %>% ggplot(aes(value)) +
-  stat_ecdf() +
-  # geom_density() +
+order_diffs %>% enframe() %>% ggplot(aes(value)) +
+  # stat_ecdf() +
+  geom_density() +
   scale_x_continuous(
     trans = "pseudo_log",
     breaks = c(0, 1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000)
@@ -57,7 +57,7 @@ order_diffs %>% as_tibble() %>% ggplot(aes(value)) +
   labs(y = "Cumulative Density", x = "Marker Order Difference")
 dev.off()
 
-(order_diffs + 1) %>% as_tibble() %>% log10() %>% unique()
+# (order_diffs + 1) %>% enframe() %>% log10() %>% unique()
 
 ################################################################################
 # create intervals for order diffs for easier mapping

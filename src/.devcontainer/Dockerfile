@@ -98,6 +98,7 @@ RUN conda install -c conda-forge \
         r-extrafont \
         r-ggally \
         r-ggrepel \
+        r-ggpubr \
         r-igraph \
         r-import \
         r-mmod \
