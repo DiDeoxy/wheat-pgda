@@ -538,7 +538,7 @@ zoomed_plots <- lapply(chroms, function (chrom) {
       )
       print(range)
 
-      zoomed_plots <- lapply(seq(2, 8, 3), function (index) {
+      zoomed_plots <- lapply(seq(2, 11, 3), function (index) {
         if (index == 2) {
           list(
             base(index, row) +
@@ -550,12 +550,18 @@ zoomed_plots <- lapply(chroms, function (chrom) {
             base(index, row),
             plots[[chrom]][[index + 1]]
           )
+        } else if (index == 8) {
+          list(
+            base(index, row) +
+              labs(x = "Position in Mb") +
+              scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)),
+            plots[[chrom]][[index + 1]]
+          )
         } else {
           list(
             base(index, row) +
-              restore_x_axis  +
-              labs(x = "Position in Mb")+
-              scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)),
+              restore_x_axis +
+              scale_y_continuous(),
             plots[[chrom]][[index + 1]]
           )
         }
@@ -567,7 +573,7 @@ zoomed_plots <- lapply(chroms, function (chrom) {
         units = "mm", res = 96
       )
       grid.arrange(
-        grobs = zoomed_plots, nrow = 3, ncol = 2, widths = c(42, 8)
+        grobs = zoomed_plots, nrow = 4, ncol = 2, widths = c(42, 8)
       )
       dev.off()
 
