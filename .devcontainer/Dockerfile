@@ -18,6 +18,7 @@ RUN apt-get update --fix-missing \
         pandoc \
         libcairo2-dev \
         libopenblas-dev \
+        nano \
         # install git iproute2, process tools, lsb-release (common in install
         # instructions for CLIs) and libzip for R Tools extension
         iproute2 \
@@ -120,7 +121,12 @@ RUN conda install -c conda-forge \
 RUN sudo ln -s /bin/tar /bin/gtar \
     && Rscript -e 'install.packages(c("stringi", "dbscan", "GeneticSubsetter", "poppr"))' \
     && Rscript -e 'devtools::install_github("DiDeoxy/pgda", dep = FALSE)'
-    
+
+# install powerline
+RUN pip install powerline-status \
+    && echo "powerline-daemon -q" >> /home/$USERNAME/.bashrc \
+    && echo ". /home/maxh/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh"  >> /home/$USERNAME/.bashrc
+
 # install tini?
 ENV TINI_VERSION v0.16.1
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini

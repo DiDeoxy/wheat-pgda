@@ -582,4 +582,111 @@ zoomed_plots <- lapply(chroms, function (chrom) {
   }
 })
 
-# zoomed_plots
+# zoomed plots just eh
+zoomed_plots <- lapply(chroms, function (chrom) {
+  print(chrom)
+
+  base <- function (index, row) {
+    plots[[chrom]][[index]] +
+      xlim(
+        chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
+      ) +
+      expand_limits(y = c(0, 1)) +
+      theme(
+        axis.title.y = element_text(angle = 90),
+        axis.text.y = element_text(hjust = 1),
+        axis.ticks.y = element_line(colour = "grey50")
+      )
+  }
+
+  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
+
+  if (nrow(chrom_window_ranges)) {
+    lapply(1:nrow(chrom_window_ranges), function (row) {
+      range <- str_c(
+        chrom, "_",
+        chrom_window_ranges[row, ]$start, "_",
+        chrom_window_ranges[row, ]$end, "_",
+        chrom_window_ranges[row, ]$genes
+      )
+      print(range)
+
+      index <- 2
+      zoomed_plots <-  list(
+        base(index, row),
+        plots[[chrom]][[index + 1]]
+      )
+
+      png(
+        file.path(zoomed_marker_plots, str_c("just_mjaf_", range, ".png")),
+        family = "Times New Roman", width = 270, height = 90,
+        units = "mm", res = 96
+      )
+      grid.arrange(
+        grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
+      )
+      dev.off()
+
+      zoomed_plots
+    }) %>% unlist(recursive = FALSE)
+  }
+})
+
+# zoomed plots just maps
+zoomed_plots <- lapply(chroms, function (chrom) {
+  print(chrom)
+
+  base <- function (index, row) {
+    plots[[chrom]][[index]] +
+      xlim(
+        chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
+      ) +
+      expand_limits(y = c(0, 1)) +
+      theme(
+        axis.title.y = element_text(angle = 90),
+        axis.text.y = element_text(hjust = 1),
+        axis.ticks.y = element_line(colour = "grey50")
+      )
+  }
+
+  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
+
+  if (nrow(chrom_window_ranges)) {
+    lapply(1:nrow(chrom_window_ranges), function (row) {
+      range <- str_c(
+        chrom, "_",
+        chrom_window_ranges[row, ]$start, "_",
+        chrom_window_ranges[row, ]$end, "_",
+        chrom_window_ranges[row, ]$genes
+      )
+      print(range)
+
+      which_markers <- which((snp_data[[chrom]]$pos_mb >= chrom_window_ranges[row, ]$start) & (snp_data[[chrom]]$pos_mb <= chrom_window_ranges[row, ]$end))
+      cm_range <- range(snp_data[[chrom]]$pos_cm[which_markers])
+
+      index <- 11
+      zoomed_plots <-  list(
+        base(index, row) +
+          theme(
+            axis.title.x = element_text(),
+            axis.text.x = element_text(),
+            axis.ticks.x = element_line(colour = "grey50")
+          ) +
+          scale_y_continuous(limits = cm_range),
+        plots[[chrom]][[index + 1]]
+      )
+
+      png(
+        file.path(zoomed_marker_plots, str_c("just_maps_", range, ".png")),
+        family = "Times New Roman", width = 270, height = 90,
+        units = "mm", res = 96
+      )
+      grid.arrange(
+        grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
+      )
+      dev.off()
+
+      zoomed_plots
+    }) %>% unlist(recursive = FALSE)
+  }
+})

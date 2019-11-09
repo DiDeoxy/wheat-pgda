@@ -93,8 +93,10 @@ title(
   xlab = "Approximate Marker Position in Mb", outer = T, cex.lab = 1.5,
   line = 2.5
 )
-title(main = paste("LD Heatmaps by Chromosome"),
-  outer = T, cex.main = 1.5, line = 1)
+# title(
+#   main = paste("LD Heatmaps by Chromosome"),
+#   outer = T, cex.main = 1.5, line = 1
+# )
 par(xpd = NA)
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")

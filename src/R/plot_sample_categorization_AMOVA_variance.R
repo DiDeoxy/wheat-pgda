@@ -80,7 +80,7 @@ plots_matrix <- ggmatrix(
   plots, nrow = 1, ncol = 11,
   xlab = "Hierarchy",
   ylab = "% Variation",
-  title = "Genetic Distance Variance Partitioning",
+  # title = "Genetic Distance Variance Partitioning",
   legend = c(1, 1)
 ) + theme(
   legend.position = "bottom", legend.box = "vertical",
