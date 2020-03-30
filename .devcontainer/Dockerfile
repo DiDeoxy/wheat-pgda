@@ -44,7 +44,7 @@ RUN wget --quiet https://packages.microsoft.com/config/debian/10/packages-micros
 
 ARG USERNAME=maxh
 # On Linux, replace with your actual UID, GID if not the default 1000
-ARG USER_UID=1001
+ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Create the user
