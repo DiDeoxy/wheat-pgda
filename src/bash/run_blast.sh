@@ -9,14 +9,14 @@
 # echo "setup_python_venv"
 # sudo apt-get install -y python3-venv
 # python3 -m venv src/python/ALIGN
-source src/python/ALIGN/bin/activate
+# source src/python/ALIGN/bin/activate
 # python -m pip install --upgrade pip
 # python -m pip install biopython pandas pyfaidx
 # python -m pip install git+https://github.com/daler/gffutils.git
 
 # # 1
 # # download and unzip ref_seq and gtf
-# # echo "download_unzip_ref_seq_and_gtf"
+# echo "download_unzip_ref_seq_and_gtf"
 # mkdir ref_seq
 # wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
 # gunzip ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
@@ -227,21 +227,21 @@ source src/python/ALIGN/bin/activate
 ##############################################################################
 # Cereba alignments
 
-# 4a
-# concat resi
-echo "concat_cereba"
-rm data/raw/gene_seqs/cereba/cerebas.fasta
-cat data/raw/gene_seqs/cereba/*.fasta > data/raw/gene_seqs/cereba/cerebas.fasta
+# # 4a
+# # concat resi
+# echo "concat_cereba"
+# rm data/raw/gene_seqs/cereba/cerebas.fasta
+# cat data/raw/gene_seqs/cereba/*.fasta > data/raw/gene_seqs/cereba/cerebas.fasta
 
-# 5c
-# align cereba genes
-echo "align_cereba_genes"
-blastn \
-    -num_threads 4 \
-    -query data/raw/gene_seqs/cereba/cerebas.fasta \
-    -db ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
-    -outfmt "6 qseqid sseqid bitscore pident evalue qlen length sstart send" \
-    > cereba_blast/cereba.txt
+# # 5c
+# # align cereba genes
+# echo "align_cereba_genes"
+# blastn \
+#     -num_threads 4 \
+#     -query data/raw/gene_seqs/cereba/cerebas.fasta \
+#     -db ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length sstart send" \
+#     > cereba_blast/cereba.txt
 
 # # 6c
 # # get top 4AL13 alignments

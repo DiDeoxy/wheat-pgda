@@ -108,6 +108,7 @@ RUN conda install -c conda-forge \
         r-pracma \
         r-quadprog \
         r-rcolorbrewer \
+        r-refgenome \
         r-rfast \
         r-roxygen2 \
         r-scrime \
@@ -115,11 +116,14 @@ RUN conda install -c conda-forge \
         r-vcd \
     && conda install -c bioconda \
         r-adegenet \
+        bioconductor-genomicranges \
+        bioconductor-rgraphviz \
         bioconductor-snprelate \
+        bioconductor-topgo \
     && conda install -c anaconda make gcc_linux-64 
 
 RUN sudo ln -s /bin/tar /bin/gtar \
-    && Rscript -e 'install.packages(c("stringi", "dbscan", "GeneticSubsetter", "poppr"))' \
+    && Rscript -e 'install.packages(c("stringi", "dbscan", "GeneticSubsetter", "GenomicFeatures", "poppr"))' \
     && Rscript -e 'devtools::install_github("DiDeoxy/pgda", dep = FALSE)'
 
 # install powerline
