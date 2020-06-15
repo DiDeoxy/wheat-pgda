@@ -18,7 +18,7 @@ colours_mc <- colour_set[c(5, 4, 3, 6, 2, 11, 1, 7, 22)]
 colours_mtg <- colour_set[c(1, 2, 7, 16, 12, 4, 9, 22)]
 colours_mtg_ar <- colour_set[c(1, 2, 7, 12, 4, 9, 22)]
 # colours_dend <- colour_set[c(22, 4, 22, 1, 3, 5, 1, 2, 22)]
-colours_dend <- colour_set[c(5, 1, 4, 3, 22, 22, 22, 2)]
+colours_dend <- colour_set[c(5, 1, 1, 4, 3, 22, 22, 22, 2)]
 colours_hdbscan <- colour_set[c(22, 2, 4, 3, 5, 1)]
 # clusters 2 and 3 are swapped on the legend of the dendrogram for writeup
 # purposes

@@ -1,6 +1,6 @@
 # load file paths and functions
-source(file.path("src", "R", "file_paths.R"))
-source(file.path("src", "R", "colour_sets.R"))
+source(file.path("/workspace/repos/wheat-pgda/src/R/file_paths.R"))
+source(file.path("/workspace/repos/wheat-pgda/src/R/colour_sets.R"))
 import::from(
   circlize, "circos.initialize", "circos.clear", "circos.dendrogram", 
   "circos.par", "circos.text", "circos.track"
@@ -100,7 +100,7 @@ legend(
 )
 legend(
   "topleft", legend = levels(wheat_data$sample$annot$mtg), box.lwd = 2,
-  title = "mtgtype", pch = pch, col = colours_mtg, cex = cex,
+  title = "Major Trait Group", pch = pch, col = colours_mtg, cex = cex,
   bg = colors()[525]
 )
 legend(

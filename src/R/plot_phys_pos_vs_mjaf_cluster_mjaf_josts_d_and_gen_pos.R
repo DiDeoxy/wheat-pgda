@@ -1,8 +1,9 @@
 source(file.path("repos", "wheat-pgda", "src", "R", "file_paths.R"))
 source(file.path("repos", "wheat-pgda",  "src", "R", "colour_sets.R"))
+import::from(ape, "read.gff")
 import::from(
-  dplyr, "arrange", "bind_cols", "mutate", "mutate_at", "rowwise", "select",
-  "ungroup"
+  dplyr, "arrange", "bind_cols", "filter", "left_join", "mutate", "mutate_at",
+  "rename", "rowwise", "select", "ungroup"
 )
 import::from(GGally, "ggmatrix")
 library(ggplot2)
@@ -12,11 +13,13 @@ import::from(gridExtra, "grid.arrange")
 import::from(magrittr, "%>%", "%<>%")
 import::from(pgda, "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(plyr, "rbind.fill")
-import::from(readr, "read_csv", "read_rds", "write_csv")
-import::from(Rfast, "rowMaxs")
+import::from(
+  readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv", 
+  "read_rds", "type_convert", "write_csv"
+)
 import::from(scrime, "rowTables")
 import::from(stringr, "str_c")
-import::from(tibble, "add_column", "enframe", "tibble")
+import::from(tibble, "add_column", "as_tibble", "enframe", "tibble")
 import::from(tidyr, "gather", "spread")
 
 # load the data from the gds object
@@ -32,10 +35,9 @@ coding <- c(0, 2)
 # load some data
 josts_d <- read_rds(josts_d)
 allele_counts <- rowTables(genos, coding)
-mjafs <- rowMaxs(allele_counts, value = TRUE) / rowSums(allele_counts)
+mjafs <- do.call(pmax, (allele_counts / rowSums(allele_counts)) %>% as.data.frame())
 eh <- (mjafs * (1 - mjafs)) * 2
 gen_to_phys_order <- match(phys_data$snp$id, gen_data$snp$id)
-window_ranges <- read_csv(file.path(intermediate, "windows.csv"))
 chroms <- as.vector(
   t(outer(as.character(1:7), c("A", "B", "D"), paste, sep = ""))
 )
@@ -97,16 +99,14 @@ cluster_genos <- list(
 )
 
 # get the group MJAFs
-mja <- rowMaxs(rowTables(genos, coding))
-mjafs_by_pop <- lapply(cluster_genos, function (sub_genos) {
+mja <- apply(rowTables(genos, coding), 1, which.max)
+cluster_mjafs <- lapply(cluster_genos, function (sub_genos) {
   genos_counts <- rowTables(sub_genos, coding)
   max_genos <- genos_counts[cbind(seq_along(mja), mja)]
   max_genos / rowSums(genos_counts)
-}) %>% bind_cols() %>% round(4)
+}) %>% bind_cols()
 
 ################################################################################
-# make the stat data dataframe
-
 # gen and phys tibbles of the data so far
 snp_data <- tibble(
   chrom = phys_data$snp$chrom,
@@ -117,7 +117,7 @@ snp_data <- tibble(
   odi = factor(order_diff_intervals),
   josts_d = josts_d
 ) %>%
-  bind_cols(mjafs_by_pop) %>%
+  bind_cols(cluster_mjafs) %>%
   rowwise() %>%
   mutate(
     josts_d_class = c("CHRSD", "CHRWD", "CSWSD")[
@@ -131,25 +131,20 @@ snp_data <- tibble(
     ]
   ) %>%
   ungroup() %>%
-  mutate(josts_d_class = factor(josts_d_class))
-
-
-# split the data up
-printing_data <- snp_data %>%
-  select(c(chrom, id, pos_mb, CHRS, CHRW, CSWS, josts_d, josts_d_class))
-
-cluster_mjaf_eh <- printing_data %>%
-  select(-c(josts_d, josts_d_class)) %>%
-  gather(cluster, mjaf, -c(chrom, id, pos_mb)) %>%
-  mutate(eh = (mjaf * (1 - mjaf)) * 2) %>%
+  mutate(josts_d_class = factor(josts_d_class)) %>%
   split(.$chrom)
 
-printing_data %<>% split(.$chrom)
+# mjafs and ehs by cluster
+mjafs_by_cluster <- cluster_mjafs %>%
+  bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
+  gather(cluster, mjaf, CHRS, CHRW, CSWS) %>%
+  as_tibble() %>%
+  split(.$chrom)
 
-snp_data %<>%
-  select(
-    c(chrom, id, pos_mb, pos_cm, eh, odi, josts_d, josts_d_class)
-  ) %>%
+ehs_by_cluster <- ((cluster_mjafs * (1 - cluster_mjafs)) * 2) %>%
+  bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
+  gather(cluster, eh, CHRS, CHRW, CSWS) %>%
+  as_tibble() %>%
   split(.$chrom)
 
 ################################################################################
@@ -161,37 +156,29 @@ landmarks <- rbind.fill(
   ) %>% mutate(
     type = "Gene", base = 0.5, pos_mb = pos / 1e6
   ) %>%
-    select(-pos),
+    dplyr::select(-pos),
   load_genes(
     file.path(blast, "selected_resi.csv")
   ) %>% mutate(
     type = "Gene", base = 0.5, pos_mb = pos / 1e6
   ) %>%
-    select(-pos),
+    dplyr::select(-pos),
   cbind(
     id = "Centromere", type = "Centromere", base = 0.5,
     read_csv(file.path(intermediate, "centromeres.csv"))
   )
-)
+) %>% as_tibble()
 
-# write out the stat data by chrom
-blah <- lapply(chroms, function (chrom) {
-  chrom_marks <- landmarks[landmarks$chrom == chrom, ]
+################################################################################
+# or use go genes as landmarks
 
-  write_csv(
-    printing_data[[chrom]] %>%
-      rbind.fill(chrom_marks) %>%
-      select(-c(base, type)) %>%
-      arrange(pos_mb),
-    file.path(
-      all_data_chroms,
-      str_c(
-        chrom, "_all_markers_josts_d_and_mjaf_freqs_by_pop_with_genes.csv"
-      )
-    )
-  )
-  NA
-})
+# landmarks <- read_csv(
+#   file.path("/workspace", "data", "intermediate", "auxin_genes.csv")
+# )
+
+# landmarks <- read_csv(
+#   file.path("/workspace", "data", "intermediate", "wounding_genes.csv")
+# )
 
 ################################################################################
 # calc the lengths of the different genomes and homoeologous sets
@@ -216,13 +203,13 @@ plots <- lapply(names(mono_haplos), function (chrom) {
   chrom_data <- snp_data[[chrom]] %>%
     rowwise() %>%
     mutate(
-      type = c("All Other", "Monolithic Haplotype")[
+      type = c("All Other", "Long Haplotype")[
         which(
           c(
-            pos_mb < mono_haplos[[chrom]]$pos_mb[1] |
-            pos_mb > mono_haplos[[chrom]]$pos_mb[2],
-            pos_mb >= mono_haplos[[chrom]]$pos_mb[1] &
-            pos_mb <= mono_haplos[[chrom]]$pos_mb[2]
+            pos_mb < mono_haplos[[chrom]]$start |
+            pos_mb > mono_haplos[[chrom]]$end,
+            pos_mb >= mono_haplos[[chrom]]$start &
+            pos_mb <= mono_haplos[[chrom]]$end
           )
         )
       ]
@@ -232,23 +219,19 @@ plots <- lapply(names(mono_haplos), function (chrom) {
     ylim(0, 0.5) +
     geom_violin(aes(fill = type)) +
     geom_boxplot(width = 0.2) +
-    labs(y = "Expected Heterozygosity")
+    labs(y = "Diversity", title = chrom) +
+    theme(legend.position = "none")
+
 })
 
-# turn plot list into ggmatrix
-plots_matrix <- ggmatrix(
-  plots,
-  nrow = 1, ncol = 6,
-  xAxisLabels = c("1A", "1B", "5B", "6A", "6B", "7A")
-)
-
-# plot the matrix
 png(
   file.path("results", "mono_haplo_vs_distal_eh_dists.png"),
-  family = "Times New Roman", width = 500, height = 250, pointsize = 5,
+  family = "Times New Roman", width = 300, height = 600, pointsize = 5,
   units = "mm", res = 192
 )
-plots_matrix
+grid.arrange(
+  grobs = plots, nrow = 3, ncol = 2
+)
 dev.off()
 
 ################################################################################
@@ -273,7 +256,6 @@ remove_y_axis <- theme(
 plots <- sapply(chroms, function (chrom) {
   print(chrom)
 
-  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
   chrom_landmarks <- landmarks[which(landmarks$chrom == chrom), ]
 
   max_pos_cm <- max_gen_lengths[[
@@ -298,23 +280,14 @@ plots <- sapply(chroms, function (chrom) {
   point_plots <- list()
   dist_plots <- list()
 
-  base <- function(max_y) {
+  plot_landmarks <- function(max_y) {
     list(
-      expand_limits(x = c(0, max_pos_mb)),
-      scale_x_continuous(
-        breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
-      ),
       geom_vline(
         aes(
           xintercept = chrom_landmarks$pos_mb,
           linetype = chrom_landmarks$type
         ), size = line_size
-      )
-    )
-  }
-
-  plot_landmarks <- function(max_y) {
-    list(
+      ),
       geom_label_repel(
         aes(
           chrom_landmarks$pos_mb, chrom_landmarks$base * max_y,
@@ -326,7 +299,7 @@ plots <- sapply(chroms, function (chrom) {
   }
 
   ## 1
-  dist_plots$mjafs <- ggplot(cluster_mjaf_eh[[chrom]], aes(cluster, mjaf)) +
+  dist_plots$mjafs <- ggplot(mjafs_by_cluster[[chrom]], aes(cluster, mjaf)) +
     geom_violin(aes(fill = cluster)) +
     geom_boxplot(width = 0.2) +
     expand_limits(y = c(0, 1)) +
@@ -340,12 +313,14 @@ plots <- sapply(chroms, function (chrom) {
     guides(fill = FALSE)
 
   point_plots$mjafs <- ggplot() +
-    base(1) +
-    expand_limits(y = c(0, 1)) +
+    scale_x_continuous(
+      breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
+    ) +
+    expand_limits(x = c(0, max_pos_mb), y = c(0, 1)) +
     geom_point(
       aes(
-        cluster_mjaf_eh[[chrom]]$pos_mb, cluster_mjaf_eh[[chrom]]$mjaf,
-        colour = cluster_mjaf_eh[[chrom]]$cluster
+        mjafs_by_cluster[[chrom]]$pos_mb, mjafs_by_cluster[[chrom]]$mjaf,
+        colour = mjafs_by_cluster[[chrom]]$cluster
       ), size = point_size
     ) +
     scale_colour_manual(
@@ -358,25 +333,27 @@ plots <- sapply(chroms, function (chrom) {
     guides(linetype = FALSE)
 
   ## 2
-  dist_plots$cluster_eh <- ggplot(cluster_mjaf_eh[[chrom]], aes(cluster, eh)) +
+  dist_plots$cluster_eh <- ggplot(ehs_by_cluster[[chrom]], aes(cluster, eh)) +
+    expand_limits(y = c(0, 0.5)) +
     geom_violin(aes(fill = cluster)) +
     geom_boxplot(width = 0.2) +
-    ylim(0, 0.5) +
     scale_fill_manual(
       "Cluster EH", values = colour_set[c(1, 2, 4)],
       na.translate = FALSE, drop = FALSE
     ) +
     remove_x_axis +
-    labs(y = "Expected Heterzygosity") +
+    labs(y = "Diversity") +
     guides(fill = FALSE)
 
   point_plots$cluster_eh <- ggplot() +
-    base(0.5) +
-    ylim(0, 0.5) +
+    scale_x_continuous(
+      breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
+    ) +
+    expand_limits(x = c(0, max_pos_mb), y = c(0, 0.5)) +
     geom_point(
       aes(
-        cluster_mjaf_eh[[chrom]]$pos_mb, cluster_mjaf_eh[[chrom]]$eh,
-        colour = cluster_mjaf_eh[[chrom]]$cluster
+        ehs_by_cluster[[chrom]]$pos_mb, ehs_by_cluster[[chrom]]$eh,
+        colour = ehs_by_cluster[[chrom]]$cluster
       ), size = point_size
     ) +
     scale_colour_manual(
@@ -385,13 +362,14 @@ plots <- sapply(chroms, function (chrom) {
     ) +
     plot_landmarks(0.5) +
     remove_x_axis +
-    labs(y = "Expected Heterzygosity") +
+    labs(y = "Diversity") +
     guides(linetype = FALSE)
 
   ## 3
   dist_plots$josts_d <- ggplot(
       snp_data[[chrom]], aes(josts_d_class, josts_d)
     ) +
+    expand_limits(y = c(0, 1)) +
     geom_violin(aes(fill = josts_d_class)) +
     geom_boxplot(width = 0.2) +
     expand_limits(y = c(0, 1)) +
@@ -405,8 +383,10 @@ plots <- sapply(chroms, function (chrom) {
     guides(fill = FALSE)
 
   point_plots$josts_d <- ggplot() +
-    base(1) +
-    expand_limits(y = c(0, 1)) +
+    scale_x_continuous(
+      breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
+    ) +
+    expand_limits(x = c(0, max_pos_mb), y = c(0, 1)) +
     geom_point(
       aes(
         snp_data[[chrom]]$pos_mb, snp_data[[chrom]]$josts_d,
@@ -426,22 +406,28 @@ plots <- sapply(chroms, function (chrom) {
   dist_plots$phys_pos_vs_gen_pos <- ggplot(
       snp_data[[chrom]], aes(chrom, pos_cm)
     ) +
+    expand_limits(y = c(0, max_pos_cm)) +
     geom_violin(fill = colour_set[3]) +
     geom_boxplot(width = 0.2) +
-    ylim(0, max_pos_cm) +
     labs(x = "", y = "Position in cM")
 
+  odi_present <- which(
+    levels(snp_data[[chrom]]$odi) %in% as.character(snp_data[[chrom]]$odi)
+  )
+
   point_plots$phys_pos_vs_gen_pos <- ggplot() +
-    base(max_pos_cm) +
-    ylim(0, max_pos_cm) +
+    expand_limits(x = c(0, max_pos_mb), y = c(0, max_pos_cm)) +
+    scale_x_continuous(
+      breaks = seq(0, max_pos_mb, by = 10), expand = c(0.01, 0.01)
+    ) +
     geom_point(
       aes(
-        snp_data[[chrom]]$pos_mb, snp_data[[chrom]]$pos_cm,
+        snp_data[[chrom]]$pos_mb , snp_data[[chrom]]$pos_cm,
         colour = snp_data[[chrom]]$odi
       ), size = point_size
     ) +
     scale_colour_manual(
-      "Order\nDifference\nIntervals", values = colours_intervals
+      "Order\nDifference\nIntervals", values = colours_intervals[odi_present]
     ) +
     plot_landmarks(max_pos_cm) +
     labs(x = "Position in Mb", y = "Position in cM") +
@@ -454,7 +440,8 @@ plots <- sapply(chroms, function (chrom) {
     plot_types, function (type) {
       list(
         dist_plots[[type]],
-        point_plots[[type]] + theme(legend.position = "none") +
+        point_plots[[type]] +
+          theme(legend.position = "none") +
           remove_y_axis,
         as_ggplot(get_legend(point_plots[[type]]))
       )
@@ -462,47 +449,59 @@ plots <- sapply(chroms, function (chrom) {
   ) %>% unlist(recursive = FALSE)
 }, simplify = FALSE)
 
-################################################################################
-# plot all plots
+# ################################################################################
+# # plot all plots
 
-chrom_1A <- c(1:3, 13:15, 25:27)
-group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
-order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+# chrom_1A <- c(1:3, 13:15, 25:27)
+# group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
+# order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
 
-# plot the matrix
-png(
-  file.path("results", "phys_pos_vs_mjaf_cluster_mjaf_josts_d_and_gen_pos.png"),
-  family = "Times New Roman", width = 1800, height = 2800, pointsize = 5,
-  units = "mm", res = 96
-)
-grid.arrange(
-  grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 28, ncol = 9,
-  widths = rep(c(6, 41, 3), 3)
-)
-dev.off()
+# # plot the matrix
+# png(
+#   file.path("results", "phys_pos_vs_mjaf_cluster_mjaf_josts_d_and_gen_pos.png"),
+#   family = "Times New Roman", width = 1800, height = 2800, pointsize = 5,
+#   units = "mm", res = 96
+# )
+# grid.arrange(
+#   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 28, ncol = 9,
+#   widths = rep(c(6, 41, 3), 3)
+# )
+# dev.off()
 
-################################################################################
-# plot just phys pos vs gen pos graphs
+# png(
+#   file.path("results", "phys_pos_vs_gen_pos_4A.png"),
+#   family = "Times New Roman", width = 900, height = 300, pointsize = 5,
+#   units = "mm", res = 96
+# )
+# grid.arrange(
+#   grobs = (plots %>% unlist(recursive = FALSE))[order][137], nrow = 1, ncol = 1
+# )
+# dev.off()
 
-group_1 <- c(10:12, 22:24, 34:36)
-order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+# ################################################################################
+# # plot just phys pos vs gen pos graphs
 
-# plot the matrix
-png(
-  file.path("results", "phys_pos_vs_gen_pos.png"),
-  family = "Times New Roman", width = 900, height = 900, pointsize = 5,
-  units = "mm", res = 96
-)
-grid.arrange(
-  grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 7, ncol = 9,
-  widths = rep(c(6, 40, 4), 3)
-)
-dev.off()
+# group_1 <- c(10:12, 22:24, 34:36)
+# order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+
+# # plot the matrix
+# png(
+#   file.path("results", "phys_pos_vs_gen_pos.png"),
+#   family = "Times New Roman", width = 900, height = 900, pointsize = 5,
+#   units = "mm", res = 96
+# )
+# grid.arrange(
+#   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 7, ncol = 9,
+#   widths = rep(c(6, 40, 4), 3)
+# )
+# dev.off()
 
 ################################################################################
 # plot zoomed windows
 
-zoomed_plots <- lapply(chroms, function (chrom) {
+window_ranges <- read_csv(file.path(intermediate, "windows.csv"))
+
+zoomed_plots <- lapply("5D", function (chrom) {
   print(chrom)
 
   restore_y_axis <- theme(
@@ -538,6 +537,12 @@ zoomed_plots <- lapply(chroms, function (chrom) {
       )
       print(range)
 
+      which_markers <- which(
+        (snp_data[[chrom]]$pos_mb >= chrom_window_ranges[row, ]$start) &
+        (snp_data[[chrom]]$pos_mb <= chrom_window_ranges[row, ]$end)
+      )
+      cm_range <- range(snp_data[[chrom]]$pos_cm[which_markers])
+
       zoomed_plots <- lapply(seq(2, 11, 3), function (index) {
         if (index == 2) {
           list(
@@ -561,7 +566,7 @@ zoomed_plots <- lapply(chroms, function (chrom) {
           list(
             base(index, row) +
               restore_x_axis +
-              scale_y_continuous(),
+              scale_y_continuous(limits = cm_range),
             plots[[chrom]][[index + 1]]
           )
         }
@@ -582,111 +587,114 @@ zoomed_plots <- lapply(chroms, function (chrom) {
   }
 })
 
-# zoomed plots just eh
-zoomed_plots <- lapply(chroms, function (chrom) {
-  print(chrom)
+# # zoomed plots just eh
+# zoomed_plots <- lapply(chroms, function (chrom) {
+#   print(chrom)
 
-  base <- function (index, row) {
-    plots[[chrom]][[index]] +
-      xlim(
-        chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
-      ) +
-      expand_limits(y = c(0, 1)) +
-      theme(
-        axis.title.y = element_text(angle = 90),
-        axis.text.y = element_text(hjust = 1),
-        axis.ticks.y = element_line(colour = "grey50")
-      )
-  }
+#   base <- function (index, row) {
+#     plots[[chrom]][[index]] +
+#       xlim(
+#         chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
+#       ) +
+#       expand_limits(y = c(0, 1)) +
+#       theme(
+#         axis.title.y = element_text(angle = 90),
+#         axis.text.y = element_text(hjust = 1),
+#         axis.ticks.y = element_line(colour = "grey50")
+#       )
+#   }
 
-  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
+#   chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
 
-  if (nrow(chrom_window_ranges)) {
-    lapply(1:nrow(chrom_window_ranges), function (row) {
-      range <- str_c(
-        chrom, "_",
-        chrom_window_ranges[row, ]$start, "_",
-        chrom_window_ranges[row, ]$end, "_",
-        chrom_window_ranges[row, ]$genes
-      )
-      print(range)
+#   if (nrow(chrom_window_ranges)) {
+#     lapply(1:nrow(chrom_window_ranges), function (row) {
+#       range <- str_c(
+#         chrom, "_",
+#         chrom_window_ranges[row, ]$start, "_",
+#         chrom_window_ranges[row, ]$end, "_",
+#         chrom_window_ranges[row, ]$genes
+#       )
+#       print(range)
 
-      index <- 2
-      zoomed_plots <-  list(
-        base(index, row),
-        plots[[chrom]][[index + 1]]
-      )
+#       index <- 2
+#       zoomed_plots <-  list(
+#         base(index, row),
+#         plots[[chrom]][[index + 1]]
+#       )
 
-      png(
-        file.path(zoomed_marker_plots, str_c("just_mjaf_", range, ".png")),
-        family = "Times New Roman", width = 270, height = 90,
-        units = "mm", res = 96
-      )
-      grid.arrange(
-        grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
-      )
-      dev.off()
+#       png(
+#         file.path(zoomed_marker_plots, str_c("just_mjaf_", range, ".png")),
+#         family = "Times New Roman", width = 270, height = 90,
+#         units = "mm", res = 96
+#       )
+#       grid.arrange(
+#         grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
+#       )
+#       dev.off()
 
-      zoomed_plots
-    }) %>% unlist(recursive = FALSE)
-  }
-})
+#       zoomed_plots
+#     }) %>% unlist(recursive = FALSE)
+#   }
+# })
 
-# zoomed plots just maps
-zoomed_plots <- lapply(chroms, function (chrom) {
-  print(chrom)
+# # zoomed plots just maps
+# zoomed_plots <- lapply(chroms, function (chrom) {
+#   print(chrom)
 
-  base <- function (index, row) {
-    plots[[chrom]][[index]] +
-      xlim(
-        chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
-      ) +
-      expand_limits(y = c(0, 1)) +
-      theme(
-        axis.title.y = element_text(angle = 90),
-        axis.text.y = element_text(hjust = 1),
-        axis.ticks.y = element_line(colour = "grey50")
-      )
-  }
+#   base <- function (index, row) {
+#     plots[[chrom]][[index]] +
+#       xlim(
+#         chrom_window_ranges[row, ]$start, chrom_window_ranges[row, ]$end
+#       ) +
+#       expand_limits(y = c(0, 1)) +
+#       theme(
+#         axis.title.y = element_text(angle = 90),
+#         axis.text.y = element_text(hjust = 1),
+#         axis.ticks.y = element_line(colour = "grey50")
+#       )
+#   }
 
-  chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
+#   chrom_window_ranges <- window_ranges[which(window_ranges$chrom == chrom), ]
 
-  if (nrow(chrom_window_ranges)) {
-    lapply(1:nrow(chrom_window_ranges), function (row) {
-      range <- str_c(
-        chrom, "_",
-        chrom_window_ranges[row, ]$start, "_",
-        chrom_window_ranges[row, ]$end, "_",
-        chrom_window_ranges[row, ]$genes
-      )
-      print(range)
+#   if (nrow(chrom_window_ranges)) {
+#     lapply(1:nrow(chrom_window_ranges), function (row) {
+#       range <- str_c(
+#         chrom, "_",
+#         chrom_window_ranges[row, ]$start, "_",
+#         chrom_window_ranges[row, ]$end, "_",
+#         chrom_window_ranges[row, ]$genes
+#       )
+#       print(range)
 
-      which_markers <- which((snp_data[[chrom]]$pos_mb >= chrom_window_ranges[row, ]$start) & (snp_data[[chrom]]$pos_mb <= chrom_window_ranges[row, ]$end))
-      cm_range <- range(snp_data[[chrom]]$pos_cm[which_markers])
+#       which_markers <- which(
+#         (snp_data[[chrom]]$pos_mb >= chrom_window_ranges[row, ]$start) &
+#         (snp_data[[chrom]]$pos_mb <= chrom_window_ranges[row, ]$end)
+#       )
+#       cm_range <- range(snp_data[[chrom]]$pos_cm[which_markers])
 
-      index <- 11
-      zoomed_plots <-  list(
-        base(index, row) +
-          theme(
-            axis.title.x = element_text(),
-            axis.text.x = element_text(),
-            axis.ticks.x = element_line(colour = "grey50")
-          ) +
-          scale_y_continuous(limits = cm_range),
-        plots[[chrom]][[index + 1]]
-      )
+#       index <- 11
+#       zoomed_plots <-  list(
+#         base(index, row) +
+#           theme(
+#             axis.title.x = element_text(),
+#             axis.text.x = element_text(),
+#             axis.ticks.x = element_line(colour = "grey50")
+#           ) +
+#           scale_y_continuous(limits = cm_range),
+#         plots[[chrom]][[index + 1]]
+#       )
 
-      png(
-        file.path(zoomed_marker_plots, str_c("just_maps_", range, ".png")),
-        family = "Times New Roman", width = 270, height = 90,
-        units = "mm", res = 96
-      )
-      grid.arrange(
-        grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
-      )
-      dev.off()
+#       png(
+#         file.path(zoomed_marker_plots, str_c("just_maps_", range, ".png")),
+#         family = "Times New Roman", width = 270, height = 90,
+#         units = "mm", res = 96
+#       )
+#       grid.arrange(
+#         grobs = zoomed_plots, nrow = 1, ncol = 2, widths = c(42, 8)
+#       )
+#       dev.off()
 
-      zoomed_plots
-    }) %>% unlist(recursive = FALSE)
-  }
-})
+#       zoomed_plots
+#     }) %>% unlist(recursive = FALSE)
+#   }
+# })

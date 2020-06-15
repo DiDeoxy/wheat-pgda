@@ -36,7 +36,7 @@ RUN wget --quiet https://packages.microsoft.com/config/debian/10/packages-micros
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get install apt-transport-https \
     && apt-get update \
-    && apt-get -y install dotnet-runtime-2.2 \
+    && apt-get -y install dotnet-runtime-3.1 \
     # clean up again
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -44,7 +44,7 @@ RUN wget --quiet https://packages.microsoft.com/config/debian/10/packages-micros
 
 ARG USERNAME=maxh
 # On Linux, replace with your actual UID, GID if not the default 1000
-ARG USER_UID=1001
+ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Create the user
@@ -108,24 +108,33 @@ RUN conda install -c conda-forge \
         r-pracma \
         r-quadprog \
         r-rcolorbrewer \
+        r-refgenome \
         r-rfast \
         r-roxygen2 \
         r-scrime \
         r-tidyverse \
-        r-vcd \
-    && conda install -c bioconda \
+        r-vcd
+
+RUN conda install -c bioconda \
         r-adegenet \
+        bioconductor-biomart \
+        bioconductor-rgraphviz \
         bioconductor-snprelate \
-    && conda install -c anaconda make gcc_linux-64 
+        bioconductor-topgo
+
+RUN sudo apt-get update --fix-missing \
+    && sudo apt-get install -y --no-install-recommends \
+        build-essential \
+    # clean up
+    && sudo apt-get autoremove -y \
+    && sudo apt-get clean -y \
+    && sudo rm -rf /var/lib/apt/lists/*
+
 
 RUN sudo ln -s /bin/tar /bin/gtar \
-    && Rscript -e 'install.packages(c("stringi", "dbscan", "GeneticSubsetter", "poppr"))' \
+    && Rscript -e 'install.packages(c("stringi", "dbscan", "poppr"))' \
+    && Rscript -e 'BiocManager::install(c("GenomicFeatures", "GenomicRanges"))' \
     && Rscript -e 'devtools::install_github("DiDeoxy/pgda", dep = FALSE)'
-
-# install powerline
-RUN pip install powerline-status \
-    && echo "powerline-daemon -q" >> /home/$USERNAME/.bashrc \
-    && echo ". /home/maxh/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh"  >> /home/$USERNAME/.bashrc
 
 # install tini?
 ENV TINI_VERSION v0.16.1

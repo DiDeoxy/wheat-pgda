@@ -1,5 +1,5 @@
-source(file.path("src", "R", "file_paths.R"))
-source(file.path("src", "R", "colour_sets.R"))
+source("/workspace/repos/wheat-pgda/src/R/file_paths.R")
+source("/workspace/repos/wheat-pgda/src/R/colour_sets.R")
 import::from(dplyr, "full_join", "arrange", "select")
 import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(magrittr, "%>%", "%<>%")

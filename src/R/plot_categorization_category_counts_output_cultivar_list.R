@@ -1,6 +1,6 @@
 # load file paths, colours, and functions
-source(file.path("src", "R", "file_paths.R"))
-source(file.path("src", "R", "colour_sets.R"))
+source(file.path("repos", "wheat-pgda", "src", "R", "file_paths.R"))
+source(file.path("repos", "wheat-pgda", "src", "R", "colour_sets.R"))
 import::from(gridExtra, "grid.arrange")
 import::from(magrittr, "%>%")
 import::from(pgda, "snpgds_parse")

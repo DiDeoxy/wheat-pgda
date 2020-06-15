@@ -25,7 +25,7 @@ var_sets <- as.character(read.gdsn(index.gdsn(phys_data, "snp.id"))) %>%
 phys_pos <- as.numeric(read.gdsn(index.gdsn(phys_data, "snp.position"))) %>%
   split(chrom)
 
-pane <- 5
+pane <- 10
 window <- pane * 2 + 1
 
 ld_mats <- lapply(var_sets, function (var_set) {
@@ -34,7 +34,7 @@ ld_mats <- lapply(var_sets, function (var_set) {
 
 snpgdsClose(phys_data)
 
-calc_gen_sparsity <- function (ld_mat, cores) {
+calc_pseudo_gen_pos <- function (ld_mat, cores) {
   int_window <- min(window, ncol(ld_mat))
   mclapply(1:ncol(ld_mat), function (i) {
     if (i - pane >= 0 && i + pane <= ncol(ld_mat)) {
@@ -63,7 +63,8 @@ calc_gen_sparsity <- function (ld_mat, cores) {
     }
     indices <- cbind(rows, cols)
     lds <- abs(ld_mat[indices])
-    sparsity <- mean(lds, na.rm = TRUE)
+    lds[is.nan(lds)] <- NA
+    sparsity <- -log(mean(lds, na.rm = TRUE))
     if (is.nan(sparsity)) {
         return(0)
     } else {
@@ -72,37 +73,9 @@ calc_gen_sparsity <- function (ld_mat, cores) {
   }, mc.cores = cores) %>% unlist() %>% as.numeric()
 }
 
-gen_sparsity <- lapply(ld_mats, calc_gen_sparsity, 8)
-summary(gen_sparsity %>% unlist())
+sparsity <- lapply(ld_mats, calc_pseudo_gen_pos, 8)
 
-pane <- 1
-window <- pane * 2 + 1
-
-max_diff <- lapply(phys_pos, diff) %>% unlist() %>% max()
-
-calc_phys_sparsity <- function (chrom_pos, cores) {
-  int_window <- min(window, length(chrom_pos))
-  mclapply(1:length(chrom_pos), function (i) {
-    if (i - pane >= 0 && i + pane <= length(chrom_pos)) {
-      indices <- (i - pane):(i + pane)
-    } else if (i - pane < 0) {
-      indices <- 1:window
-    } else {
-      indices <- (length(chrom_pos) - window):length(chrom_pos)
-    }
-    mean(diff(chrom_pos[indices])) / max_diff
-  }, mc.cores = cores) %>% unlist() %>% as.numeric()
-}
-
-phys_sparsity <- lapply(phys_pos, calc_phys_sparsity, 8)
-summary(phys_sparsity %>% unlist())
-
-sparsity <- lapply(chroms, function (chrom) {
-  -log(gen_sparsity[[chrom]] + phys_sparsity[[chrom]])
-})
-summary(sparsity %>% unlist())
-
-names(sparsity) <- chroms
+gen_pos <- lapply(sparsity, cumsum)
 
 phys_data <- snpgds_parse(phys_gds)
 
@@ -110,7 +83,7 @@ max_phys_lengths <- span_by_chrom(
   phys_data$snp$chrom, phys_data$snp$pos
 ) %>% max_lengths() / 1e6
 
-landmarks <- read_csv(file.path(intermediate, "centromeres.csv")) %>% cbind(id = "Centromere") %>% split(.$chrom)
+landmarks <- read_csv(file.path(intermediate, "centromeres.csv")) %>% cbind(id = "Centromere", base = 0.5) %>% split(.$chrom)
 
 plots <- lapply(chroms, function (chrom) {
 
@@ -125,14 +98,14 @@ plots <- lapply(chroms, function (chrom) {
     scale_x_continuous(
       breaks = seq(0, max_pos_mb, by = 25), expand = c(0.01, 0.01)
     ) +
-    geom_vline(aes(xintercept = landmarks[[chrom]]$pos_mb))
-    # geom_label_repel(
-    #   aes(
-    #     landmarks[[chrom]]$pos_mb,
-    #     0.5 * max(sparsity[[chrom]]),
-    #     label = landmarks[[chrom]]$id
-    #   )
-    # )
+    geom_vline(aes(xintercept = landmarks[[chrom]]$pos_mb)) +
+    geom_label_repel(
+      aes(
+        landmarks[[chrom]]$pos_mb,
+        landmarks[[chrom]]$base * max(sparsity[[chrom]]),
+        label = landmarks[[chrom]]$id
+      )
+    )
 })
 
 png(

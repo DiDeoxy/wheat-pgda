@@ -1,11 +1,11 @@
 # import file paths and functions
-source(file.path("src", "R", "file_paths.R"))
+source(file.path("/workspace/repos/wheat-pgda/src/R/file_paths.R"))
 import::from(ape, "read.gff")
 import::from(
   dplyr, "arrange", "do", "filter", "group_by", "left_join", "n", "rename",
-  "select", "ungroup"
+  "select", "ungroup", "recode"
 )
-import::from(magrittr, "%>%")
+import::from(magrittr, "%>%", "%<>%")
 import::from(parallel, "detectCores", "mclapply")
 import::from(
   readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv",
@@ -15,7 +15,7 @@ import::from(stringr, "str_c")
 import::from(tibble, "as_tibble", "tibble")
 
 chr_orders <- list(
-  ABD = outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
+  ABD = outer(as.character(1:7), c("A", "B", "D"), paste, sep = "")%>%
     t() %>% as.vector(),
   ADB = outer(as.character(1:7), c("A", "D", "B"), paste, sep = "") %>%
     t() %>% as.vector(),
@@ -30,7 +30,7 @@ chr_orders <- list(
 )
 
 # parse the GFF3 format file of the wheat 90K snp chip physical map positions
-marker_aligns <- lapply(chr_orders[1], function (chr) {
+marker_aligns <- lapply(chr_orders[[1]], function (chr) {
   chr_feats <- read.gff(
     file.path(
       markers, "90K_RefSeqv1_probe_alignments",
@@ -50,7 +50,7 @@ marker_aligns <- lapply(chr_orders[1], function (chr) {
 }) %>% do.call(rbind, .)
 
 # format the alignemnts, rename, filter, and split by marker
-marker_aligns <- marker_aligns %>%
+marker_aligns %<>%
   as_tibble() %>%
   type_convert(
     col_type = list(
@@ -108,11 +108,13 @@ genotypes <- read_csv(
 ) %>%
   select(-X1, -X3, -X4, -X5, -Name) %>%
   .[-1:-2, ] %>%
-  rename(marker = X2) %>%
-  replace(. == "C1", 0) %>%
-  replace(. == "c1", 0) %>%
-  replace(. == "C2", 2) %>%
-  replace(. == "NC", 3)
+  rename(marker = X2)
+
+recoded_genos <- apply(genotypes[, -1], 1, function (row) {
+  recode(row, C1 = 0, c1 = 0, C2 = 2, NC = 3)
+}) %>% t()
+
+genotypes[, 2:ncol(genotypes)] <- recoded_genos
 
 blah <- lapply(chr_orders[1], function (chr_order) {
   levels(marker_gen_pos$chrom) <<- chr_order
@@ -142,14 +144,14 @@ blah <- lapply(chr_orders[1], function (chr_order) {
     do(unique_marker(.)) %>%
     nrow() %>%
     str_c(
-      "Of markers with identical postions num retained after pruning: ", .
+      "Of markers with identical positions num retained after pruning: ", .
     ) %>% print()
 
   # actually remove the markers
   markers_with_maps_genos <- markers_with_maps_genos %>%
     do(unique_marker(.)) %>%
     ungroup()
-  nrow(markers_with_maps_genos) %>%
+    nrow(markers_with_maps_genos) %>%
     str_c("Num markers remaining after pruning: ", .) %>%
     print()
 

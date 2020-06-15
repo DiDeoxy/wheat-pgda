@@ -18,20 +18,25 @@ source src/python/ALIGN/bin/activate
 # # download and unzip ref_seq and gtf
 # # echo "download_unzip_ref_seq_and_gtf"
 # mkdir ref_seq
-# wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
-# gunzip ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
-# wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/gtf/triticum_aestivum/Triticum_aestivum.IWGSC.42.gtf.gz
-# gunzip ref_seq/Triticum_aestivum.IWGSC.42.gtf.gz
+wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
+gunzip ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
+wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/gtf/triticum_aestivum/Triticum_aestivum.IWGSC.42.gtf.gz
+gunzip ref_seq/Triticum_aestivum.IWGSC.42.gtf.gz
 
 # # 2
-# # extract genes from ref_seq delete reference
-# echo "extract_genes_from_reference_and_delete"
-# mkdir -p ref_seq/blast_db
-# python src/python/extract_gene_sequences.py \
-#     ref_seq/Triticum_aestivum.IWGSC.42.gtf \
-#     ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
-#     ref_seq/ref_seq_v1_genes.fasta
-# rm -r ref_seq
+# extract genes from ref_seq delete reference
+echo "extract_genes_from_reference_and_delete"
+mkdir -p ref_seq/blast_db
+python src/python/extract_gene_sequences.py \
+    ref_seq/Triticum_aestivum.IWGSC.42.gtf \
+    ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+    ref_seq/ref_seq_v1_genes.fasta
+rm -r ref_seq
+
+python .//extract_gene_sequences.py \
+    Triticum_aestivum.IWGSC.42.gtf \
+    Triticum_aestivum.IWGSC.dna.toplevel.fa \
+    ref_seq_v1_genes.fasta
 
 # # 3a
 # # make blast database from whole genome
