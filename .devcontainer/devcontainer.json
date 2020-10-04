@@ -4,7 +4,7 @@
 	"name": "R",
 	"dockerFile": "Dockerfile",
 
-	"workspaceMount": "src=C:\\Users\\Max_H\\repos,dst=/workspace/repos,type=bind,consistency=cached",
+	"workspaceMount": "src=C:\\Users\\Max_H\\repos\\wheat-pgda,dst=/workspace/wheat-pgda,type=bind,consistency=cached",
 	"workspaceFolder": "/workspace",
 
 	"runArgs": [
@@ -12,7 +12,7 @@
 		// new files getting created as root, but you may need to update the USER_UID
 		// and USER_GID in .devcontainer/Dockerfile to match your user if not 1000.
 		"-u", "maxh",
-		"--mount", "src=C:\\Users\\Max_H\\Dropbox\\PGDA,dst=/workspace,type=bind",
+		"--mount", "src=C:\\Users\\Max_H\\OneDrive - University of Guelph\\Pedagogy\\wheat-pgda,dst=/workspace,type=bind",
 		"--mount", "src=C:\\Users\\Max_H\\.ssh,dst=/home/maxh/.ssh,type=bind,readonly",
 		"--mount", "src=C:\\Users\\Max_H\\.gitconfig,dst=/home/maxh/.gitconfig,type=bind,readonly"
 	],

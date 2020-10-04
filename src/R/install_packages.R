@@ -1,1 +1,0 @@
-devtools::install_git(file.path("repos", "pgda"), dep = FALSE)
