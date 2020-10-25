@@ -16,7 +16,7 @@ wheat_data$genotypes <- wheat_data$genotypes %>%
   replace(. == 2, "B") %>%
   replace(. == 3, "")
 
-cluster <- read_rds(hdbscan)$cluster
+cluster <- read_rds(hdbscan_rds)$cluster
 
 # making indices in order to create subsets containing just the varieties of
 # the mtg/cluster groups we are interested in
@@ -64,7 +64,7 @@ for (i in 1:length(grouping)) {
 # markers
 wheat_data <- snpgds_parse(ld_phys_gds)
 
-cluster <- read_rds(hdbscan)$cluster
+cluster <- read_rds(hdbscan_rds)$cluster
 
 # making the genotype data palatable by genind
 wheat_data$genotypes <- wheat_data$genotypes %>%

@@ -19,4 +19,4 @@ norm_josts_d <- D_Jost(comp_genind)[[1]] / max_D
 norm_josts_d[which(norm_josts_d < 0)] <- 0
 
 # calculate normalized josts d values and wrtie the out
-write_rds(norm_josts_d, josts_d)
+write_rds(norm_josts_d, josts_d_rds)

@@ -59,11 +59,6 @@ order_diffs %>% enframe() %>% ggplot(aes(value)) +
   labs(y = "Cumulative Density", x = "Marker Order Difference")
 dev.off()
 
-# (order_diffs + 1) %>% enframe() %>% log10() %>% unique()
-
-################################################################################
-# create intervals for order diffs for easier mapping
-
 order_diff_quantiles <- c("0%" = -1,
   quantile(
     order_diffs, c(1 / 2, 3 / 4, 7 / 8, 15 / 16, 31 / 32, 63 / 64, 127 / 128)
@@ -134,18 +129,18 @@ snp_data <- tibble(
   mutate(josts_d_class = factor(josts_d_class)) %>%
   split(.$chrom)
 
-# mjafs and ehs by cluster
-mjafs_by_cluster <- cluster_mjafs %>%
-  bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
-  gather(cluster, mjaf, CHRS, CHRW, CSWS) %>%
-  as_tibble() %>%
-  split(.$chrom)
+# # mjafs and ehs by cluster
+# mjafs_by_cluster <- cluster_mjafs %>%
+#   bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
+#   gather(cluster, mjaf, CHRS, CHRW, CSWS) %>%
+#   as_tibble() %>%
+#   split(.$chrom)
 
-ehs_by_cluster <- ((cluster_mjafs * (1 - cluster_mjafs)) * 2) %>%
-  bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
-  gather(cluster, eh, CHRS, CHRW, CSWS) %>%
-  as_tibble() %>%
-  split(.$chrom)
+# ehs_by_cluster <- ((cluster_mjafs * (1 - cluster_mjafs)) * 2) %>%
+#   bind_cols(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6) %>%
+#   gather(cluster, eh, CHRS, CHRW, CSWS) %>%
+#   as_tibble() %>%
+#   split(.$chrom)
 
 ################################################################################
 # create a tibble of the genes and centromeres
@@ -154,17 +149,17 @@ landmarks <- rbind.fill(
   load_genes(
     file.path(blast, "selected_pheno.csv")
   ) %>% mutate(
-    type = "Gene", base = 0.5, pos_mb = pos / 1e6
+    type = "Gene", base = 0.75, pos_mb = pos / 1e6
   ) %>%
     dplyr::select(-pos),
   load_genes(
     file.path(blast, "selected_resi.csv")
   ) %>% mutate(
-    type = "Gene", base = 0.5, pos_mb = pos / 1e6
+    type = "Gene", base = 0.75, pos_mb = pos / 1e6
   ) %>%
     dplyr::select(-pos),
   cbind(
-    id = "Centromere", type = "Centromere", base = 0.5,
+    id = "Centromere", type = "Centromere", base = 0.75,
     read_csv(file.path(intermediate, "centromeres.csv"))
   )
 ) %>% as_tibble()
@@ -221,7 +216,6 @@ plots <- lapply(names(mono_haplos), function (chrom) {
     geom_boxplot(width = 0.2) +
     labs(y = "Diversity", title = chrom) +
     theme(legend.position = "none")
-
 })
 
 png(
@@ -238,7 +232,7 @@ dev.off()
 # plot the data
 line_size <- 1
 point_size <- 2
-text_size <- 2
+text_size <- 10
 seed <- 101
 
 remove_x_axis <- theme(
@@ -452,56 +446,75 @@ plots <- sapply(chroms, function (chrom) {
 # ################################################################################
 # # plot all plots
 
-# chrom_1A <- c(1:3, 13:15, 25:27)
-# group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
-# order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+chrom_1A <- c(1:3, 13:15, 25:27)
+group_1 <- lapply(seq(0, 9, 3), function (num) chrom_1A + num) %>% unlist()
+order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
 
-# # plot the matrix
-# png(
-#   file.path("results", "phys_pos_vs_mjaf_cluster_mjaf_josts_d_and_gen_pos.png"),
-#   family = "Times New Roman", width = 1800, height = 2800, pointsize = 5,
-#   units = "mm", res = 96
-# )
-# grid.arrange(
-#   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 28, ncol = 9,
-#   widths = rep(c(6, 41, 3), 3)
-# )
-# dev.off()
-
-# png(
-#   file.path("results", "phys_pos_vs_gen_pos_4A.png"),
-#   family = "Times New Roman", width = 900, height = 300, pointsize = 5,
-#   units = "mm", res = 96
-# )
-# grid.arrange(
-#   grobs = (plots %>% unlist(recursive = FALSE))[order][137], nrow = 1, ncol = 1
-# )
-# dev.off()
+# plot the matrix
+png(
+  file.path("results", "phys_pos_vs_mjaf_cluster_mjaf_josts_d_and_gen_pos.png"),
+  family = "Times New Roman", width = 4960, height = 7016, pointsize = 5
+)
+grid.arrange(
+  grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 28, ncol = 9,
+  widths = rep(c(6, 41, 3), 3)
+)
+dev.off()
 
 # ################################################################################
 # # plot just phys pos vs gen pos graphs
 
-# group_1 <- c(10:12, 22:24, 34:36)
-# order <- lapply(seq(0, 216, 36), function (num) group_1 + num) %>% unlist()
+mod_plots <- lapply(chroms, function (chrom) {
+  lapply(c(10, 11), function (index) {
+    new_plot <- ggplot()
+    if (chrom == "7A") {
+      new_plot <- plots[[chrom]][[index]]
 
-# # plot the matrix
-# png(
-#   file.path("results", "phys_pos_vs_gen_pos.png"),
-#   family = "Times New Roman", width = 900, height = 900, pointsize = 5,
-#   units = "mm", res = 96
-# )
-# grid.arrange(
-#   grobs = (plots %>% unlist(recursive = FALSE))[order], nrow = 7, ncol = 9,
-#   widths = rep(c(6, 40, 4), 3)
-# )
-# dev.off()
+    } else if (grepl("A", chrom)) {
+      new_plot <- plots[[chrom]][[index]] +
+        remove_x_axis
+
+    } else if (grepl("7", chrom)) {
+      new_plot <- plots[[chrom]][[index]] +
+        remove_y_axis
+    } else {
+      new_plot <- plots[[chrom]][[index]] +
+        remove_y_axis +
+        remove_x_axis
+    }
+    if (index == 10) {
+      new_plot <- new_plot +
+        labs(title = chrom)
+    } else {
+      new_plot <- new_plot +
+        labs(title = chrom) +
+        theme(plot.title = element_text(color = "white"))
+    }
+    new_plot
+  })
+})
+
+# plot the matrix
+png(
+  file.path("results", "phys_pos_vs_gen_pos_v2.png"),
+  family = "Times New Roman", width = 2480, height = 3508, pointsize = 5
+)
+grid.arrange(
+  grobs = c(
+    mod_plots %>% unlist(recursive = FALSE),
+    (plots %>% unlist(recursive = FALSE))[24]
+  ),
+  layout_matrix = matrix(nrow = 6, 1:42) %>% rbind(rep(43, 7)) %>% t(),
+  widths = c(rep(c(6, 44), 3), 5)
+)
+dev.off()
 
 ################################################################################
 # plot zoomed windows
 
 window_ranges <- read_csv(file.path(intermediate, "windows.csv"))
 
-zoomed_plots <- lapply("5D", function (chrom) {
+zoomed_plots <- lapply(chroms, function (chrom) {
   print(chrom)
 
   restore_y_axis <- theme(

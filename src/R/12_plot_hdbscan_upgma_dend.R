@@ -15,7 +15,7 @@ import::from(stringr, "str_c")
 ## setting up the data
 wheat_data <- snpgds_parse(ld_phys_gds)
 
-clusters <- factor(read_rds(hdbscan)$cluster)
+clusters <- factor(read_rds(hdbscan_rds)$cluster)
 levels(clusters) <- c(
   "Noise", "Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5"
 )

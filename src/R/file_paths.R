@@ -22,10 +22,10 @@ ld_gen_gds <- file.path(gds, "maf_mr_filtered_sample_ld_pruned_gen.gds")
 geninds <- file.path(intermediate, "geninds")
 ifelse(! dir.exists(geninds), dir.create(geninds), FALSE)
 
-hdbscan <- file.path(intermediate, "wheat_hdbscan.rds")
-josts_d <- file.path(intermediate, "josts_d.rds")
-
 blast <- file.path(intermediate, "blast")
+
+hdbscan_rds <- file.path(intermediate, "wheat_hdbscan.rds")
+josts_d_rds <- file.path(intermediate, "josts_d.rds")
 
 ################################################################################
 # results

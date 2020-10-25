@@ -18,7 +18,7 @@ phys_data <- snpgds_parse(phys_gds)
 write_rds(phys_data, "/workspace/data/intermediate/phys_data.rds")
 
 # load some data
-josts_d <- read_rds(josts_d)
+josts_d <- read_rds(josts_d_rds)
 
 # get chomr names order
 chroms <- as.vector(
