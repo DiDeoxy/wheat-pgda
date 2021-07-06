@@ -1,5 +1,8 @@
 source("wheat-pgda/src/R/file_paths.R")
+source("wheat-pgda/src/R/colour_sets.R")
 library(ggplot2)
+import::from(gdsfmt, "index.gdsn", "read.gdsn")
+import::from(ggalt, "geom_xspline")
 import::from(ggrepel, "geom_label_repel")
 import::from(gridExtra, "grid.arrange")
 import::from(magrittr, "%>%")
@@ -7,7 +10,7 @@ import::from(parallel, "mclapply")
 import::from(pgda, "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(readr, "read_csv")
 import::from(SNPRelate, "snpgdsLDMat", "snpgdsClose", "snpgdsOpen")
-import::from(gdsfmt, "index.gdsn", "read.gdsn")
+import::from(tibble, "tibble")
 
 phys_data <- snpgdsOpen(phys_gds)
 
@@ -34,7 +37,7 @@ ld_mats <- lapply(var_sets, function (var_set) {
 
 snpgdsClose(phys_data)
 
-calc_pseudo_gen_pos <- function (ld_mat, cores) {
+calc_sparsity <- function (ld_mat, cores) {
   int_window <- min(window, ncol(ld_mat))
   mclapply(1:ncol(ld_mat), function (i) {
     if (i - pane >= 0 && i + pane <= ncol(ld_mat)) {
@@ -73,9 +76,7 @@ calc_pseudo_gen_pos <- function (ld_mat, cores) {
   }, mc.cores = cores) %>% unlist() %>% as.numeric()
 }
 
-sparsity <- lapply(ld_mats, calc_pseudo_gen_pos, 8)
-
-gen_pos <- lapply(sparsity, cumsum)
+sparsity <- lapply(ld_mats, calc_sparsity, 8)
 
 phys_data <- snpgds_parse(phys_gds)
 
@@ -83,7 +84,13 @@ max_phys_lengths <- span_by_chrom(
   phys_data$snp$chrom, phys_data$snp$pos
 ) %>% max_lengths() / 1e6
 
-landmarks <- read_csv(file.path(intermediate, "centromeres.csv")) %>% cbind(id = "Centromere", base = 0.5) %>% split(.$chrom)
+landmarks <- read_csv(file.path(intermediate, "centromeres.csv")) %>%
+  cbind(id = "Centromere", base = 0.5) %>%
+  split(.$chrom)
+
+sparsity_by_chrom <- tibble(chrom = phys_data$snp$chrom, pos_mb = phys_data$snp$pos / 1e6, sparsity = sparsity %>% unlist())
+
+################################################################################
 
 plots <- lapply(chroms, function (chrom) {
 
@@ -110,10 +117,74 @@ plots <- lapply(chroms, function (chrom) {
 
 png(
    "/workspace/results/sparsity.png",
-  family = "Times New Roman", width = 900, height = 900, pointsize = 5,
-  units = "mm", res = 192
+  family = "Times New Roman", width = 2480, height = 3508
 )
 grid.arrange(
   grobs = plots, nrow = 7, ncol = 3
 )
 dev.off()
+
+# ################################################################################
+
+# groups <- lapply(phys_data$snp$chrom, function (chrom) {
+#   ifelse(grepl("1", chrom), "1",
+#       ifelse(grepl("2", chrom), "2",
+#         ifelse(grepl("3", chrom), "3",
+#           ifelse(grepl("4", chrom), "4",
+#             ifelse(grepl("5", chrom), "5",
+#               ifelse(grepl("6", chrom), "6", "7")
+#             )
+#           )
+#         )
+#       )
+#     )
+# }) %>% unlist()
+
+# plots <- by(sparsity_by_chrom, groups, function (group) {
+#   group2 <- by(group, group$chrom, function (chrom) {
+#     chrom_spline <- smooth.spline(chrom$pos_mb, chrom$sparsity, spar = 0.9)
+#     tibble(chrom = chrom$chrom[1], x = chrom_spline$x, y = chrom_spline$y)
+#   }) %>% as.list() %>% do.call(rbind, .)
+
+#   ggplot() +
+#     geom_point(data = group, aes(pos_mb, sparsity, colour = chrom), alpha = 0.1) +
+#     geom_line(data = group2, aes(x, y, color = chrom), size = 2) +
+#     scale_colour_manual(
+#       values = colour_set[c(1, 2, 4)]
+#     )
+# }) %>% as.list()
+
+# png(
+#    "/workspace/results/sparsity.png",
+#   family = "Times New Roman", width = 1240, height = 1754
+# )
+# grid.arrange(
+#   grobs = plots, nrow = 7, ncol = 1
+# )
+# dev.off()
+
+# ################################################################################
+
+# genomes <- lapply(phys_data$snp$chrom, function (chrom) {
+#   ifelse(grepl("A", chrom), "A", ifelse(grepl("B", chrom), "B", "D"))
+# }) %>% unlist()
+
+# plots <- by(sparsity_by_chrom, genomes, function (genome) {
+#   genome2 <- by(genome, genome$chrom, function (chrom) {
+#     chrom_spline <- smooth.spline(chrom$pos_mb, chrom$sparsity, spar = 0.5)
+#     tibble(chrom = chrom$chrom[1], x = chrom_spline$x, y = chrom_spline$y)
+#   }) %>% as.list() %>% do.call(rbind, .)
+
+#   ggplot() +
+#     geom_point(data = genome, aes(pos_mb, sparsity, colour = chrom), alpha = 0.1) +
+#     geom_line(data = genome2, aes(x, y, color = chrom), size = 1)
+# }) %>% as.list()
+
+# png(
+#    "/workspace/results/sparsity.png",
+#   family = "Times New Roman", width = 1240, height = 1754
+# )
+# grid.arrange(
+#   grobs = plots, nrow = 3, ncol = 1
+# )
+# dev.off()

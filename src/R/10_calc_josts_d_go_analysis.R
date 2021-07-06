@@ -61,7 +61,7 @@ sig_ranges <- GRanges(
 )
 
 gene_ranges <- makeTxDbFromGFF(
-  "/workspace/repos/Triticum_aestivum.IWGSC.42.gtf"
+  "/workspace/data/raw/genes/Triticum_aestivum.IWGSC.42.gtf"
 ) %>% GenomicFeatures::genes()
 
 overlaps <- findOverlaps(sig_ranges, gene_ranges, ignore.strand = TRUE)

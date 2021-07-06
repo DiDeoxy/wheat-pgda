@@ -89,7 +89,7 @@ plots_matrix <- ggmatrix(
 
 png(
   file.path("results", "categorization_AMOVA_variance.png"),
-  width = 210, height = 180, units = "mm", res = 192
+  width = 1240, height = 1240
 )
 plots_matrix
 dev.off()

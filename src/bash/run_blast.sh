@@ -18,32 +18,32 @@
 # # download and unzip ref_seq and gtf
 # echo "download_unzip_ref_seq_and_gtf"
 # mkdir ref_seq
-wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
-gunzip ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
-wget -P ref_seq/ ftp://ftp.ensemblgenomes.org/pub/plants/release-42/gtf/triticum_aestivum/Triticum_aestivum.IWGSC.42.gtf.gz
-gunzip ref_seq/Triticum_aestivum.IWGSC.42.gtf.gz
+# wget -P /workspace/data/intermediate/ref_seq ftp://ftp.ensemblgenomes.org/pub/plants/release-42/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
+# gunzip /workspace/data/intermediate/ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz
+# wget -P /workspace/data/intermediate/ref_seq ftp://ftp.ensemblgenomes.org/pub/plants/release-42/gtf/triticum_aestivum/Triticum_aestivum.IWGSC.42.gtf.gz
+# gunzip /workspace/data/intermediate/ref_seq/Triticum_aestivum.IWGSC.42.gtf.gz
 
-# # 2
-# extract genes from ref_seq delete reference
-echo "extract_genes_from_reference_and_delete"
-mkdir -p ref_seq/blast_db
-python src/python/extract_gene_sequences.py \
-    ref_seq/Triticum_aestivum.IWGSC.42.gtf \
-    ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
-    ref_seq/ref_seq_v1_genes.fasta
-rm -r ref_seq
+# # # 2
+# # extract genes from ref_seq delete reference
+# echo "extract_genes_from_reference_and_delete"
+# mkdir -p ref_seq/blast_db
+# python src/python/extract_gene_sequences.py \
+#     ref_seq/Triticum_aestivum.IWGSC.42.gtf \
+#     ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+#     ref_seq/ref_seq_v1_genes.fasta
+# rm -r ref_seq
 
-python .//extract_gene_sequences.py \
-    Triticum_aestivum.IWGSC.42.gtf \
-    Triticum_aestivum.IWGSC.dna.toplevel.fa \
-    ref_seq_v1_genes.fasta
+# python ./extract_gene_sequences.py \
+#     Triticum_aestivum.IWGSC.42.gtf \
+#     Triticum_aestivum.IWGSC.dna.toplevel.fa \
+#     ref_seq_v1_genes.fasta
 
 # # 3a
 # # make blast database from whole genome
 # echo "make_blast_db"
-# makeblastdb -in ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
-#     -dbtype nucl \
-#     -parse_seqids
+makeblastdb -in /workspace/data/intermediate/ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+    -dbtype nucl \
+    -parse_seqids
 
 # # 3b
 # # make blast database from cds
@@ -241,12 +241,12 @@ python .//extract_gene_sequences.py \
 # # 5c
 # # align cereba genes
 # echo "align_cereba_genes"
-# blastn \
-#     -num_threads 4 \
-#     -query data/raw/gene_seqs/cereba/cerebas.fasta \
-#     -db ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
-#     -outfmt "6 qseqid sseqid bitscore pident evalue qlen length sstart send" \
-#     > cereba_blast/cereba.txt
+blastn \
+    -num_threads 4 \
+    -query /workspace/data/raw/gene_seqs/cereba/cerebas.fasta \
+    -db /workspace/data/intermediate/ref_seq/Triticum_aestivum.IWGSC.dna.toplevel.fa \
+    -outfmt "6 qseqid sseqid bitscore pident evalue qlen length sstart send" \
+    > /workspace/data/intermediate/blast/cereba.txt
 
 # # 6c
 # # get top 4AL13 alignments

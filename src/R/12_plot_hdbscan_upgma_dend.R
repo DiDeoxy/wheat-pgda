@@ -28,19 +28,19 @@ levels(clusters) <- c(
 
 wheat_gds <- snpgdsOpen(ld_phys_gds)
 ## making the distance object
-ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = F)$ibs)
+ibs_dist <- as.dist(1 - snpgdsIBS(wheat_gds, autosome.only = FALSE)$ibs)
 snpgdsClose(wheat_gds)
 
 upgma_dend <- hclust(ibs_dist) %>%
   as.dendrogram(method = "average") %>%
   color_branches(k = 9, col = colours_dend) %>%
-  set("branches_lwd", 1.5)
+  set("branches_lwd", 5)
 label_order <- order.dendrogram(upgma_dend)
 
 ## drawing the circos plot
 png(
-  file.path("results", "dend.png"), family = "Times New Roman", width = 210,
-  height = 210, pointsize = 15, units = "mm", res = 192
+  file.path("results", "dend.png"), family = "Times New Roman", width = 2480,
+  height = 2480, pointsize = 60
 )
 circos.par(
   cell.padding = c(0, 0, 0, 0), gap.degree = 0.5, track.margin = c(0.005, 0.005)
@@ -121,7 +121,7 @@ dev.off()
 
 ################################################################################
 # out put some table summarizing the groupings
-clusters <- read_rds(hdbscan)$cluster %>% replace(. == 0, "Noise") 
+clusters <- read_rds(hdbscan_rds)$cluster %>% replace(. == 0, "Noise") 
 
 table(data.frame(wheat_data$sample$annot$mtg, clusters)) %>%
   as.data.frame.matrix() %>%

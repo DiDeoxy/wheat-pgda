@@ -8,7 +8,7 @@ library(plyr)
 wheat_data <- snpgds_parse(phys_gds)
 
 cereba_data <- read_tsv(
-  "cereba_blast/cereba.txt",
+  "/workspace/data/intermediate/blast/cereba.txt",
   col_names = c(
     "qseqid", "chrom", "bitscore", "pident", "evalue", "qlen", "length",
     "sstart", "send"
@@ -53,7 +53,7 @@ plots_matrix <- ggmatrix(
 # plot the matrix
 png(
   file.path("results", "wheat_vs_gen_pos_with_cereba.png"),
-  family = "Times New Roman", width = 200, height = 240, pointsize = 5,
-  units = "mm", res = 192)
+  family = "Times New Roman", width = 2480, height = 3508
+)
 plots_matrix
 dev.off()

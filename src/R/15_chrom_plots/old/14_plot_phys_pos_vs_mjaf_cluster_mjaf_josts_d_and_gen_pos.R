@@ -14,7 +14,7 @@ import::from(magrittr, "%>%", "%<>%")
 import::from(pgda, "load_genes", "max_lengths", "snpgds_parse", "span_by_chrom")
 import::from(plyr, "rbind.fill")
 import::from(
-  readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv", 
+  readr, "col_character", "col_double", "col_factor", "col_integer", "read_csv",
   "read_rds", "type_convert", "write_csv"
 )
 import::from(scrime, "rowTables")

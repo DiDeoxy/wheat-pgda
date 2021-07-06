@@ -17,7 +17,7 @@ import::from(tibble, "as_tibble", "tibble")
 # permute the genome orders so that we can see how well markers from each genome
 # align to the other genomes
 chr_orders <- list(
-  ABD = outer(as.character(1:7), c("A", "B", "D"), paste, sep = "")%>%
+  ABD = outer(as.character(1:7), c("A", "B", "D"), paste, sep = "") %>%
     t() %>% as.vector(),
   ADB = outer(as.character(1:7), c("A", "D", "B"), paste, sep = "") %>%
     t() %>% as.vector(),
